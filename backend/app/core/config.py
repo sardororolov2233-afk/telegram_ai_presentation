@@ -72,8 +72,15 @@ class Settings:
     DEBUG: bool = _get_bool("DEBUG", False)
     FRONTEND_URL: str = _get_str("FRONTEND_URL", "https://your-domain.com")
 
-    # Database
-    DATABASE_URL: str = _get_str("DATABASE_URL", "sqlite+aiosqlite:///./app.db")
+    # Database (Railway postgres:// ni avtomatik asyncpg formatga o'giradi)
+    _raw_db_url: str = _get_str("DATABASE_URL", "sqlite+aiosqlite:///./app.db")
+    DATABASE_URL: str = (
+        _raw_db_url
+        .replace("postgres://", "postgresql+asyncpg://", 1)
+        .replace("postgresql://", "postgresql+asyncpg://", 1)
+        if _raw_db_url.startswith(("postgres://", "postgresql://"))
+        else _raw_db_url
+    )
 
     # Telegram
     TELEGRAM_BOT_TOKEN: str = _get_str("TELEGRAM_BOT_TOKEN", "")
