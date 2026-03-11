@@ -53,7 +53,7 @@ DESIGN_TEMPLATES: dict[int, dict] = {
         "font": "'Trebuchet MS', sans-serif", "theme_name": "Medical Clean",
     },
     7: {  # Bauhaus Geometric
-        "page_bg": "#fce4ec", "slide_bg": "linear-gradient(135deg, #f8bbd0, #e1f5fe)",
+        "page_bg": "#fce4ec", "slide_bg": "#f8bbd0",
         "title_color": "#1a1a1a", "body_color": "#333333",
         "accent": "#e91e63", "num_color": "#999999",
         "font": "'Playfair Display', serif", "theme_name": "Bauhaus Geometric",
