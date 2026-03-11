@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from app.core.database import get_db
 from app.models.user import User
 from app.utils.telegram_auth import validate_telegram_init_data, create_access_token
+from app.utils.bot_db import get_bot_user_balance
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -65,7 +66,7 @@ async def telegram_auth(body: TelegramAuthRequest, db: AsyncSession = Depends(ge
             "first_name": user.first_name,
             "last_name": user.last_name,
             "username": user.username,
-            "balance": float(user.balance),
+            "balance": float(get_bot_user_balance(user.telegram_id)),
             "role": user.role,
             "is_premium": user.is_premium,
         },
@@ -112,7 +113,7 @@ async def dev_login(db: AsyncSession = Depends(get_db)):
             "first_name": user.first_name,
             "last_name": user.last_name,
             "username": user.username,
-            "balance": float(user.balance),
+            "balance": float(get_bot_user_balance(user.telegram_id)),
             "role": user.role,
             "is_premium": user.is_premium,
         },

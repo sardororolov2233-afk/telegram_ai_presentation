@@ -28,7 +28,7 @@ class PresentationRequest(BaseModel):
     slide_count: int = 8               # Nechta slide
     style: str = "professional"        # "professional" | "creative" | "minimal"
     extra_context: Optional[str] = None  # Qo'shimcha ma'lumotlar
-    user_prompt: Optional[str] = None    # Dizayn uslubi, masalan: "antik, jigarrang, klassik"
+    design_template: int = 1             # Dizayn shabloni (1-10)
     send_to_telegram: bool = True       # Botga yuborsinmi
 
 
@@ -62,7 +62,7 @@ async def generate_presentation(
         slide_count=body.slide_count,
         style=body.style,
         extra_context=body.extra_context,
-        user_prompt=body.user_prompt,
+        design_template=body.design_template,
         telegram_id=user.telegram_id if body.send_to_telegram else None,
     )
 

@@ -7,6 +7,7 @@ from typing import Optional
 from app.core.database import get_db
 from app.models.user import User, UserRole
 from app.api.v1.deps import get_current_user, require_admin
+from app.utils.bot_db import get_bot_user_balance
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -40,7 +41,7 @@ async def get_my_profile(user: User = Depends(get_current_user)):
         last_name=user.last_name,
         username=user.username,
         language_code=user.language_code,
-        balance=float(user.balance),
+        balance=float(get_bot_user_balance(user.telegram_id)),
         role=user.role,
         is_premium=user.is_premium,
         is_active=user.is_active,
@@ -66,7 +67,7 @@ async def update_my_profile(
         last_name=user.last_name,
         username=user.username,
         language_code=user.language_code,
-        balance=float(user.balance),
+        balance=float(get_bot_user_balance(user.telegram_id)),
         role=user.role,
         is_premium=user.is_premium,
         is_active=user.is_active,
@@ -90,7 +91,7 @@ async def list_users(
             "id": u.telegram_id,
             "username": u.username,
             "first_name": u.first_name,
-            "balance": float(u.balance),
+            "balance": float(get_bot_user_balance(u.telegram_id)),
             "role": u.role,
             "is_active": u.is_active,
             "created_at": u.created_at,

@@ -12,18 +12,70 @@ from typing import Optional
 
 
 # ──────────────────────────────────────────────────────────────
-# Fallback tema (Groq ishlamasa ishlatiladi)
+# 10 ta tayyor dizayn shablonlari
 # ──────────────────────────────────────────────────────────────
 
-FALLBACK_THEME: dict = {
-    "page_bg":     "#0f172a",
-    "slide_bg":    "#1e293b",
-    "title_color": "#f1f5f9",
-    "body_color":  "#cbd5e1",
-    "accent":      "#3b82f6",
-    "num_color":   "#64748b",
-    "font":        "Inter, 'Segoe UI', sans-serif",
-    "theme_name":  "Professional",
+DESIGN_TEMPLATES: dict[int, dict] = {
+    1: {  # Minimalist Macaron
+        "page_bg": "#ffffff", "slide_bg": "#ffffff",
+        "title_color": "#1a1a1a", "body_color": "#333333",
+        "accent": "#c8e6c9", "num_color": "#999999",
+        "font": "'Segoe UI', sans-serif", "theme_name": "Minimalist Macaron",
+    },
+    2: {  # Classic Architecture
+        "page_bg": "#3a3228", "slide_bg": "#4b4537",
+        "title_color": "#ffffff", "body_color": "#e0dcd4",
+        "accent": "#c9b896", "num_color": "#8a8070",
+        "font": "'Segoe UI', sans-serif", "theme_name": "Classic Architecture",
+    },
+    3: {  # Abstract Lines
+        "page_bg": "#f5f5f5", "slide_bg": "#f5f5f5",
+        "title_color": "#37474f", "body_color": "#546e7a",
+        "accent": "#bca88e", "num_color": "#90a4ae",
+        "font": "Arial, sans-serif", "theme_name": "Abstract Lines",
+    },
+    4: {  # Financial Modern
+        "page_bg": "#0f2944", "slide_bg": "#1a3a5f",
+        "title_color": "#ffffff", "body_color": "#b0c4de",
+        "accent": "#00bcd4", "num_color": "#5a7fa0",
+        "font": "'Calibri', sans-serif", "theme_name": "Financial Modern",
+    },
+    5: {  # Nature Adventure
+        "page_bg": "#1b2a1b", "slide_bg": "#2d4a2d",
+        "title_color": "#ffffff", "body_color": "#c8e6c9",
+        "accent": "#66bb6a", "num_color": "#5a7a5a",
+        "font": "'Brush Script MT', cursive, sans-serif", "theme_name": "Nature Adventure",
+    },
+    6: {  # Medical Clean
+        "page_bg": "#f8f9fa", "slide_bg": "#ffffff",
+        "title_color": "#333333", "body_color": "#555555",
+        "accent": "#607d8b", "num_color": "#9e9e9e",
+        "font": "'Trebuchet MS', sans-serif", "theme_name": "Medical Clean",
+    },
+    7: {  # Bauhaus Geometric
+        "page_bg": "#fce4ec", "slide_bg": "linear-gradient(135deg, #f8bbd0, #e1f5fe)",
+        "title_color": "#1a1a1a", "body_color": "#333333",
+        "accent": "#e91e63", "num_color": "#999999",
+        "font": "'Playfair Display', serif", "theme_name": "Bauhaus Geometric",
+    },
+    8: {  # Elegant Emerald
+        "page_bg": "#1e2a16", "slide_bg": "#2e3b23",
+        "title_color": "#f5f5dc", "body_color": "#c5e1a5",
+        "accent": "#8bc34a", "num_color": "#6a7a5a",
+        "font": "Georgia, serif", "theme_name": "Elegant Emerald",
+    },
+    9: {  # Rustic Wood
+        "page_bg": "#1a1210", "slide_bg": "#2c1e14",
+        "title_color": "#f5e6d0", "body_color": "#d4b896",
+        "accent": "#8d6e4c", "num_color": "#6b5a48",
+        "font": "'Georgia', serif", "theme_name": "Rustic Wood",
+    },
+    10: {  # Abstract Geometry
+        "page_bg": "#344e6a", "slide_bg": "#4a698d",
+        "title_color": "#ffffff", "body_color": "#cfd8dc",
+        "accent": "#9c27b0", "num_color": "#7a99b8",
+        "font": "'Arial Black', sans-serif", "theme_name": "Abstract Geometry",
+    },
 }
 
 GROQ_MODEL = "llama-3.3-70b-versatile"
@@ -59,18 +111,17 @@ class PresentationPipeline:
         style: str,
         extra_context: Optional[str],
         telegram_id: Optional[int],
-        user_prompt: Optional[str] = None,
+        design_template: int = 1,
     ) -> dict:
         pid = str(uuid.uuid4())
         out = self._output_dir()
 
-        # 1. AI → Mavzuga mos CSS tema generatsiya
-        print(f"[Pipeline] Tema generatsiya: '{topic}'")
-        theme = await self._generate_theme(topic, user_prompt)
-        print(f"[Pipeline] Tema: {theme.get('theme_name', '?')}")
+        # 1. Dizayn shablonini tanlash
+        theme = DESIGN_TEMPLATES.get(design_template, DESIGN_TEMPLATES[1]).copy()
+        print(f"[Pipeline] Shablon: {theme.get('theme_name', '?')}")
 
         # 2. Groq → slaydlar
-        slides = await self._generate_slides(topic, language, slide_count, style, extra_context, user_prompt)
+        slides = await self._generate_slides(topic, language, slide_count, style, extra_context)
 
         # 3. HTML yaratish va saqlash
         html = self._build_html(topic, slides, theme)
@@ -89,7 +140,7 @@ class PresentationPipeline:
         # 6. Telegram yuborish
         tg_sent = False
         if telegram_id:
-            tg_sent = await self._send_to_telegram(telegram_id, pptx_path, topic)
+            tg_sent = await self._send_to_telegram(telegram_id, pptx_path, pdf_path, topic)
 
         return {
             "id": pid,
@@ -100,71 +151,7 @@ class PresentationPipeline:
             "slide_count": len(slides),
         }
 
-    # ── Step 0: Mavzuga mos CSS tema ───────────────────────────
-
-    async def _generate_theme(self, topic: str, user_prompt: Optional[str] = None) -> dict:
-        """Groq API orqali mavzuga mos CSS rang palitrasini generatsiya qiladi."""
-        from app.core.config import settings
-
-        if not settings.GROQ_API_KEY:
-            return FALLBACK_THEME.copy()
-
-        style_hint = f"\nFoydalanuvchi uslub istaklari: {user_prompt}" if user_prompt else ""
-
-        theme_prompt = f"""Sen veb dizayner va rang nazariyachisan.
-Quyidagi mavzu uchun taqdimot rang palitrasini (CSS coloring) yarat.
-Mavzu: "{topic}"{style_hint}
-
-Mavzuning ruhiga mos ranglar tanlash kerak. Misol:
-- Tarix, antik → jigarrang, pergament sariq, zangori
-- Texnologiya → qoʻyngʻir qora, neon ko'k, yashil
-- Tabiat → yashil, tuproq, havorang
-- Tibbiyot → oq, ko'k, yashil
-- Ijod, san'at → to'q binafsha, oltin, qoʻngʻir
-- Marketing → qizil, to'q sariq, oq
-
-FAQAT quyidagi JSON formatda javob ber (boshqa hech narsa yozma):
-{{
-  "page_bg": "#hex",
-  "slide_bg": "#hex",
-  "title_color": "#hex",
-  "body_color": "#hex",
-  "accent": "#hex",
-  "num_color": "#hex",
-  "font": "Font name, fallback",
-  "theme_name": "Mavzuga mos nom"
-}}"""
-
-        try:
-            from groq import AsyncGroq
-            client = AsyncGroq(api_key=settings.GROQ_API_KEY)
-            response = await client.chat.completions.create(
-                model=GROQ_MODEL,
-                messages=[
-                    {"role": "system", "content": "Sen faqat valid JSON qaytaradigan dizayner AI san."},
-                    {"role": "user", "content": theme_prompt},
-                ],
-                temperature=0.8,
-                max_tokens=512,
-            )
-            raw = response.choices[0].message.content.strip()
-            if "```" in raw:
-                raw = raw.split("```")[1].split("```")[0].strip()
-                if raw.startswith("json"):
-                    raw = raw[4:]
-            start = raw.find("{")
-            end   = raw.rfind("}") + 1
-            if start != -1 and end > 0:
-                raw = raw[start:end]
-            theme = json.loads(raw)
-            # Barcha kerakli kalitlar borligini tekshirish
-            required = {"page_bg", "slide_bg", "title_color", "body_color", "accent", "num_color", "font"}
-            if required.issubset(theme.keys()):
-                return theme
-            return FALLBACK_THEME.copy()
-        except Exception as exc:
-            print(f"[Pipeline] Tema generatsiya xatosi: {exc}")
-            return FALLBACK_THEME.copy()
+    # _generate_theme() olib tashlandi — endi DESIGN_TEMPLATES dan tanlangan shablon ishlatiladi
 
     # ── Step 1: Groq API ───────────────────────────────────────
 
@@ -175,7 +162,6 @@ FAQAT quyidagi JSON formatda javob ber (boshqa hech narsa yozma):
         slide_count: int,
         style: str,
         extra_context: Optional[str],
-        user_prompt: Optional[str] = None,
     ) -> list[dict]:
         from app.core.config import settings
 
@@ -185,25 +171,31 @@ FAQAT quyidagi JSON formatda javob ber (boshqa hech narsa yozma):
         lang_map = {"uz": "O'zbek tilida", "ru": "на русском языке", "en": "in English"}
         lang_str = lang_map.get(language, "in English")
         extra = f"\n\nQo'shimcha kontekst: {extra_context}" if extra_context else ""
-        user_style = f"\nDizayn/Uslub yo'nalishi: {user_prompt}" if user_prompt else ""
 
         prompt = f"""Sen professional taqdimot (prezentatsiya) yaratuvchi AI yordamchisan.
 Quyidagi mavzuda {slide_count} ta slayd yarat. Til: {lang_str}.
-Mavzu: {topic}{user_style}{extra}
+Mavzu: {topic}{extra}
 
-MUHIM: Faqat quyidagi JSON formatda javoب ber, boshqa hech narsa yozma:
+MUHIM TALABLAR:
+1. HAR BIR slaydning "body" maydoni 50-100 so'zdan iborat akademik, ilmiy uslubdagi matn bo'lsin.
+   Matn paragraf ko'rinishida, chuqur ma'noli va mavzuga tegishli bo'lsin.
+2. Maksimal 5 ta slaydda "image_query" maydoni bo'lsin — bu Unsplash dan rasm izlash uchun
+   ingliz tilidagi 1-3 so'zlik kalit so'z. Qolgan slaydlarda image_query bo'lmasin.
+3. Birinchi slayd — kirish (mavzu nomi va akademik tavsif).
+4. Oxirgi slayd — xulosa va keyingi qadamlar.
+
+Faqat quyidagi JSON formatda javob ber, boshqa hech narsa yozma:
 [
   {{
     "title": "Slayd sarlavhasi",
-    "body": "Asosiy matn. Har bir fikr yangi qatordan boshlansin. - Bullet point 1\\n- Bullet point 2",
+    "body": "50-100 so'zlik akademik matn. Paragraf ko'rinishida yozing, bullet point emas.",
     "emoji": "🎯",
-    "notes": "Notiq uchun qo'shimcha izoh (ixtiyoriy)"
+    "image_query": "keyword",
+    "notes": "Notiq uchun qo'shimcha izoh"
   }}
 ]
 
-Birinchi slayd — kirish (mavzu nomi va qisqa tavsif).
-Oxirgi slayd — xulosa va keyingi qadamlar.
-Har bir slaydning tanasi 3-5 qisqa jumladan iborat bo'lsin."""
+Eslatma: image_query ni faqat 5 ta slaydga qo'shing, qolganlarida bo'lmasin."""
 
         try:
             from groq import AsyncGroq
@@ -219,7 +211,7 @@ Har bir slaydning tanasi 3-5 qisqa jumladan iborat bo'lsin."""
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.7,
-                max_tokens=4096,
+                max_tokens=8192,
             )
 
             raw = response.choices[0].message.content.strip()
@@ -242,12 +234,15 @@ Har bir slaydning tanasi 3-5 qisqa jumladan iborat bo'lsin."""
             validated = []
             for s in slides:
                 if isinstance(s, dict) and "title" in s and "body" in s:
-                    validated.append({
+                    slide_dict = {
                         "title": str(s.get("title", "")),
                         "body":  str(s.get("body", "")),
                         "emoji": str(s.get("emoji", "📌")),
                         "notes": str(s.get("notes", "")),
-                    })
+                    }
+                    if s.get("image_query"):
+                        slide_dict["image_query"] = str(s["image_query"])
+                    validated.append(slide_dict)
 
             return validated[:slide_count] if validated else self._demo_slides(topic, slide_count, language)
 
@@ -284,11 +279,16 @@ Har bir slaydning tanasi 3-5 qisqa jumladan iborat bo'lsin."""
         for i, s in enumerate(slides):
             body_html = self._format_body(s["body"])
             display = "flex" if i == 0 else "none"
+            image_html = ""
+            if s.get("image_query"):
+                q = s["image_query"].replace(" ", ",")
+                image_html = f'<div class="slide-image"><img src="https://source.unsplash.com/800x400/?{q}" alt="{self._esc(s["image_query"])}" loading="lazy"></div>'
             slides_html += f"""
         <div class="slide" id="s{i}" style="display:{display}">
             <div class="slide-num">{i+1} / {total}</div>
             <div class="slide-emoji">{s['emoji']}</div>
             <h2 class="slide-title">{self._esc(s['title'])}</h2>
+            {image_html}
             <div class="slide-body">{body_html}</div>
         </div>"""
 
@@ -364,6 +364,20 @@ Har bir slaydning tanasi 3-5 qisqa jumladan iborat bo'lsin."""
     font-size: clamp(.95rem, 1.5vw, 1.15rem);
     color: {cfg['body_color']};
     line-height: 1.85;
+  }}
+
+  .slide-image {{
+    margin: 16px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,.25);
+  }}
+
+  .slide-image img {{
+    width: 100%;
+    max-height: 240px;
+    object-fit: cover;
+    display: block;
   }}
 
   .slide-body ul {{
@@ -505,6 +519,8 @@ Har bir slaydning tanasi 3-5 qisqa jumladan iborat bo'lsin."""
 
     def _build_pptx(self, topic: str, slides: list[dict], theme: dict, path: str) -> None:
         try:
+            import httpx
+            import tempfile
             from pptx import Presentation
             from pptx.util import Inches, Pt, Emu
             from pptx.dml.color import RGBColor
@@ -558,7 +574,30 @@ Har bir slaydning tanasi 3-5 qisqa jumladan iborat bo'lsin."""
                 p.font.color.rgb = title_rgb
 
                 # Matn (body)
-                tx_body = slide.shapes.add_textbox(Inches(0.5), Inches(3.4), Inches(12.5), Inches(3.6))
+                has_image = bool(slide_data.get("image_query"))
+                body_top = Inches(3.4)
+                body_height = Inches(3.6)
+
+                # Rasm qo'shish (agar image_query mavjud bo'lsa)
+                if has_image:
+                    try:
+                        q = slide_data["image_query"].replace(" ", ",")
+                        img_url = f"https://source.unsplash.com/800x400/?{q}"
+                        with httpx.Client(timeout=15.0, follow_redirects=True) as http:
+                            resp = http.get(img_url)
+                        if resp.status_code == 200 and len(resp.content) > 1000:
+                            with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+                                tmp.write(resp.content)
+                                tmp_path = tmp.name
+                            slide.shapes.add_picture(tmp_path, Inches(7.5), Inches(1.5), Inches(5.5), Inches(3.5))
+                            os.remove(tmp_path)
+                            # Body narrower when image present
+                            body_top = Inches(1.7)
+                            body_height = Inches(5.3)
+                    except Exception as img_err:
+                        print(f"[Pipeline] PPTX rasm xatosi: {img_err}")
+
+                tx_body = slide.shapes.add_textbox(Inches(0.5), body_top, Inches(7.0) if has_image else Inches(12.5), body_height)
                 tf = tx_body.text_frame
                 tf.word_wrap = True
 
@@ -645,11 +684,16 @@ Har bir slaydning tanasi 3-5 qisqa jumladan iborat bo'lsin."""
         slides_html = ""
         for i, s in enumerate(slides):
             body_html = self._format_body(s["body"])
+            image_html = ""
+            if s.get("image_query"):
+                q = s["image_query"].replace(" ", ",")
+                image_html = f'<div class="slide-image-print"><img src="https://source.unsplash.com/1200x600/?{q}" alt="{self._esc(s["image_query"])}"></div>'
             slides_html += f"""
         <div class="slide">
             <div class="slide-num">{i+1} / {len(slides)}</div>
             <div class="slide-emoji">{s.get('emoji', '📌')}</div>
             <h2 class="slide-title">{self._esc(s['title'])}</h2>
+            {image_html}
             <div class="slide-body">{body_html}</div>
         </div>"""
 
@@ -729,6 +773,19 @@ Har bir slaydning tanasi 3-5 qisqa jumladan iborat bo'lsin."""
     border-radius: 50%;
     background: {cfg['accent']};
   }}
+
+  .slide-image-print {{
+    margin: 30px 0;
+    border-radius: 16px;
+    overflow: hidden;
+  }}
+
+  .slide-image-print img {{
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    display: block;
+  }}
 </style>
 </head>
 <body>
@@ -738,35 +795,58 @@ Har bir slaydning tanasi 3-5 qisqa jumladan iborat bo'lsin."""
 
     # ── Step 5: Telegram ──────────────────────────────────────
 
-    async def _send_to_telegram(self, telegram_id: int, pptx_path: str, topic: str) -> bool:
+    async def _send_to_telegram(self, telegram_id: int, pptx_path: str, pdf_path: str, topic: str) -> bool:
         try:
             import httpx
             from app.core.config import settings
 
-            if not os.path.exists(pptx_path) or os.path.getsize(pptx_path) == 0:
-                return False
-
             api_url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}"
-            filename = f"{topic[:40]}.pptx"
+            sent_any = False
 
             async with httpx.AsyncClient(timeout=60.0) as client:
-                with open(pptx_path, "rb") as fh:
-                    resp = await client.post(
-                        f"{api_url}/sendDocument",
-                        data={
-                            "chat_id": str(telegram_id),
-                            "caption": f"📊 <b>{topic}</b>\n\nTaqdimotingiz tayyor! PPTX faylni yuklab oling.",
-                            "parse_mode": "HTML",
-                        },
-                        files={
-                            "document": (
-                                filename,
-                                fh,
-                                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-                            )
-                        },
-                    )
-            return resp.status_code == 200
+                # PPTX yuborish
+                if os.path.exists(pptx_path) and os.path.getsize(pptx_path) > 0:
+                    with open(pptx_path, "rb") as fh:
+                        resp = await client.post(
+                            f"{api_url}/sendDocument",
+                            data={
+                                "chat_id": str(telegram_id),
+                                "caption": f"📊 <b>{topic}</b>\n\n✅ PPTX taqdimotingiz tayyor!",
+                                "parse_mode": "HTML",
+                            },
+                            files={
+                                "document": (
+                                    f"{topic[:40]}.pptx",
+                                    fh,
+                                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                                )
+                            },
+                        )
+                    if resp.status_code == 200:
+                        sent_any = True
+
+                # PDF yuborish
+                if os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 0:
+                    with open(pdf_path, "rb") as fh:
+                        resp = await client.post(
+                            f"{api_url}/sendDocument",
+                            data={
+                                "chat_id": str(telegram_id),
+                                "caption": f"📄 <b>{topic}</b>\n\n✅ PDF versiyasi tayyor!",
+                                "parse_mode": "HTML",
+                            },
+                            files={
+                                "document": (
+                                    f"{topic[:40]}.pdf",
+                                    fh,
+                                    "application/pdf",
+                                )
+                            },
+                        )
+                    if resp.status_code == 200:
+                        sent_any = True
+
+            return sent_any
 
         except Exception as e:
             print(f"[Pipeline] Telegram yuborish xatosi: {e}")
