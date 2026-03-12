@@ -1,256 +1,246 @@
 """
-PPTX Generator
-==============
-SlideData ro'yxatidan professional PPTX fayl yasaydi.
-PptxGenJS (Node.js) ni subprocess orqali chaqiradi.
+PPTX Generator — Template-based
+================================
+10 ta tayyor dizayn shablonidan foydalanib SlideData ro'yxatidan
+professional PPTX fayl yasaydi.
+
+Yondashuv:
+  1. Tanlangan shablon faylni yuklash (dizayn_ 1..10.pptx)
+  2. Birinchi slayd = title slide dizayni sifatida ishlatiladi
+  3. Ikkinchi slayddan boshlab content slide sifatida nusxalanadi
+  4. Asl shablon slaydlarini o'chirish, faqat yangi slaydlar qoladi
 """
 
-import json
-import asyncio
 import os
-import tempfile
+import copy
+import random
+import asyncio
 from pathlib import Path
-from app.services.presentation.ai_generator import SlideData
+from typing import Optional
 
-# Rang palitrasi: tema bo'yicha
-PALETTES = {
-    "professional": {
-        "bg_title": "1E2761",
-        "bg_content": "F5F7FA",
-        "bg_section": "2E3A87",
-        "accent": "4A90D9",
-        "title_text": "CADCFC",
-        "body_text": "1a2a4a",
-        "bullet_text": "2d3e6e",
-    },
-    "creative": {
-        "bg_title": "2F3C7E",
-        "bg_content": "FFF9F0",
-        "bg_section": "F96167",
-        "accent": "F9E795",
-        "title_text": "F9E795",
-        "body_text": "2F3C7E",
-        "bullet_text": "3a4a90",
-    },
-    "minimal": {
-        "bg_title": "36454F",
-        "bg_content": "FFFFFF",
-        "bg_section": "F2F2F2",
-        "accent": "028090",
-        "title_text": "FFFFFF",
-        "body_text": "1a1a1a",
-        "bullet_text": "36454F",
-    },
-}
+from pptx import Presentation
+from pptx.util import Pt
+
+try:
+    from app.services.presentation.ai_generator import SlideData
+except ImportError:
+    from dataclasses import dataclass
+
+    @dataclass
+    class SlideData:
+        index: int
+        title: str
+        bullets: list
+        speaker_notes: str = ""
+        slide_type: str = "content"
+
+# Shablonlar papkasi
+TEMPLATES_DIR = Path(__file__).parent / "templates"
 
 
-def _build_pptxgenjs_script(slides: list[SlideData], style: str, output_path: str) -> str:
-    """PptxGenJS Node.js skriptini yasaydi."""
-    palette = PALETTES.get(style, PALETTES["professional"])
-    slides_data = json.dumps([
-        {
-            "index": s.index,
-            "type": s.slide_type,
-            "title": s.title,
-            "bullets": s.bullets,
-            "notes": s.speaker_notes,
-        }
-        for s in slides
-    ], ensure_ascii=False)
-
-    return f"""
-const pptxgen = require("pptxgenjs");
-
-const palette = {json.dumps(palette)};
-const slidesData = {slides_data};
-const outputPath = {json.dumps(output_path)};
-
-let pres = new pptxgen();
-pres.layout = "LAYOUT_16x9";
-pres.title = "AI Generated Presentation";
-
-const W = 10, H = 5.625;
-
-slidesData.forEach((sd) => {{
-  let slide = pres.addSlide();
-
-  if (sd.type === "title") {{
-    // ── Title slide ──────────────────────────────
-    slide.background = {{ color: palette.bg_title }};
-
-    // Left accent bar
-    slide.addShape(pres.shapes.RECTANGLE, {{
-      x: 0, y: 0, w: 0.35, h: H,
-      fill: {{ color: palette.accent }}, line: {{ color: palette.accent }}
-    }});
-
-    // Main title
-    slide.addText(sd.title, {{
-      x: 0.7, y: 1.5, w: W - 1.2, h: 1.6,
-      fontSize: 40, bold: true, color: palette.title_text,
-      fontFace: "Georgia", valign: "middle"
-    }});
-
-    // Subtitle / bullet
-    if (sd.bullets && sd.bullets[0]) {{
-      slide.addText(sd.bullets[0], {{
-        x: 0.7, y: 3.3, w: W - 1.4, h: 0.7,
-        fontSize: 18, color: "AABBCC", fontFace: "Calibri", italic: true
-      }});
-    }}
-
-    // Slide number
-    slide.addText("01", {{
-      x: W - 1.2, y: H - 0.6, w: 1, h: 0.5,
-      fontSize: 11, color: "555577", align: "right"
-    }});
-
-  }} else if (sd.type === "section") {{
-    // ── Section divider ──────────────────────────
-    slide.background = {{ color: palette.bg_section }};
-
-    slide.addText(String(sd.index + 1).padStart(2, "0"), {{
-      x: 0.5, y: 0.3, w: 2, h: 1.5,
-      fontSize: 72, bold: true, color: palette.accent, fontFace: "Georgia",
-      transparency: 70
-    }});
-
-    slide.addText(sd.title, {{
-      x: 0.8, y: 2.0, w: W - 1.6, h: 1.8,
-      fontSize: 34, bold: true, color: "FFFFFF", fontFace: "Georgia",
-      valign: "middle", align: "center"
-    }});
-
-  }} else if (sd.type === "conclusion") {{
-    // ── Conclusion slide ─────────────────────────
-    slide.background = {{ color: palette.bg_title }};
-
-    slide.addShape(pres.shapes.RECTANGLE, {{
-      x: 0, y: H - 0.5, w: W, h: 0.5,
-      fill: {{ color: palette.accent }}, line: {{ color: palette.accent }}
-    }});
-
-    slide.addText("✦ " + sd.title, {{
-      x: 0.7, y: 0.6, w: W - 1.4, h: 1.2,
-      fontSize: 32, bold: true, color: palette.title_text, fontFace: "Georgia"
-    }});
-
-    if (sd.bullets.length > 0) {{
-      const bulletItems = sd.bullets.map((b, i) => ({{
-        text: b,
-        options: {{ bullet: true, breakLine: i < sd.bullets.length - 1, fontSize: 15, color: "CCDDEE" }}
-      }}));
-      slide.addText(bulletItems, {{
-        x: 0.9, y: 2.0, w: W - 1.8, h: H - 2.6,
-        fontFace: "Calibri", valign: "top"
-      }});
-    }}
-
-  }} else {{
-    // ── Content slide ─────────────────────────────
-    slide.background = {{ color: palette.bg_content }};
-
-    // Top accent bar
-    slide.addShape(pres.shapes.RECTANGLE, {{
-      x: 0, y: 0, w: W, h: 0.08,
-      fill: {{ color: palette.accent }}, line: {{ color: palette.accent }}
-    }});
-
-    // Left accent bar
-    slide.addShape(pres.shapes.RECTANGLE, {{
-      x: 0, y: 0.08, w: 0.06, h: H - 0.08,
-      fill: {{ color: palette.accent }}, line: {{ color: palette.accent }}
-    }});
-
-    // Slide number badge
-    slide.addShape(pres.shapes.RECTANGLE, {{
-      x: 0.18, y: 0.22, w: 0.45, h: 0.37,
-      fill: {{ color: palette.accent }}, line: {{ color: palette.accent }},
-      shadow: {{ type: "outer", blur: 4, offset: 2, angle: 135, color: "000000", opacity: 0.2 }}
-    }});
-    slide.addText(String(sd.index + 1).padStart(2, "0"), {{
-      x: 0.18, y: 0.22, w: 0.45, h: 0.37,
-      fontSize: 13, bold: true, color: "FFFFFF", align: "center", valign: "middle", margin: 0
-    }});
-
-    // Title
-    slide.addText(sd.title, {{
-      x: 0.85, y: 0.2, w: W - 1.1, h: 0.7,
-      fontSize: 22, bold: true, color: palette.body_text, fontFace: "Georgia",
-      valign: "middle"
-    }});
-
-    // Divider line
-    slide.addShape(pres.shapes.LINE, {{
-      x: 0.85, y: 0.98, w: W - 1.2, h: 0,
-      line: {{ color: palette.accent, width: 1.5 }}
-    }});
-
-    // Content card background
-    slide.addShape(pres.shapes.RECTANGLE, {{
-      x: 0.75, y: 1.1, w: W - 1.1, h: H - 1.5,
-      fill: {{ color: "FFFFFF" }},
-      shadow: {{ type: "outer", blur: 8, offset: 3, angle: 135, color: "000000", opacity: 0.08 }}
-    }});
-
-    // Bullet points
-    if (sd.bullets.length > 0) {{
-      const bulletItems = sd.bullets.map((b, i) => ({{
-        text: b,
-        options: {{
-          bullet: true,
-          breakLine: i < sd.bullets.length - 1,
-          fontSize: 15,
-          color: palette.bullet_text,
-          paraSpaceAfter: 8,
-        }}
-      }}));
-      slide.addText(bulletItems, {{
-        x: 0.95, y: 1.25, w: W - 1.5, h: H - 1.8,
-        fontFace: "Calibri", valign: "top"
-      }});
-    }}
-  }}
-
-  // Speaker notes
-  if (sd.notes) {{
-    slide.addNotes(sd.notes);
-  }}
-}});
-
-pres.writeFile({{ fileName: outputPath }})
-  .then(() => {{ console.log("PPTX_OK:" + outputPath); }})
-  .catch(err => {{ console.error("PPTX_ERROR:" + err.message); process.exit(1); }});
-"""
+def _get_template_path(template_index: Optional[int] = None) -> str:
+    """Shablon faylni tanlash. Agar index berilmasa, tasodifiy tanlanadi."""
+    if template_index is None:
+        template_index = random.randint(1, 10)
+    template_index = max(1, min(10, template_index))
+    path = TEMPLATES_DIR / f"dizayn_ {template_index}.pptx"
+    if not path.exists():
+        for i in range(1, 11):
+            fallback = TEMPLATES_DIR / f"dizayn_ {i}.pptx"
+            if fallback.exists():
+                return str(fallback)
+        raise FileNotFoundError(f"Templates papkasida shablon topilmadi: {TEMPLATES_DIR}")
+    return str(path)
 
 
-async def generate_pptx(slides: list[SlideData], output_path: str, style: str = "professional") -> str:
-    """PPTX fayl yasaydi va yo'lini qaytaradi."""
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+def _clone_slide(prs: Presentation, template_slide) -> object:
+    """
+    Template slaydni XML darajasida klonlaydi.
+    Barcha shape, background, rasm va boshqa elementlarni saqlaydi.
+    """
+    slide_layout = template_slide.slide_layout
+    new_slide = prs.slides.add_slide(slide_layout)
 
-    # Vaqtinchalik JS fayl
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False, encoding="utf-8") as f:
-        script = _build_pptxgenjs_script(slides, style, output_path)
-        f.write(script)
-        script_path = f.name
+    # Yangi slaydning spTree ichidagi barcha shape elementlarni o'chirish
+    sp_tree = new_slide.shapes._spTree
+    tags_to_remove = ['}sp', '}pic', '}grpSp', '}cxnSp']
+    for sp in list(sp_tree):
+        if any(sp.tag.endswith(t) for t in tags_to_remove):
+            sp_tree.remove(sp)
 
+    # Template slayddagi barcha elementlarni nusxalash
+    tmpl_sp_tree = template_slide.shapes._spTree
+    for sp in tmpl_sp_tree:
+        if any(sp.tag.endswith(t) for t in tags_to_remove):
+            new_sp = copy.deepcopy(sp)
+            sp_tree.append(new_sp)
+
+    # Background elementini nusxalash
     try:
-        process = await asyncio.create_subprocess_exec(
-            "node", script_path,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=60)
+        P_NS = 'http://schemas.openxmlformats.org/presentationml/2006/main'
+        tmpl_cSld = template_slide._element.find(f'{{{P_NS}}}cSld')
+        new_cSld = new_slide._element.find(f'{{{P_NS}}}cSld')
+        if tmpl_cSld is not None and new_cSld is not None:
+            tmpl_bg = tmpl_cSld.find(f'{{{P_NS}}}bg')
+            if tmpl_bg is not None:
+                old_bg = new_cSld.find(f'{{{P_NS}}}bg')
+                new_bg = copy.deepcopy(tmpl_bg)
+                if old_bg is not None:
+                    new_cSld.replace(old_bg, new_bg)
+                else:
+                    new_cSld.insert(0, new_bg)
+    except Exception:
+        pass
 
-        if process.returncode != 0:
-            error_msg = stderr.decode().strip()
-            raise RuntimeError(f"PPTX generatsiya xatosi: {error_msg}")
+    # Relationship'larni nusxalash (rasmlar uchun)
+    try:
+        for rel in template_slide.part.rels.values():
+            if "image" in rel.reltype:
+                new_slide.part.rels.get_or_add(rel.reltype, rel._target)
+    except Exception:
+        pass
 
-        output = stdout.decode().strip()
-        if "PPTX_OK:" not in output:
-            raise RuntimeError(f"PPTX yaratilmadi. Natija: {output}")
+    return new_slide
 
-        return output_path
 
-    finally:
-        os.unlink(script_path)
+def _find_text_shapes(slide) -> list:
+    """Slayddagi barcha matnli shape'larni topish."""
+    return [shape for shape in slide.shapes if shape.has_text_frame]
+
+
+def _inject_title(slide, title: str):
+    """Title matnini slaydga yozish."""
+    # Avval placeholder orqali
+    for shape in slide.placeholders:
+        if shape.placeholder_format.idx == 0:
+            shape.text = title
+            return
+    # Fallback: birinchi text shape
+    text_shapes = _find_text_shapes(slide)
+    if text_shapes:
+        text_shapes[0].text = title
+
+
+def _inject_bullets(slide, bullets: list, title: str = ""):
+    """Bullet pointlarni slaydga yozish."""
+    # Body placeholder (idx=1 yoki idx=2)
+    for ph_idx in [1, 2]:
+        for shape in slide.placeholders:
+            if shape.placeholder_format.idx == ph_idx and shape.has_text_frame:
+                tf = shape.text_frame
+                tf.clear()
+                for i, bullet in enumerate(bullets):
+                    para = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+                    para.text = bullet
+                    para.level = 0
+                return
+
+    # Fallback: ikkinchi text shape
+    text_shapes = _find_text_shapes(slide)
+    content_shapes = [s for s in text_shapes if s.text != title]
+    if not content_shapes and len(text_shapes) > 1:
+        content_shapes = text_shapes[1:]
+
+    if content_shapes:
+        tf = content_shapes[0].text_frame
+        tf.clear()
+        for i, bullet in enumerate(bullets):
+            para = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+            para.text = bullet
+            para.level = 0
+
+
+def _inject_notes(slide, notes: str):
+    """Speaker notes qo'shish."""
+    if notes:
+        slide.notes_slide.notes_text_frame.text = notes
+
+
+def _delete_slide(prs: Presentation, slide_index: int):
+    """Slaydni o'chirish."""
+    rId = prs.slides._sldIdLst[slide_index].rId
+    prs.part.drop_rel(rId)
+    del prs.slides._sldIdLst[slide_index]
+
+
+def _build_presentation(
+    slides: list,
+    output_path: str,
+    template_index: Optional[int] = None,
+) -> str:
+    """
+    Asosiy PPTX qurish funksiyasi.
+    1. Shablonni yuklaydi
+    2. Har bir SlideData uchun mos slayd nusxalaydi
+    3. Matnlarni joylashtiradi
+    4. Asl shablon slaydlarni o'chiradi
+    5. Faylni saqlaydi
+    """
+    template_path = _get_template_path(template_index)
+    print(f"[PptxGen] Shablon: {template_path}")
+
+    prs = Presentation(template_path)
+    original_count = len(prs.slides)
+
+    print(f"[PptxGen] Shablon slaydlar: {original_count}, Generatsiya: {len(slides)}")
+
+    # Shablondagi slaydlarni xotirada saqlash
+    tmpl_slides = list(prs.slides)
+    title_tmpl = tmpl_slides[0] if tmpl_slides else None
+    content_tmpl = tmpl_slides[1] if len(tmpl_slides) > 1 else title_tmpl
+
+    # Har bir SlideData uchun yangi slayd
+    for sd in slides:
+        if sd.slide_type == "title" and title_tmpl:
+            new_slide = _clone_slide(prs, title_tmpl)
+        elif content_tmpl:
+            new_slide = _clone_slide(prs, content_tmpl)
+        else:
+            new_slide = prs.slides.add_slide(prs.slide_layouts[0])
+
+        _inject_title(new_slide, sd.title)
+        if sd.bullets:
+            _inject_bullets(new_slide, sd.bullets, sd.title)
+        if sd.speaker_notes:
+            try:
+                _inject_notes(new_slide, sd.speaker_notes)
+            except Exception:
+                pass
+
+    # Asl shablon slaydlarni o'chirish (oxiridan boshlab)
+    for i in range(original_count - 1, -1, -1):
+        _delete_slide(prs, i)
+
+    # Saqlash
+    out_dir = os.path.dirname(output_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+    prs.save(output_path)
+    print(f"[PptxGen] Saqlandi: {output_path}")
+    return output_path
+
+
+async def generate_pptx(
+    slides: list,
+    output_path: str,
+    style: str = "professional",
+    template_index: Optional[int] = None,
+) -> str:
+    """
+    PPTX fayl yasaydi va yo'lini qaytaradi.
+
+    Args:
+        slides: SlideData ro'yxati
+        output_path: Natija PPTX fayl yo'li
+        style: Dizayn stili (template o'zi stil beradi)
+        template_index: Shablon raqami (1-10), None bo'lsa tasodifiy
+    """
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(
+        None,
+        _build_presentation,
+        slides,
+        output_path,
+        template_index,
+    )
+    return result

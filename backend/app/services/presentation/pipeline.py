@@ -90,6 +90,7 @@ class PresentationPipeline:
         extra_context: Optional[str],
         telegram_id: Optional[int],
         design_template: int = 1,
+        user_images: Optional[list[str]] = None,
     ) -> dict:
         pid = str(uuid.uuid4())
         out = self._output_dir()
@@ -107,7 +108,7 @@ class PresentationPipeline:
         print(f"[Pipeline] Content: {len(slides)} slayd tayyor")
 
         # 4. Rasmlar (max 5, faqat image_prompt bor slaydlar)
-        slides = await self._fetch_images(slides)
+        slides = await self._fetch_images(slides, user_images)
 
         # 5. PPTX
         pptx_path = f"{out}/{pid}.pptx"
@@ -360,18 +361,64 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
     # STAGE 3: IMAGE FETCHER
     # ══════════════════════════════════════════════════════════
 
-    async def _fetch_images(self, slides: list[dict]) -> list[dict]:
+    async def _fetch_images(self, slides: list[dict], user_images: Optional[list[str]] = None) -> list[dict]:
         """Taqdimot uchun rasmlar olish (max 5)."""
+        from app.core.config import settings
+        import httpx
+        import urllib.parse
+        import uuid
+        
+        user_imgs = list(user_images) if user_images else []
         image_count = 0
+        
         for slide in slides:
             if slide.get("image_prompt") and image_count < 5:
-                # Use a reliable free image generation API instead of deprecated Unsplash Source
-                import urllib.parse
+                # 1. User rasmi bo'lsa ishlatish
+                if user_imgs:
+                    slide["image_path"] = user_imgs.pop(0)
+                    image_count += 1
+                    continue
+                
+                # 2. Unsplash API orqali qidirish
+                unsplash_key = settings.UNSPLASH_ACCESS_KEY
+                img_url = None
                 q = urllib.parse.quote(slide["image_prompt"])
-                slide["image_url"] = f"https://image.pollinations.ai/prompt/{q}?width=800&height=400&nologo=true"
-                image_count += 1
+                
+                if unsplash_key:
+                    try:
+                        async with httpx.AsyncClient(timeout=10.0) as client:
+                            resp = await client.get(
+                                f"https://api.unsplash.com/search/photos?query={q}&per_page=1&orientation=landscape",
+                                headers={"Authorization": f"Client-ID {unsplash_key}"}
+                            )
+                            if resp.status_code == 200:
+                                data = resp.json()
+                                if data.get("results"):
+                                    img_url = data["results"][0]["urls"]["regular"]
+                    except Exception as e:
+                        print(f"[Pipeline] Unsplash xatoda: {e}")
+                
+                # 3. Fallback: Pollinations AI
+                if not img_url:
+                    img_url = f"https://image.pollinations.ai/prompt/{q}?width=800&height=400&nologo=true"
+                
+                # URL dan rasmni yuklab lokalga saqlash (PPTX dagi delayni oldini olish)
+                if img_url:
+                    try:
+                        async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+                            resp = await client.get(img_url)
+                            if resp.status_code == 200 and len(resp.content) > 1000:
+                                tmp_path = os.path.join(self._output_dir(), f"img_{uuid.uuid4().hex}.jpg")
+                                with open(tmp_path, "wb") as f:
+                                    f.write(resp.content)
+                                slide["image_path"] = tmp_path
+                                image_count += 1
+                    except Exception as e:
+                        print(f"[Pipeline] Rasm yuklashda xato: {e}")
+                        
             elif "image_prompt" in slide and image_count >= 5:
                 del slide["image_prompt"]  # Limit exceeded
+                
         print(f"[Pipeline] Rasmlar: {image_count} ta rasm tayyor")
         return slides
     # ══════════════════════════════════════════════════════════
@@ -481,28 +528,22 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                     continue
 
                 # Rasm uchun joy aniqlash
-                has_image = bool(slide_data.get("image_url"))
+                has_image = bool(slide_data.get("image_path"))
                 body_left = Inches(0.5)
                 body_width = Inches(12.5)
                 body_top = Inches(2.8)
 
                 if has_image:
                     try:
-                        img_url = slide_data["image_url"]
-                        with httpx.Client(timeout=15.0, follow_redirects=True) as http:
-                            resp = http.get(img_url)
-                        if resp.status_code == 200 and len(resp.content) > 1000:
-                            with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
-                                tmp.write(resp.content)
-                                tmp_path = tmp.name
+                        img_path = slide_data["image_path"]
+                        if os.path.exists(img_path) and os.path.getsize(img_path) > 0:
                             if stype == "image_text":
-                                sl.shapes.add_picture(tmp_path, Inches(0.5), Inches(2.8), Inches(5.5), Inches(4.0))
+                                sl.shapes.add_picture(img_path, Inches(0.5), Inches(2.8), Inches(5.5), Inches(4.0))
                                 body_left = Inches(6.5)
                                 body_width = Inches(6.5)
                             else:
-                                sl.shapes.add_picture(tmp_path, Inches(7.5), Inches(1.5), Inches(5.5), Inches(3.5))
+                                sl.shapes.add_picture(img_path, Inches(7.5), Inches(1.5), Inches(5.5), Inches(3.5))
                                 body_width = Inches(6.8)
-                            os.remove(tmp_path)
                     except Exception as img_err:
                         print(f"[Pipeline] PPTX rasm xatosi: {img_err}")
 

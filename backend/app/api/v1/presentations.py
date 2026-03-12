@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Form, File, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 import os
+import uuid
+import aiofiles
 
 from app.core.database import get_db
 from app.models.user import User
@@ -45,23 +47,47 @@ class PresentationResponse(BaseModel):
 
 @router.post("/generate", response_model=PresentationResponse)
 async def generate_presentation(
-    body: PresentationRequest,
+    topic: str = Form(...),
+    language: str = Form("uz"),
+    slide_count: int = Form(8),
+    style: str = Form("professional"),
+    extra_context: Optional[str] = Form(None),
+    design_template: int = Form(1),
+    send_to_telegram: bool = Form(True),
+    images: List[UploadFile] = File(default=[]),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    if body.slide_count < 3 or body.slide_count > 20:
+    if slide_count < 3 or slide_count > 20:
         raise HTTPException(status_code=400, detail="Slaydlar soni 3-20 oralig'ida bo'lishi kerak")
+
+    user_image_paths = []
+    if images:
+        out_dir = os.path.join(os.path.expanduser("~"), "presentations_cache")
+        os.makedirs(out_dir, exist_ok=True)
+        for img in images:
+            if img.filename:
+                ext = img.filename.split(".")[-1] if "." in img.filename else "jpg"
+                tmp_path = os.path.join(out_dir, f"usr_img_{uuid.uuid4().hex}.{ext}")
+                try:
+                    async with aiofiles.open(tmp_path, 'wb') as out_file:
+                        content = await img.read()
+                        await out_file.write(content)
+                    user_image_paths.append(tmp_path)
+                except Exception as e:
+                    print(f"[API] Rasm saqlash xatosi: {e}")
 
     pipeline = PresentationPipeline()
 
     result = await pipeline.run(
-        topic=body.topic,
-        language=body.language,
-        slide_count=body.slide_count,
-        style=body.style,
-        extra_context=body.extra_context,
-        design_template=body.design_template,
-        telegram_id=user.telegram_id if body.send_to_telegram else None,
+        topic=topic,
+        language=language,
+        slide_count=slide_count,
+        style=style,
+        extra_context=extra_context,
+        design_template=design_template,
+        telegram_id=user.telegram_id if send_to_telegram else None,
+        user_images=user_image_paths
     )
 
     return PresentationResponse(**result)
