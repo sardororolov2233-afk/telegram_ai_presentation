@@ -34,9 +34,7 @@ class PresentationRequest(BaseModel):
 
 class PresentationResponse(BaseModel):
     id: str
-    html_preview: str          # HTML taqdimot (brauzerda ko'rish uchun)
     pptx_url: str              # Yuklab olish uchun
-    pdf_url: str               # Yuklab olish uchun
     telegram_sent: bool
     slide_count: int
 
@@ -71,8 +69,8 @@ async def generate_presentation(
 
 @router.get("/download/{presentation_id}/{file_type}")
 async def download_file(presentation_id: str, file_type: str):
-    if file_type not in ("pptx", "pdf"):
-        raise HTTPException(status_code=400, detail="Fayl turi noto'g'ri")
+    if file_type != "pptx":
+        raise HTTPException(status_code=400, detail="Fayl turi noto'g'ri (faqat pptx qo'llab-quvvatlanadi)")
 
     # Path traversal dan himoya
     safe_id = presentation_id.replace("..", "").replace("/", "").replace("\\", "")
@@ -81,18 +79,15 @@ async def download_file(presentation_id: str, file_type: str):
 
     # Pipeline bilan bir xil papka (cross-platform)
     output_dir = os.path.join(os.path.expanduser("~"), "presentations_cache")
-    file_path = os.path.join(output_dir, f"{safe_id}.{file_type}")
+    file_path = os.path.join(output_dir, f"{safe_id}.pptx")
 
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Fayl topilmadi yoki muddati tugagan")
 
-    media_type = (
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-        if file_type == "pptx" else "application/pdf"
-    )
+    media_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
 
     return FileResponse(
         path=file_path,
         media_type=media_type,
-        filename=f"presentation.{file_type}",
+        filename=f"presentation.pptx",
     )
