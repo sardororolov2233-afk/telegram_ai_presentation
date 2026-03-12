@@ -1,0 +1,62 @@
+Traceback (most recent call last):
+  File "D:\Новая папка\backend\test.py", line 5, in <module>
+    import app.main
+  File "D:\Новая папка\backend\app\main.py", line 6, in <module>
+    from app.api.v1.router import api_router
+  File "D:\Новая папка\backend\app\api\v1\router.py", line 3, in <module>
+    from app.api.v1 import auth, users, payments, bot, presentations
+  File "D:\Новая папка\backend\app\api\v1\auth.py", line 7, in <module>
+    from app.models.user import User
+  File "D:\Новая папка\backend\app\models\__init__.py", line 1, in <module>
+    from app.models.user import User
+  File "D:\Новая папка\backend\app\models\user.py", line 16, in <module>
+    class User(Base):
+    ...<20 lines>...
+            return f"<User {self.telegram_id} @{self.username}>"
+  File "D:\Новая папка\backend\.venv\Lib\site-packages\sqlalchemy\orm\decl_api.py", line 836, in __init_subclass__
+    _as_declarative(cls._sa_registry, cls, cls.__dict__)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Новая папка\backend\.venv\Lib\site-packages\sqlalchemy\orm\decl_base.py", line 244, in _as_declarative
+    return _MapperConfig.setup_mapping(registry, cls, dict_, None, {})
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Новая папка\backend\.venv\Lib\site-packages\sqlalchemy\orm\decl_base.py", line 325, in setup_mapping
+    return _ClassScanMapperConfig(
+        registry, cls_, dict_, table, mapper_kw
+    )
+  File "D:\Новая папка\backend\.venv\Lib\site-packages\sqlalchemy\orm\decl_base.py", line 572, in __init__
+    self._extract_mappable_attributes()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Новая папка\backend\.venv\Lib\site-packages\sqlalchemy\orm\decl_base.py", line 1570, in _extract_mappable_attributes
+    value.declarative_scan(
+    ~~~~~~~~~~~~~~~~~~~~~~^
+        self,
+        ^^^^^
+    ...<7 lines>...
+        is_dataclass,
+        ^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Новая папка\backend\.venv\Lib\site-packages\sqlalchemy\orm\properties.py", line 709, in declarative_scan
+    self._init_column_for_annotation(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        cls,
+        ^^^^
+    ...<2 lines>...
+        originating_module,
+        ^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\Новая папка\backend\.venv\Lib\site-packages\sqlalchemy\orm\properties.py", line 751, in _init_column_for_annotation
+    argument = de_stringify_union_elements(
+        cls, argument, originating_module
+    )
+  File "D:\Новая папка\backend\.venv\Lib\site-packages\sqlalchemy\util\typing.py", line 341, in de_stringify_union_elements
+    return make_union_type(
+        *[
+    ...<8 lines>...
+        ]
+    )
+  File "D:\Новая папка\backend\.venv\Lib\site-packages\sqlalchemy\util\typing.py", line 478, in make_union_type
+    return cast(Any, Union).__getitem__(types)  # type: ignore
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+TypeError: descriptor '__getitem__' requires a 'typing.Union' object but received a 'tuple'
