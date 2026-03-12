@@ -51,8 +51,8 @@ DESIGN_TEMPLATES: dict[int, dict] = _load_design_templates()
 
 # Qo'llab-quvvatlanadigan slayd turlari
 SLIDE_TYPES = [
-    "title", "problem", "solution", "content", "chart",
-    "image_text", "comparison", "quote", "team", "closing",
+    "title", "agenda", "problem", "solution", "content", "chart",
+    "image_text", "comparison", "timeline", "quote", "team", "closing",
 ]
 
 GROQ_MODEL = "llama-3.3-70b-versatile"
@@ -255,12 +255,14 @@ Faqat JSON formatda javob ber:
         # Slayd turiga qarab maxsus instruktsiya
         type_instructions = {
             "title": "Kirish slayd. Katta sarlavha va qisqa tavsif (1-2 jumla subtitle). Body kerak emas.",
+            "agenda": "Mundarija slayd. Taqdimot rejasini ko'rsatadi. Points da 3-5 ta bo'lim nomi.",
             "problem": "Muammo slayd. 50-80 so'zlik akademik matn muammoni tavsiflaydi. 3-4 ta asosiy muammo nuqtalari.",
             "solution": "Yechim slayd. 50-80 so'zlik akademik matn yechimni tavsifla. 3-4 ta yechim yo'llari.",
             "content": "Asosiy kontent slayd. 60-100 so'zlik chuqur akademik matn. Ma'lumotli paragraf.",
             "chart": "Statistika slayd. Raqamlar va dalillarga boy matn. Kamida 3-4 ta raqamli ma'lumot (points da).",
             "image_text": "Vizual tushuntirish slayd. 50-80 so'zlik matn + image_prompt berish SHART.",
             "comparison": "Solishtirish slayd. 2 ta narsani solishtiradigan matn. Points da har birining afzalliklari.",
+            "timeline": "Xronologiya slayd. Jarayon yoki tarix. Points da 3-5 ta bosqich (yil/davr bilan).",
             "quote": "Iqtibos slayd. Mashhur shaxs yoki manba dan iqtibos. body da iqtibos, subtitle da muallif.",
             "team": "Jamoa/tashkilot slayd. Ishtirokchilar yoki tashkilotlar haqida. Points da ro'yxat.",
             "closing": "Xulosa slayd. Asosiy xulosalar va keyingi qadamlar. 3-4 yakuniy fikr.",
@@ -342,15 +344,15 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
 
     def _demo_slide(self, slide_type: str, topic: str, hint: str, index: int) -> dict:
         """Fallback demo slide."""
-        emojis = {"title": "🚀", "problem": "⚠️", "solution": "💡", "content": "📖",
-                  "chart": "📊", "image_text": "🖼️", "comparison": "⚖️",
+        emojis = {"title": "🚀", "agenda": "📋", "problem": "⚠️", "solution": "💡", "content": "📖",
+                  "chart": "📊", "image_text": "🖼️", "comparison": "⚖️", "timeline": "⏳",
                   "quote": "💬", "team": "👥", "closing": "🎯"}
         return {
             "type": slide_type,
             "title": f"{topic}" if slide_type == "title" else hint or slide_type.capitalize(),
             "subtitle": f"{topic} haqida" if slide_type == "title" else "",
-            "body": f"{topic} haqida {index + 1}-qism ma'lumoti. Bu demo matn.",
-            "points": ["Muhim nuqta 1", "Muhim nuqta 2", "Muhim nuqta 3"],
+            "body": f"{topic} haqida batafsil ma'lumot generatsiya qilinmoqda. Slayd {index + 1}.",
+            "points": ["Muhim tushuncha 1", "Asosiy va muhim qism 2", "Xulosa va natija 3"],
             "emoji": emojis.get(slide_type, "📌"),
         }
 
@@ -423,6 +425,9 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                 p = tf.paragraphs[0]
                 p.text = slide_data.get("emoji", "📌")
                 p.font.size = Pt(32)
+                # Set font if available (simple heuristic for font name)
+                font_name = cfg.get("font", "Arial").split(",")[0].strip("'\" ")
+                p.font.name = font_name
 
                 # Title
                 title_top = Inches(1.4)
@@ -436,6 +441,7 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                     p.font.bold = True
                     p.font.size = Pt(44)
                     p.font.color.rgb = title_rgb
+                    p.font.name = font_name
                     p.alignment = PP_ALIGN.CENTER
 
                     # Subtitle
@@ -445,6 +451,7 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                         p2.text = subtitle
                         p2.font.size = Pt(24)
                         p2.font.color.rgb = accent_rgb
+                        p2.font.name = font_name
                         p2.alignment = PP_ALIGN.CENTER
                         p2.space_before = Pt(16)
                 else:
@@ -457,6 +464,7 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                     p.font.bold = True
                     p.font.size = Pt(32)
                     p.font.color.rgb = title_rgb
+                    p.font.name = font_name
 
                     # Subtitle
                     subtitle = slide_data.get("subtitle", "")
@@ -465,6 +473,7 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                         p2.text = subtitle
                         p2.font.size = Pt(20)
                         p2.font.color.rgb = accent_rgb
+                        p2.font.name = font_name
                         p2.space_before = Pt(6)
 
                 # Skip body/points for title slide
@@ -507,6 +516,7 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                     p.text = body
                     p.font.size = Pt(16)
                     p.font.color.rgb = body_rgb
+                    p.font.name = font_name
                     p.line_spacing = Pt(24)
 
                 # Points
@@ -523,6 +533,7 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                         p.text = f"• {point}"
                         p.font.size = Pt(16)
                         p.font.color.rgb = body_rgb
+                        p.font.name = font_name
                         p.space_before = Pt(6)
 
             prs.save(path)
