@@ -316,7 +316,12 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
             if start != -1 and end > 0:
                 raw = raw[start:end]
 
-            data = json.loads(raw)
+            try:
+                data = json.loads(raw)
+            except Exception as parse_e:
+                with open("json_err.log", "w", encoding="utf-8") as fe:
+                    fe.write(f"Error: {parse_e}\nRaw:\n{raw}")
+                raise parse_e
 
             slide = {
                 "type": slide_type,
@@ -354,12 +359,14 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
     # ══════════════════════════════════════════════════════════
 
     async def _fetch_images(self, slides: list[dict]) -> list[dict]:
-        """Unsplash dan rasmlar olish (max 5)."""
+        """Taqdimot uchun rasmlar olish (max 5)."""
         image_count = 0
         for slide in slides:
             if slide.get("image_prompt") and image_count < 5:
-                q = slide["image_prompt"].replace(" ", ",")
-                slide["image_url"] = f"https://source.unsplash.com/800x400/?{q}"
+                # Use a reliable free image generation API instead of deprecated Unsplash Source
+                import urllib.parse
+                q = urllib.parse.quote(slide["image_prompt"])
+                slide["image_url"] = f"https://image.pollinations.ai/prompt/{q}?width=800&height=400&nologo=true"
                 image_count += 1
             elif "image_prompt" in slide and image_count >= 5:
                 del slide["image_prompt"]  # Limit exceeded
@@ -580,8 +587,20 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
             raw = raw.split("```json")[1].split("```")[0].strip()
         elif "```" in raw:
             raw = raw.split("```")[1].split("```")[0].strip()
-        start = raw.find("[") if "[" in raw else raw.find("{")
-        end = max(raw.rfind("]"), raw.rfind("}")) + 1
+            
+        start_obj = raw.find("{")
+        start_arr = raw.find("[")
+        if start_obj == -1:
+            start = start_arr
+        elif start_arr == -1:
+            start = start_obj
+        else:
+            start = min(start_obj, start_arr)
+            
+        end_obj = raw.rfind("}")
+        end_arr = raw.rfind("]")
+        end = max(end_obj, end_arr) + 1
+        
         if start != -1 and end > 0:
             raw = raw[start:end]
-        return raw
+        return raw.strip()
