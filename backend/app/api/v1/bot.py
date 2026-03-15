@@ -50,7 +50,8 @@ async def bot_webhook(request: Request, db: Client = Depends(get_db)):
         user = message.get("from", {})
 
         if text == "/start":
-            mini_app_url = settings.FRONTEND_URL or "https://yordamchiai.vercel.app"
+            mini_app_url = settings.FRONTEND_URL or "https://orzu-two.vercel.app"
+
             await send_mini_app_button(
                 chat_id=chat_id,
                 text=f"Salom, <b>{user.get('first_name', 'Foydalanuvchi')}</b>! 👋\n\nIlovamizga xush kelibsiz!",
