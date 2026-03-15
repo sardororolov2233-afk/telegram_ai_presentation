@@ -104,5 +104,8 @@ class Settings:
     GROQ_API_KEY: Optional[str] = _get("GROQ_API_KEY")
     UNSPLASH_ACCESS_KEY: Optional[str] = _get("UNSPLASH_ACCESS_KEY")
 
+    # Supabase
+    SUPABASE_URL: Optional[str] = _get("SUPABASE_URL")
+    SUPABASE_KEY: Optional[str] = _get("SUPABASE_KEY")
 
 settings = Settings()

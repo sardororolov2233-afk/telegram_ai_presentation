@@ -112,7 +112,7 @@ class PresentationPipeline:
 
         # 5. PPTX
         pptx_path = f"{out}/{pid}.pptx"
-        self._build_pptx(topic, slides, theme, pptx_path)
+        await asyncio.to_thread(self._build_pptx, topic, slides, theme, pptx_path)
 
         # 6. Telegram
         tg_sent = False

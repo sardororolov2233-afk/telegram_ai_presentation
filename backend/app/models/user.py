@@ -1,37 +1,25 @@
-from __future__ import annotations
+from pydantic import BaseModel, ConfigDict
+from enum import Enum
+from typing import Optional
+from datetime import datetime
 
-from sqlalchemy import BigInteger, String, Boolean, DateTime, Numeric, Enum
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
-from typing import Optional, List
-from app.core.database import Base
-import enum
-
-
-class UserRole(str, enum.Enum):
+class UserRole(str, Enum):
     USER = "user"
     ADMIN = "admin"
 
+class User(BaseModel):
+    id: Optional[int] = None
+    telegram_id: int
+    username: Optional[str] = None
+    first_name: str
+    last_name: Optional[str] = None
+    phone: Optional[str] = None
+    language_code: Optional[str] = "uz"
+    is_active: bool = True
+    is_premium: bool = False
+    role: UserRole = UserRole.USER
+    balance: float = 0.0
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-class User(Base):
-    __tablename__ = "users"
-
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False, index=True)
-    username: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
-    first_name: Mapped[str] = mapped_column(String(128), nullable=False)
-    last_name: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
-    phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    language_code: Mapped[Optional[str]] = mapped_column(String(10), default="uz")
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    is_premium: Mapped[bool] = mapped_column(Boolean, default=False)
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.USER)
-    balance: Mapped[float] = mapped_column(Numeric(12, 2), default=0.0)
-    created_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
-
-    # Relationships
-    payments: Mapped[List["Payment"]] = relationship("Payment", back_populates="user")
-
-    def __repr__(self):
-        return f"<User {self.telegram_id} @{self.username}>"
+    model_config = ConfigDict(from_attributes=True)

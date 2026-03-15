@@ -1,30 +1,21 @@
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
+import asyncio
+from typing import Generator
+from supabase import create_client, Client
 from app.core.config import settings
 
+# Global client instance
+_supabase: Client | None = None
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DEBUG,
-    pool_pre_ping=True,
-)
+def get_supabase() -> Client:
+    global _supabase
+    if _supabase is None:
+        if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
+            raise ValueError("SUPABASE_URL or SUPABASE_KEY not set in environment or config")
+        _supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+    return _supabase
 
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
-
-
-class Base(DeclarativeBase):
-    pass
-
-
-async def get_db() -> AsyncSession:
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
+async def get_db() -> Client:
+    """Dependency injector for FastAPI endpoints"""
+    # Supabase HTTPX asosida ishlaydi, shunga sinxron obyekt qaytarish xavfsiz.
+    # Lekin barcha so'rovlar await asyncio.to_thread bilan berilishi ma'qul.
+    yield get_supabase()

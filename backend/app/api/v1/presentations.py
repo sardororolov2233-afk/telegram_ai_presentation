@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Form, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
 from fastapi.responses import FileResponse
-from sqlalchemy.ext.asyncio import AsyncSession
+from supabase import Client
+import asyncio
 from pydantic import BaseModel
 from typing import Optional, List
 import os
@@ -9,41 +10,16 @@ import aiofiles
 
 from app.core.database import get_db
 from app.models.user import User
-from app.api.v1.deps import get_current_user
+from app.routes.deps import get_current_user
 from app.services.presentation.pipeline import PresentationPipeline
 
 router = APIRouter(prefix="/presentations", tags=["Presentations"])
 
-
-# ──────────────────────────────────────────────
-# Schemas
-# ──────────────────────────────────────────────
-
-class SlideContent(BaseModel):
-    title: str
-    body: str  # Markdown yoki oddiy matn
-
-
-class PresentationRequest(BaseModel):
-    topic: str                          # "Süni intellekt va kelajak"
-    language: str = "uz"               # "uz" | "ru" | "en"
-    slide_count: int = 8               # Nechta slide
-    style: str = "professional"        # "professional" | "creative" | "minimal"
-    extra_context: Optional[str] = None  # Qo'shimcha ma'lumotlar
-    design_template: int = 1             # Dizayn shabloni (1-10)
-    send_to_telegram: bool = True       # Botga yuborsinmi
-
-
 class PresentationResponse(BaseModel):
     id: str
-    pptx_url: str              # Yuklab olish uchun
+    pptx_url: str
     telegram_sent: bool
     slide_count: int
-
-
-# ──────────────────────────────────────────────
-# Routes
-# ──────────────────────────────────────────────
 
 @router.post("/generate", response_model=PresentationResponse)
 async def generate_presentation(
@@ -55,11 +31,15 @@ async def generate_presentation(
     design_template: int = Form(1),
     send_to_telegram: bool = Form(True),
     images: List[UploadFile] = File(default=[]),
-    db: AsyncSession = Depends(get_db),
+    db: Client = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     if slide_count < 3 or slide_count > 20:
         raise HTTPException(status_code=400, detail="Slaydlar soni 3-20 oralig'ida bo'lishi kerak")
+
+    price = slide_count * 600
+    if user.balance < price:
+        raise HTTPException(status_code=402, detail="Balansingiz yetarli emas. Iltimos, hisobingizni to'ldiring.")
 
     user_image_paths = []
     if images:
@@ -90,6 +70,14 @@ async def generate_presentation(
         user_images=user_image_paths
     )
 
+    new_balance = user.balance - price
+    try:
+        await asyncio.to_thread(
+            db.table("users").update({"balance": new_balance}).eq("telegram_id", user.telegram_id).execute
+        )
+    except Exception as e:
+        print(f"[API] Balansni yechishda xato: {e}")
+
     return PresentationResponse(**result)
 
 
@@ -98,12 +86,10 @@ async def download_file(presentation_id: str, file_type: str):
     if file_type != "pptx":
         raise HTTPException(status_code=400, detail="Fayl turi noto'g'ri (faqat pptx qo'llab-quvvatlanadi)")
 
-    # Path traversal dan himoya
     safe_id = presentation_id.replace("..", "").replace("/", "").replace("\\", "")
     if not safe_id:
         raise HTTPException(status_code=400, detail="Noto'g'ri fayl ID")
 
-    # Pipeline bilan bir xil papka (cross-platform)
     output_dir = os.path.join(os.path.expanduser("~"), "presentations_cache")
     file_path = os.path.join(output_dir, f"{safe_id}.pptx")
 

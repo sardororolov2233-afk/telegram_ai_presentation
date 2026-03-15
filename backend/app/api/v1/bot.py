@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from supabase import Client
 import httpx
+import asyncio
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.models.user import User as UserModel
 
 router = APIRouter(prefix="/bot", tags=["Bot"])
 
@@ -39,12 +38,11 @@ async def send_mini_app_button(chat_id: int, text: str, button_text: str, web_ap
 
 
 @router.post("/webhook")
-async def bot_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+async def bot_webhook(request: Request, db: Client = Depends(get_db)):
     """Telegram bot webhookini qabul qiladi."""
     data = await request.json()
 
     message = data.get("message", {})
-    callback = data.get("callback_query", {})
 
     if message:
         chat_id = message["chat"]["id"]
@@ -61,11 +59,10 @@ async def bot_webhook(request: Request, db: AsyncSession = Depends(get_db)):
             )
 
         elif text == "/balance":
-            result = await db.execute(
-                select(UserModel).where(UserModel.telegram_id == user["id"])
+            resp = await asyncio.to_thread(
+                db.table("users").select("balance").eq("telegram_id", user["id"]).execute
             )
-            db_user = result.scalar_one_or_none()
-            balance = float(db_user.balance) if db_user else 0.0
+            balance = float(resp.data[0]["balance"]) if resp.data else 0.0
             await send_message(chat_id, f"💰 Balansingiz: <b>{balance:,.0f} so'm</b>")
 
     return {"ok": True}
