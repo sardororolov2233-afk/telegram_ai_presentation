@@ -73,7 +73,7 @@ class Settings:
     FRONTEND_URL: str = _get_str("FRONTEND_URL", "https://your-domain.com")
 
     # Database (Railway postgres:// ni avtomatik asyncpg formatga o'giradi)
-    _raw_db_url: str = _get_str("DATABASE_URL", "sqlite+aiosqlite:///./app.db")
+    _raw_db_url: str = _get_str("DATABASE_URL") or "sqlite+aiosqlite:///./app.db"
     DATABASE_URL: str = (
         _raw_db_url
         .replace("postgres://", "postgresql+asyncpg://", 1)
@@ -83,7 +83,7 @@ class Settings:
     )
 
     # Telegram
-    TELEGRAM_BOT_TOKEN: str = _get_str("TELEGRAM_BOT_TOKEN", "")
+    TELEGRAM_BOT_TOKEN: str = _get_str("TELEGRAM_BOT_TOKEN")
     TELEGRAM_WEBHOOK_URL: Optional[str] = _get("TELEGRAM_WEBHOOK_URL")
 
     # Payment
@@ -95,17 +95,18 @@ class Settings:
 
     # JWT
     SECRET_KEY: str = _get_str("SECRET_KEY", "change-this-secret-key-in-production")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = _get_int("ACCESS_TOKEN_EXPIRE_MINUTES", 60 * 24 * 7)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = _get_int("ACCESS_TOKEN_EXPIRE_MINUTES", 10080)
 
     # Redis
     REDIS_URL: str = _get_str("REDIS_URL", "redis://localhost:6379")
 
-    # OpenAI
+    # AI & Services
     GROQ_API_KEY: Optional[str] = _get("GROQ_API_KEY")
     UNSPLASH_ACCESS_KEY: Optional[str] = _get("UNSPLASH_ACCESS_KEY")
 
     # Supabase
     SUPABASE_URL: Optional[str] = _get("SUPABASE_URL")
     SUPABASE_KEY: Optional[str] = _get("SUPABASE_KEY")
+
 
 settings = Settings()
