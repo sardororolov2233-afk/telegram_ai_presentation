@@ -106,7 +106,7 @@ class Settings:
 
     # Supabase
     SUPABASE_URL: Optional[str] = _get("SUPABASE_URL")
-    SUPABASE_KEY: Optional[str] = _get("SUPABASE_KEY")
+    SUPABASE_KEY: Optional[str] = _get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImplY3B3aG9meWN0am9pc2Nlem1rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzE5ODc4NCwiZXhwIjoyMDg4Nzc0Nzg0fQ.EZYLJmYb0rCJVNk2TilijQoGE4i9cL48sLX5rmOs09A")
 
 
 settings = Settings()
