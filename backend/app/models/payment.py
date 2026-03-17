@@ -6,11 +6,8 @@ from datetime import datetime
 class PaymentStatus(str, Enum):
     PENDING = "pending"
     COMPLETED = "completed"
-    FAILED = "failed"
-    REFUNDED = "refunded"
 
 class PaymentProvider(str, Enum):
-    TELEGRAM_STARS = "telegram_stars"
     PAYME = "payme"
     CLICK = "click"
 

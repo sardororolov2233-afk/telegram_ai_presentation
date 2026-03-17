@@ -441,8 +441,6 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                 return RGBColor(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
 
             prs = Presentation()
-            prs.slide_width = Inches(13.33)
-            prs.slide_height = Inches(7.5)
 
             slide_bg_rgb = hex_to_rgb(cfg["slide_bg"])
             title_rgb = hex_to_rgb(cfg["title_color"])
@@ -500,7 +498,6 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                         p2.font.color.rgb = accent_rgb
                         p2.font.name = font_name
                         p2.alignment = PP_ALIGN.CENTER
-                        p2.space_before = Pt(16)
                 else:
                     # Normal title
                     tx = sl.shapes.add_textbox(Inches(0.5), title_top, Inches(12.5), Inches(1.2))
@@ -521,7 +518,6 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                         p2.font.size = Pt(20)
                         p2.font.color.rgb = accent_rgb
                         p2.font.name = font_name
-                        p2.space_before = Pt(6)
 
                 # Skip body/points for title slide
                 if stype == "title":
@@ -558,7 +554,6 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                     p.font.size = Pt(16)
                     p.font.color.rgb = body_rgb
                     p.font.name = font_name
-                    p.line_spacing = Pt(24)
 
                 # Points
                 points = slide_data.get("points", [])
@@ -575,7 +570,6 @@ MUHIM: body maydoni 50-100 so'zdan iborat bo'lsin. Points maydoni 3-5 ta qisqa g
                         p.font.size = Pt(16)
                         p.font.color.rgb = body_rgb
                         p.font.name = font_name
-                        p.space_before = Pt(6)
 
             prs.save(path)
 
