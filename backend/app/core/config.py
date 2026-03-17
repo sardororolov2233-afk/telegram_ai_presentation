@@ -70,7 +70,7 @@ class Settings:
 
     APP_NAME: str = _get_str("APP_NAME", "Telegram Mini App")
     DEBUG: bool = _get_bool("DEBUG", False)
-    FRONTEND_URL: str = _get_str("FRONTEND_URL", "https://your-domain.com")
+    FRONTEND_URL: str = _get_str("FRONTEND_URL", "https://orzu-two.vercel.app")
 
     # Database (Railway postgres:// ni avtomatik asyncpg formatga o'giradi)
     _raw_db_url: str = _get_str("DATABASE_URL") or "sqlite+aiosqlite:///./app.db"
