@@ -1,4 +1,0 @@
-D:\Новая папка\backend\debug.py:3
-D:\Новая папка\backend\app\main.py:7
-
-ImportError: cannot import name 'engine' from 'app.core.database' (D:\Новая папка\backend\app\core\database.py)
