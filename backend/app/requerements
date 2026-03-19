@@ -1,12 +1,25 @@
+# Web framework
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
-sqlalchemy[asyncio]==2.0.36
-asyncpg==0.30.0
-alembic==1.14.0
+
+# Supabase
+supabase==2.10.0
+
+# Pydantic
 pydantic==2.10.0
 pydantic-settings==2.6.0
-python-jose[cryptography]==3.3.0
+
+# JWT
 PyJWT==2.10.0
+
+# HTTP client
 httpx==0.28.0
+
+# File upload
 python-multipart==0.0.20
-redis==5.2.0
+
+# Async file operations
+aiofiles
+
+# Environment
+python-dotenv

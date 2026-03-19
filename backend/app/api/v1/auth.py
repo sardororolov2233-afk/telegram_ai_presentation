@@ -4,13 +4,12 @@ import asyncio
 from pydantic import BaseModel
 
 from app.core.database import get_db
-from app.models.user import User
 from app.utils.telegram_auth import validate_telegram_init_data, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 class TelegramAuthRequest(BaseModel):
-    init_data: str  # Telegram WebApp.initData
+    init_data: str
 
 class AuthResponse(BaseModel):
     access_token: str
@@ -19,10 +18,6 @@ class AuthResponse(BaseModel):
 
 @router.post("/telegram", response_model=AuthResponse)
 async def telegram_auth(body: TelegramAuthRequest, db: Client = Depends(get_db)):
-    """
-    Telegram initData orqali autentifikatsiya.
-    Frontend: const initData = window.Telegram.WebApp.initData
-    """
     user_data = validate_telegram_init_data(body.init_data)
 
     if not user_data:
@@ -33,8 +28,10 @@ async def telegram_auth(body: TelegramAuthRequest, db: Client = Depends(get_db))
 
     telegram_id = user_data["id"]
 
-    resp = await asyncio.to_thread(db.table("users").select("*").eq("telegram_id", telegram_id).execute)
-    
+    resp = await asyncio.to_thread(
+        db.table("users").select("*").eq("telegram_id", telegram_id).execute
+    )
+
     if not resp.data:
         new_user = {
             "telegram_id": telegram_id,
@@ -45,7 +42,7 @@ async def telegram_auth(body: TelegramAuthRequest, db: Client = Depends(get_db))
             "is_premium": user_data.get("is_premium", False),
             "balance": 0.0,
             "role": "user",
-            "is_active": True
+            "is_active": True,
         }
         res_ins = await asyncio.to_thread(db.table("users").insert(new_user).execute)
         db_user = res_ins.data[0]
@@ -57,19 +54,20 @@ async def telegram_auth(body: TelegramAuthRequest, db: Client = Depends(get_db))
             "username": user_data.get("username", db_user.get("username")),
             "is_premium": user_data.get("is_premium", False),
         }
-        res_upd = await asyncio.to_thread(db.table("users").update(update_data).eq("telegram_id", telegram_id).execute)
+        res_upd = await asyncio.to_thread(
+            db.table("users").update(update_data).eq("telegram_id", telegram_id).execute
+        )
         db_user = res_upd.data[0]
 
     token = create_access_token(telegram_id)
 
-    # balance ni bot_db (SQLite xatoligi) o'rniga Supabase'dan olishimiz kerak
     return AuthResponse(
         access_token=token,
         user={
             "id": db_user["telegram_id"],
-            "first_name": db_user["first_name"],
-            "last_name": db_user["last_name"],
-            "username": db_user["username"],
+            "first_name": db_user.get("first_name", ""),
+            "last_name": db_user.get("last_name"),
+            "username": db_user.get("username"),
             "balance": float(db_user.get("balance", 0.0)),
             "role": db_user.get("role", "user"),
             "is_premium": db_user.get("is_premium", False),
@@ -78,10 +76,6 @@ async def telegram_auth(body: TelegramAuthRequest, db: Client = Depends(get_db))
 
 @router.post("/dev-login", response_model=AuthResponse)
 async def dev_login(db: Client = Depends(get_db)):
-    """
-    DEV MODE faqat! DEBUG=True bo'lganda ishlaydi.
-    Haqiqiy Telegram kerak emas — test foydalanuvchi uchun real JWT token beradi.
-    """
     from app.core.config import settings
     if not settings.DEBUG:
         raise HTTPException(
@@ -90,7 +84,9 @@ async def dev_login(db: Client = Depends(get_db)):
         )
 
     DEV_TELEGRAM_ID = 123456789
-    resp = await asyncio.to_thread(db.table("users").select("*").eq("telegram_id", DEV_TELEGRAM_ID).execute)
+    resp = await asyncio.to_thread(
+        db.table("users").select("*").eq("telegram_id", DEV_TELEGRAM_ID).execute
+    )
 
     if not resp.data:
         new_user = {
@@ -102,7 +98,7 @@ async def dev_login(db: Client = Depends(get_db)):
             "is_premium": False,
             "balance": 100000.0,
             "role": "admin",
-            "is_active": True
+            "is_active": True,
         }
         res_ins = await asyncio.to_thread(db.table("users").insert(new_user).execute)
         db_user = res_ins.data[0]
@@ -115,9 +111,9 @@ async def dev_login(db: Client = Depends(get_db)):
         access_token=token,
         user={
             "id": db_user["telegram_id"],
-            "first_name": db_user["first_name"],
-            "last_name": db_user["last_name"],
-            "username": db_user["username"],
+            "first_name": db_user.get("first_name", ""),
+            "last_name": db_user.get("last_name"),
+            "username": db_user.get("username"),
             "balance": float(db_user.get("balance", 0.0)),
             "role": db_user.get("role", "user"),
             "is_premium": db_user.get("is_premium", False),

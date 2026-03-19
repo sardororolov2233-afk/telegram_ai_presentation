@@ -9,7 +9,6 @@ import uuid
 import aiofiles
 
 from app.core.database import get_db
-from app.models.user import User
 from app.routes.deps import get_current_user
 from app.services.presentation.pipeline import PresentationPipeline
 
@@ -32,13 +31,13 @@ async def generate_presentation(
     send_to_telegram: bool = Form(True),
     images: List[UploadFile] = File(default=[]),
     db: Client = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
     if slide_count < 3 or slide_count > 20:
         raise HTTPException(status_code=400, detail="Slaydlar soni 3-20 oralig'ida bo'lishi kerak")
 
     price = slide_count * 600
-    if user.balance < price:
+    if user.get("balance", 0.0) < price:
         raise HTTPException(status_code=402, detail="Balansingiz yetarli emas. Iltimos, hisobingizni to'ldiring.")
 
     user_image_paths = []
@@ -66,14 +65,14 @@ async def generate_presentation(
         style=style,
         extra_context=extra_context,
         design_template=design_template,
-        telegram_id=user.telegram_id if send_to_telegram else None,
-        user_images=user_image_paths
+        telegram_id=user["telegram_id"] if send_to_telegram else None,
+        user_images=user_image_paths,
     )
 
-    new_balance = user.balance - price
+    new_balance = user.get("balance", 0.0) - price
     try:
         await asyncio.to_thread(
-            db.table("users").update({"balance": new_balance}).eq("telegram_id", user.telegram_id).execute
+            db.table("users").update({"balance": new_balance}).eq("telegram_id", user["telegram_id"]).execute
         )
     except Exception as e:
         print(f"[API] Balansni yechishda xato: {e}")
@@ -96,10 +95,8 @@ async def download_file(presentation_id: str, file_type: str):
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Fayl topilmadi yoki muddati tugagan")
 
-    media_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-
     return FileResponse(
         path=file_path,
-        media_type=media_type,
-        filename=f"presentation.pptx",
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        filename="presentation.pptx",
     )
