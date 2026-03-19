@@ -1,39 +1,16 @@
-"""
-Presentation Pipeline
-=====================
-Barcha servislarni birlashtiruvchi asosiy orchestrator.
-
-Oqim:
-  frontend ma'lumotlari
-      ↓
-  AIContentGenerator  → SlideData[]
-      ↓
-  HTMLGenerator       → html_preview (string)
-      ↓
-  PptxGenerator       → presentation.pptx
-      ↓
-  PdfGenerator        → presentation.pdf
-      ↓
-  TelegramSender      → foydalanuvchi Telegram'iga yuboradi
-"""
-
 import uuid
 import os
 from typing import Optional
 
 from app.services.presentation.ai_generator import AIContentGenerator
-from app.services.presentation.html_generator import generate_html_preview
 from app.services.presentation.pptx_generator import generate_pptx
-from app.services.presentation.pdf_generator import generate_pdf_from_pptx, generate_pdf_direct
 from app.services.presentation.telegram_sender import send_presentation_to_telegram
+from app.services.presentation.image_fetcher import fetch_images_for_slides
 
 PRESENTATIONS_DIR = "/tmp/presentations"
 
 
 class PresentationPipeline:
-    """
-    To'liq pipeline: frontend → AI → HTML → PPTX → PDF → Telegram.
-    """
 
     def __init__(self):
         self.ai = AIContentGenerator()
@@ -46,13 +23,14 @@ class PresentationPipeline:
         slide_count: int = 8,
         style: str = "professional",
         extra_context: Optional[str] = None,
+        design_template: int = 1,
         telegram_id: Optional[int] = None,
+        user_images: Optional[list] = None,
     ) -> dict:
         presentation_id = str(uuid.uuid4())[:12]
         pptx_path = f"{PRESENTATIONS_DIR}/{presentation_id}.pptx"
-        pdf_path = f"{PRESENTATIONS_DIR}/{presentation_id}.pdf"
 
-        # ── 1. AI → Slayd mazmuni ────────────────────────────────────────
+        # 1. AI → Slayd mazmuni
         print(f"[Pipeline] AI mazmun generatsiya: '{topic}'")
         slides = await self.ai.generate_slides(
             topic=topic,
@@ -63,42 +41,34 @@ class PresentationPipeline:
         )
         print(f"[Pipeline] {len(slides)} ta slayd generatsiya qilindi")
 
-        # ── 2. HTML preview ───────────────────────────────────────────────
-        print(f"[Pipeline] HTML preview yasalyapti...")
-        html_preview = generate_html_preview(slides, topic, style)
+        # 2. Rasmlarni tayyorlash
+        if user_images:
+            final_images = user_images
+            print(f"[Pipeline] User rasmlari: {len(final_images)} ta")
+        else:
+            print(f"[Pipeline] Unsplash dan rasmlar olinmoqda...")
+            try:
+                final_images = await fetch_images_for_slides(topic, slide_count)
+            except Exception as e:
+                print(f"[Pipeline] Unsplash xatosi: {e}")
+                final_images = []
 
-        # HTML faylni ham saqlaymiz (ixtiyoriy)
-        html_path = f"{PRESENTATIONS_DIR}/{presentation_id}.html"
-        with open(html_path, "w", encoding="utf-8") as f:
-            f.write(html_preview)
-
-        # ── 3. PPTX ───────────────────────────────────────────────────────
+        # 3. PPTX
         print(f"[Pipeline] PPTX yasalyapti...")
         try:
-            await generate_pptx(slides, pptx_path, style)
+            await generate_pptx(
+                slides=slides,
+                output_path=pptx_path,
+                style=style,
+                template_index=design_template,
+                user_images=final_images,
+            )
             pptx_ok = True
         except Exception as e:
             print(f"[Pipeline] PPTX xatosi: {e}")
             pptx_ok = False
 
-        # ── 4. PDF ────────────────────────────────────────────────────────
-        print(f"[Pipeline] PDF yasalyapti...")
-        try:
-            if pptx_ok:
-                await generate_pdf_from_pptx(pptx_path, pdf_path)
-            else:
-                # Fallback: reportlab bilan to'g'ridan-to'g'ri
-                slides_dicts = [
-                    {"title": s.title, "bullets": s.bullets, "notes": s.speaker_notes}
-                    for s in slides
-                ]
-                await generate_pdf_direct(slides_dicts, pdf_path)
-            pdf_ok = True
-        except Exception as e:
-            print(f"[Pipeline] PDF xatosi: {e}")
-            pdf_ok = False
-
-        # ── 5. Telegram ───────────────────────────────────────────────────
+        # 4. Telegram
         telegram_sent = False
         if telegram_id:
             print(f"[Pipeline] Telegram ga yuborilyapti: {telegram_id}")
@@ -107,20 +77,16 @@ class PresentationPipeline:
                     telegram_id=telegram_id,
                     topic=topic,
                     pptx_path=pptx_path if pptx_ok else "",
-                    pdf_path=pdf_path if pdf_ok else "",
                     slide_count=len(slides),
                 )
                 telegram_sent = True
             except Exception as e:
                 print(f"[Pipeline] Telegram xatosi: {e}")
 
-        # ── Natija ────────────────────────────────────────────────────────
         print(f"[Pipeline] Tayyor! ID: {presentation_id}")
         return {
             "id": presentation_id,
-            "html_preview": html_preview,
             "pptx_url": f"/api/v1/presentations/download/{presentation_id}/pptx" if pptx_ok else "",
-            "pdf_url": f"/api/v1/presentations/download/{presentation_id}/pdf" if pdf_ok else "",
             "telegram_sent": telegram_sent,
             "slide_count": len(slides),
         }
