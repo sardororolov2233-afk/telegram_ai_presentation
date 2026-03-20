@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
-from fastapi.responses import FileResponse
 from supabase import Client
 import asyncio
 from pydantic import BaseModel
@@ -16,7 +15,6 @@ router = APIRouter(prefix="/presentations", tags=["Presentations"])
 
 class PresentationResponse(BaseModel):
     id: str
-    pptx_url: str
     telegram_sent: bool
     slide_count: int
 
@@ -38,11 +36,11 @@ async def generate_presentation(
 
     price = slide_count * 600
     if user.get("balance", 0.0) < price:
-        raise HTTPException(status_code=402, detail="Balansingiz yetarli emas. Iltimos, hisobingizni to'ldiring.")
+        raise HTTPException(status_code=402, detail="Balansingiz yetarli emas.")
 
     user_image_paths = []
     if images:
-        out_dir = os.path.join(os.path.expanduser("~"), "presentations_cache")
+        out_dir = "/tmp/user_images"
         os.makedirs(out_dir, exist_ok=True)
         for img in images:
             if img.filename:
@@ -78,25 +76,3 @@ async def generate_presentation(
         print(f"[API] Balansni yechishda xato: {e}")
 
     return PresentationResponse(**result)
-
-
-@router.get("/download/{presentation_id}/{file_type}")
-async def download_file(presentation_id: str, file_type: str):
-    if file_type != "pptx":
-        raise HTTPException(status_code=400, detail="Fayl turi noto'g'ri (faqat pptx qo'llab-quvvatlanadi)")
-
-    safe_id = presentation_id.replace("..", "").replace("/", "").replace("\\", "")
-    if not safe_id:
-        raise HTTPException(status_code=400, detail="Noto'g'ri fayl ID")
-
-    output_dir = os.path.join(os.path.expanduser("~"), "presentations_cache")
-    file_path = os.path.join(output_dir, f"{safe_id}.pptx")
-
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="Fayl topilmadi yoki muddati tugagan")
-
-    return FileResponse(
-        path=file_path,
-        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        filename="presentation.pptx",
-    )
