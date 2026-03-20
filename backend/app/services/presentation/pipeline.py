@@ -7,7 +7,7 @@ from app.services.presentation.pptx_generator import generate_pptx
 from app.services.presentation.telegram_sender import send_presentation_to_telegram
 from app.services.presentation.image_fetcher import fetch_images_for_slides
 
-PRESENTATIONS_DIR = "/tmp/presentations"
+PRESENTATIONS_DIR = os.path.join(os.path.expanduser("~"), "presentations_cache")
 
 
 class PresentationPipeline:
