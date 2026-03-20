@@ -75,7 +75,7 @@ class PresentationPipeline:
             except Exception as e:
                 print(f"[Pipeline] Telegram xatosi: {e}")
             finally:
-                # Faylni o'chirish — Telegram ga yuborilgandan keyin kerak emas
+                # Faylni o'chirish ï¿½ Telegram ga yuborilgandan keyin kerak emas
                 try:
                     os.remove(pptx_path)
                 except Exception:
