@@ -5,7 +5,7 @@ from typing import Optional
 from app.services.presentation.ai_generator import AIContentGenerator
 from app.services.presentation.pptx_generator import generate_pptx
 from app.services.presentation.telegram_sender import send_presentation_to_telegram
-from app.services.presentation.image_fetcher import fetch_images_for_slides
+from app.services.presentation.image_fetcher import fetch_images_for_slides, cleanup_images
 
 PRESENTATIONS_DIR = "/tmp/presentations"
 
@@ -49,6 +49,8 @@ class PresentationPipeline:
                 print(f"[Pipeline] Unsplash xatosi: {e}")
                 final_images = []
 
+        _unsplash_images = final_images if not user_images else []
+
         try:
             await generate_pptx(
                 slides=slides,
@@ -61,6 +63,11 @@ class PresentationPipeline:
         except Exception as e:
             print(f"[Pipeline] PPTX xatosi: {e}")
             pptx_ok = False
+        finally:
+            # Unsplash dan yuklangan vaqtinchalik rasmlarni o'chirish
+            if _unsplash_images:
+                cleanup_images(_unsplash_images)
+                print(f"[Pipeline] {len(_unsplash_images)} ta vaqtinchalik rasm o'chirildi")
 
         telegram_sent = False
         if telegram_id and pptx_ok:

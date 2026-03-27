@@ -11,6 +11,16 @@ PRESENTATIONS_DIR = "/tmp/presentations"
 IMAGES_DIR = f"{PRESENTATIONS_DIR}/images"
 
 
+def cleanup_images(image_paths: list) -> None:
+    """PPTX ga qo'shilgandan keyin vaqtinchalik rasmlarni o'chiradi."""
+    for path in image_paths:
+        try:
+            if path and os.path.exists(path):
+                os.remove(path)
+        except Exception as e:
+            print(f"[ImageFetcher] O'chirishda xato: {e}")
+
+
 async def fetch_image_for_topic(query: str) -> Optional[str]:
     """Unsplash dan bitta rasm yuklab, yo'lini qaytaradi."""
     if not settings.UNSPLASH_ACCESS_KEY:
@@ -20,7 +30,7 @@ async def fetch_image_for_topic(query: str) -> Optional[str]:
     os.makedirs(IMAGES_DIR, exist_ok=True)
 
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=15) as client:
             # Rasm qidirish
             resp = await client.get(
                 "https://api.unsplash.com/photos/random",
@@ -59,12 +69,15 @@ async def fetch_images_for_slides(topic: str, slide_count: int) -> list:
     """
     Har bir slayd uchun Unsplash dan rasm oladi.
     Maksimum 3 ta unikal rasm olib, keyin takrorlaydi.
+    So'rovlarni biroz farqlash uchun indeks qo'shiladi.
     """
     import asyncio
 
     # 3 ta unikal rasm yetarli (takrorlanadi)
     fetch_count = min(3, slide_count)
-    queries = [topic] * fetch_count
+    # Har xil so'rov uchun ozgina farq qilamiz (rate limit uchun)
+    suffixes = ["", " background", " concept"]
+    queries = [topic + suffixes[i % len(suffixes)] for i in range(fetch_count)]
 
     tasks = [fetch_image_for_topic(q) for q in queries]
     results = await asyncio.gather(*tasks, return_exceptions=True)

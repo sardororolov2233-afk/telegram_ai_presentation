@@ -185,8 +185,8 @@ def _build_presentation(
             except Exception:
                 pass
 
-        # Rasm qo'shish — user rasmi yoki Unsplash rasmi
-        if user_images:
+        # Rasm qo'shish — faqat content/section/conclusion slaydlarga (title emas)
+        if user_images and sd.slide_type != "title":
             img_path = user_images[i % len(user_images)]
             _inject_image(new_slide, img_path, slide_width, slide_height)
 
