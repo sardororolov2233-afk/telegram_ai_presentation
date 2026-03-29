@@ -1,6 +1,6 @@
 import json
 import httpx
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 from app.core.config import settings
@@ -14,6 +14,7 @@ class SlideData:
     speaker_notes: str = ""
     slide_type: str = "content"
     image_keyword: str = ""
+    raw_data: dict = field(default_factory=dict)
 
 
 # ============================================================
@@ -362,6 +363,7 @@ class AIContentGenerator:
                 bullets=bullets,
                 speaker_notes=s.get("speaker_notes", ""),
                 slide_type=slide_type,
-                image_keyword=s.get("image_keyword", "")
+                image_keyword=s.get("image_keyword", ""),
+                raw_data=s
             ))
         return slides

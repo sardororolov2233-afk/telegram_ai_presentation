@@ -7,11 +7,14 @@ from typing import Optional
 
 from pptx import Presentation
 from pptx.util import Inches, Pt
+from pptx.enum.text import PP_ALIGN
+from pptx.chart.data import CategoryChartData
+from pptx.enum.chart import XL_CHART_TYPE
 
 try:
     from app.services.presentation.ai_generator import SlideData
 except ImportError:
-    from dataclasses import dataclass
+    from dataclasses import dataclass, field
 
     @dataclass
     class SlideData:
@@ -21,6 +24,7 @@ except ImportError:
         speaker_notes: str = ""
         slide_type: str = "content"
         image_keyword: str = ""
+        raw_data: dict = field(default_factory=dict)
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
@@ -43,6 +47,7 @@ def _clone_slide(prs: Presentation, template_slide) -> object:
     slide_layout = template_slide.slide_layout
     new_slide = prs.slides.add_slide(slide_layout)
 
+    # Shablon fondasidagi eski shakllarni tozalaymiz
     sp_tree = new_slide.shapes._spTree
     tags_to_remove = ['}sp', '}pic', '}grpSp', '}cxnSp']
     for sp in list(sp_tree):
@@ -81,44 +86,17 @@ def _clone_slide(prs: Presentation, template_slide) -> object:
     return new_slide
 
 
-def _find_text_shapes(slide) -> list:
-    return [shape for shape in slide.shapes if shape.has_text_frame]
-
-
 def _inject_title(slide, title: str):
+    # Faqat 0-indeksdagi placeholderga yozamiz (Sarlavha)
     for shape in slide.placeholders:
         if shape.placeholder_format.idx == 0:
             shape.text = title
             return
-    text_shapes = _find_text_shapes(slide)
+            
+    # Agar 0-indeks topilmasa (shablon buzilgan bo'lsa), text framelarni qidiramiz
+    text_shapes = [shape for shape in slide.shapes if shape.has_text_frame]
     if text_shapes:
         text_shapes[0].text = title
-
-
-def _inject_bullets(slide, bullets: list, title: str = ""):
-    for ph_idx in [1, 2]:
-        for shape in slide.placeholders:
-            if shape.placeholder_format.idx == ph_idx and shape.has_text_frame:
-                tf = shape.text_frame
-                tf.clear()
-                for i, bullet in enumerate(bullets):
-                    para = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-                    para.text = bullet
-                    para.level = 0
-                return
-
-    text_shapes = _find_text_shapes(slide)
-    content_shapes = [s for s in text_shapes if s.text != title]
-    if not content_shapes and len(text_shapes) > 1:
-        content_shapes = text_shapes[1:]
-
-    if content_shapes:
-        tf = content_shapes[0].text_frame
-        tf.clear()
-        for i, bullet in enumerate(bullets):
-            para = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
-            para.text = bullet
-            para.level = 0
 
 
 def _inject_notes(slide, notes: str):
@@ -126,19 +104,141 @@ def _inject_notes(slide, notes: str):
         slide.notes_slide.notes_text_frame.text = notes
 
 
-def _inject_image(slide, image_path: str, slide_width, slide_height):
-    """Rasmni slaydning o'ng tomoniga, matn yoniga qo'shadi."""
-    if not image_path or not os.path.exists(image_path):
-        return
-    try:
-        img_width = Inches(3.5)
-        img_height = Inches(3.0)
-        left = slide_width - img_width - Inches(0.3)
-        top = (slide_height - img_height) // 2
-        slide.shapes.add_picture(image_path, left, top, img_width, img_height)
-        print(f"[PptxGen] Rasm qo'shildi: {image_path}")
-    except Exception as e:
-        print(f"[PptxGen] Rasm qo'shishda xato: {e}")
+def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w, slide_h):
+    # Birinchi navbatda sarlavha (idx ba'zan 0 bo'ladi) dan boshqa BARCHA body/text placeholderlarni o'chiramiz.
+    # Bu shablonning noto'g'ri elementlarini oldini oladi.
+    for shape in list(slide.placeholders):
+        if shape.placeholder_format.idx != 0:
+            sp = shape._element
+            sp.getparent().remove(sp)
+            
+    # Asosiy koordinatalar
+    margin_x = Inches(0.5)
+    margin_top = Inches(1.5)
+    margin_bottom = Inches(0.5)
+    
+    content_w = slide_w - margin_x * 2
+    content_h = slide_h - margin_top - margin_bottom
+    
+    stype = sd.slide_type
+    
+    def add_text_box(x, y, w, h, text_lines):
+        if not text_lines: return
+        txBox = slide.shapes.add_textbox(x, y, w, h)
+        tf = txBox.text_frame
+        tf.word_wrap = True
+        for i, line in enumerate(text_lines):
+            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+            p.text = str(line)
+            p.level = 0
+            p.font.size = Pt(20)
+
+    def add_image(x, y, w, h, img_p):
+        if img_p and os.path.exists(img_p):
+            try:
+                slide.shapes.add_picture(img_p, x, y, w, h)
+                print(f"[PptxGen] Rasm qo'shildi: {img_p}")
+            except Exception as e:
+                print(f"[PptxGen] Rasm xatosi: {e}")
+
+    # ===== LAYOUTLAR =====
+    if stype == "content_image_right":
+        add_text_box(margin_x, margin_top, content_w * 0.45, content_h, sd.bullets)
+        if img_path:
+            add_image(margin_x + content_w * 0.5, margin_top, content_w * 0.5, content_h, img_path)
+            
+    elif stype == "content_image_left":
+        if img_path:
+            add_image(margin_x, margin_top, content_w * 0.5, content_h, img_path)
+        add_text_box(margin_x + content_w * 0.55, margin_top, content_w * 0.45, content_h, sd.bullets)
+        
+    elif stype == "table":
+        raw = sd.raw_data or {}
+        table_dict = raw.get("table", {})
+        headers = table_dict.get("headers", [])
+        rows = table_dict.get("rows", [])
+        
+        total_rows = (1 if headers else 0) + len(rows)
+        total_cols = len(headers) if headers else (len(rows[0]) if rows else 1)
+        
+        if total_rows > 0 and total_cols > 0:
+            shape = slide.shapes.add_table(total_rows, total_cols, margin_x, margin_top, content_w, content_h)
+            tbl = shape.table
+            row_idx = 0
+            if headers:
+                for col_idx, h_text in enumerate(headers):
+                    if col_idx < len(tbl.columns):
+                        tbl.cell(row_idx, col_idx).text = str(h_text)
+                row_idx += 1
+            for r in rows:
+                if row_idx < len(tbl.rows):
+                    for col_idx, c_text in enumerate(r):
+                        if col_idx < len(tbl.columns):
+                            tbl.cell(row_idx, col_idx).text = str(c_text)
+                row_idx += 1
+        else:
+            add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets)
+
+    elif stype in ["chart_bar", "chart_pie", "chart_line"]:
+        raw = sd.raw_data or {}
+        chart_dict = raw.get("chart", {})
+        data_points = chart_dict.get("data", [])
+        insight = raw.get("insight", "")
+        
+        if data_points:
+            chart_data = CategoryChartData()
+            categories = []
+            values = []
+            for dp in data_points:
+                categories.append(str(dp.get("label", "")))
+                values.append(float(dp.get("value", 0)))
+                
+            chart_data.categories = categories
+            chart_data.add_series("Ma'lumotlar", tuple(values))
+            
+            ctype = XL_CHART_TYPE.COLUMN_CLUSTERED
+            if stype == "chart_pie": ctype = XL_CHART_TYPE.PIE
+            elif stype == "chart_line": ctype = XL_CHART_TYPE.LINE
+            
+            # Diagrammani chizish (80% balandlikda)
+            chart_h = content_h * 0.8 if insight else content_h
+            try:
+                slide.shapes.add_chart(ctype, margin_x, margin_top, content_w, chart_h, chart_data)
+                
+                # Insight xulosasini pastga yozamiz
+                if insight:
+                    add_text_box(margin_x, margin_top + chart_h + Inches(0.1), content_w, content_h * 0.15, [f"Xulosa: {insight}"])
+            except Exception as e:
+                print(f"[PptxGen] Chart xatosi: {e}")
+                add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets)
+        else:
+            add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets)
+
+    elif stype == "quote":
+        raw = sd.raw_data or {}
+        q_text = raw.get("quote", "")
+        author = raw.get("author", "")
+        
+        text_lines = []
+        if q_text: text_lines.append(f'"{q_text}"')
+        if author: text_lines.append(f"— {author}")
+        if not text_lines: text_lines = sd.bullets
+        
+        txBox = slide.shapes.add_textbox(margin_x, margin_top + Inches(1), content_w, Inches(2))
+        tf = txBox.text_frame
+        tf.word_wrap = True
+        for i, line in enumerate(text_lines):
+            p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
+            p.text = line
+            p.alignment = PP_ALIGN.CENTER
+            p.font.size = Pt(28 if i == 0 else 22)
+            p.font.italic = (i == 0)
+
+    else:
+        # Odatiy matn slayd (content, conclusion, section, agenda va title)
+        # title slaydlarda ortiqcha narsalar ko'rinmaydi.
+        if stype != "title":
+            add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets)
 
 
 def _delete_slide(prs: Presentation, slide_index: int):
@@ -178,19 +278,20 @@ def _build_presentation(
             new_slide = prs.slides.add_slide(prs.slide_layouts[0])
 
         _inject_title(new_slide, sd.title)
-        if sd.bullets:
-            _inject_bullets(new_slide, sd.bullets, sd.title)
+        
+        # Slayd rasmini aniqlaymiz
+        img_path = None
+        if user_images and i < len(user_images):
+            img_path = user_images[i]
+            
+        # Dinamik Inch yordamida har bir elementni to'liq kafolatlangan chizish!
+        _render_slide_content(new_slide, sd, img_path, slide_width, slide_height)
+        
         if sd.speaker_notes:
             try:
                 _inject_notes(new_slide, sd.speaker_notes)
             except Exception:
                 pass
-
-        # Rasm qo'shish — faqat content/section/conclusion slaydlarga (title emas)
-        if user_images and i < len(user_images):
-            img_path = user_images[i]
-            if img_path and sd.slide_type != "title":
-                _inject_image(new_slide, img_path, slide_width, slide_height)
 
     for i in range(original_count - 1, -1, -1):
         _delete_slide(prs, i)
