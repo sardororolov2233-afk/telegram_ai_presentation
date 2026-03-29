@@ -10,6 +10,8 @@ from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN
 from pptx.chart.data import CategoryChartData
 from pptx.enum.chart import XL_CHART_TYPE
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.dml.color import RGBColor
 
 try:
     from app.services.presentation.ai_generator import SlideData
@@ -29,7 +31,7 @@ except ImportError:
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
 
-def _get_template_path(template_index: Optional[int] = None) -> str:
+def _get_template_path(template_index: Optional[int] = None) -> tuple[str, int]:
     if template_index is None:
         template_index = random.randint(1, 10)
     template_index = max(1, min(10, template_index))
@@ -38,9 +40,9 @@ def _get_template_path(template_index: Optional[int] = None) -> str:
         for i in range(1, 11):
             fallback = TEMPLATES_DIR / f"dizayn_ {i}.pptx"
             if fallback.exists():
-                return str(fallback)
+                return str(fallback), i
         raise FileNotFoundError(f"Templates papkasida shablon topilmadi: {TEMPLATES_DIR}")
-    return str(path)
+    return str(path), template_index
 
 
 def _clone_slide(prs: Presentation, template_slide) -> object:
@@ -104,23 +106,32 @@ def _inject_notes(slide, notes: str):
         slide.notes_slide.notes_text_frame.text = notes
 
 
-def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w, slide_h):
+def get_theme_color(tmpl_idx: int) -> RGBColor:
+    # Shablonga mos oq va qora ranglar:
+    # 1: oq, 2: qora, 3: oq, 4: oq, 5: oq, 6: qora, 7: qora, 8: oq, 9: oq, 10: qora
+    if tmpl_idx in [2, 6, 7, 10]:
+        return RGBColor(0, 0, 0) # Qora
+    else:
+        return RGBColor(255, 255, 255) # Oq
+
+
+def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w, slide_h, tmpl_idx: int):
     # Birinchi navbatda sarlavha (idx ba'zan 0 bo'ladi) dan boshqa BARCHA body/text placeholderlarni o'chiramiz.
-    # Bu shablonning noto'g'ri elementlarini oldini oladi.
     for shape in list(slide.placeholders):
         if shape.placeholder_format.idx != 0:
             sp = shape._element
             sp.getparent().remove(sp)
             
-    # Asosiy koordinatalar
+    # Asosiy koordinatalar (Sarlavha yozuvidan himoya qilish uchun margin_top ancha tortildi)
     margin_x = Inches(0.5)
-    margin_top = Inches(1.5)
+    margin_top = Inches(2.2) 
     margin_bottom = Inches(0.5)
     
     content_w = slide_w - margin_x * 2
     content_h = slide_h - margin_top - margin_bottom
     
     stype = sd.slide_type
+    txt_color = get_theme_color(tmpl_idx)
     
     def add_text_box(x, y, w, h, text_lines):
         if not text_lines: return
@@ -131,13 +142,19 @@ def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
             p.text = str(line)
             p.level = 0
-            p.font.size = Pt(20)
+            # Silliq va katta yozuv shrifti
+            p.font.size = Pt(26)
+            p.font.color.rgb = txt_color
 
     def add_image(x, y, w, h, img_p):
         if img_p and os.path.exists(img_p):
             try:
-                slide.shapes.add_picture(img_p, x, y, w, h)
-                print(f"[PptxGen] Rasm qo'shildi: {img_p}")
+                # To'rtburchak o'rniga qirralari silliqlangan (Rounded Rectangle) shakl yaratamiz
+                shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h)
+                shape.fill.user_picture(img_p)
+                # Chekka chiziqni yo'qotamiz
+                shape.line.fill.background()
+                print(f"[PptxGen] Silliqlangan rasm qo'shildi: {img_p}")
             except Exception as e:
                 print(f"[PptxGen] Rasm xatosi: {e}")
 
@@ -231,12 +248,12 @@ def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
             p.text = line
             p.alignment = PP_ALIGN.CENTER
-            p.font.size = Pt(28 if i == 0 else 22)
+            p.font.size = Pt(32 if i == 0 else 26)
             p.font.italic = (i == 0)
+            p.font.color.rgb = txt_color
 
     else:
         # Odatiy matn slayd (content, conclusion, section, agenda va title)
-        # title slaydlarda ortiqcha narsalar ko'rinmaydi.
         if stype != "title":
             add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets)
 
@@ -253,8 +270,8 @@ def _build_presentation(
     template_index: Optional[int] = None,
     user_images: Optional[list] = None,
 ) -> str:
-    template_path = _get_template_path(template_index)
-    print(f"[PptxGen] Shablon: {template_path}")
+    template_path, actual_template_index = _get_template_path(template_index)
+    print(f"[PptxGen] Shablon: {template_path} (Index: {actual_template_index})")
 
     prs = Presentation(template_path)
     original_count = len(prs.slides)
@@ -284,10 +301,10 @@ def _build_presentation(
         if user_images and i < len(user_images):
             img_path = user_images[i]
             
-        # Dinamik Inch yordamida har bir elementni to'liq kafolatlangan chizish!
-        _render_slide_content(new_slide, sd, img_path, slide_width, slide_height)
+        # Dinamik Inch yordamida har bir elementni to'liq kafolatlangan chizish va ranglash
+        _render_slide_content(new_slide, sd, img_path, slide_width, slide_height, actual_template_index)
         
-        if sd.speaker_notes:
+        if sd.speaker_notes: # Biz ai_generator.py orqali buni bo'shatdik asosiysi, lekin bo'lsa ishlayveradi
             try:
                 _inject_notes(new_slide, sd.speaker_notes)
             except Exception:

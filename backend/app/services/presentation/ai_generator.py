@@ -357,11 +357,16 @@ class AIContentGenerator:
                     bullets.extend(str(k) for k in s["key_takeaways"])
                 if "call_to_action" in s: bullets.append(str(s["call_to_action"]))
 
+            # Speaker notes dagi barcha matnlarni ro'yxatga olib kelamiz va speaker note ga g'oyib qilamiz
+            sp_notes = s.get("speaker_notes", "")
+            if sp_notes:
+                bullets.append(sp_notes)
+
             slides.append(SlideData(
                 index=s.get("index", 0),
                 title=s.get("title", ""),
                 bullets=bullets,
-                speaker_notes=s.get("speaker_notes", ""),
+                speaker_notes="",
                 slide_type=slide_type,
                 image_keyword=s.get("image_keyword", ""),
                 raw_data=s
