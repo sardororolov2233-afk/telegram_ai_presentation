@@ -13,6 +13,7 @@ class SlideData:
     bullets: list[str]
     speaker_notes: str = ""
     slide_type: str = "content"
+    image_keyword: str = ""
 
 
 # ============================================================
@@ -315,13 +316,52 @@ class AIContentGenerator:
 
         slides_json = json.loads(raw_text)
 
-        return [
-            SlideData(
-                index=s["index"],
-                title=s["title"],
-                bullets=s.get("bullets", []),
+        slides = []
+        for s in slides_json:
+            bullets = s.get("bullets", [])
+            if not isinstance(bullets, list):
+                bullets = []
+                
+            slide_type = s.get("slide_type", "content")
+            
+            # Matnlarni bullets ichiga jamlash
+            if slide_type == "title":
+                if "subtitle" in s: bullets.append(str(s["subtitle"]))
+                if "tagline" in s: bullets.append(str(s["tagline"]))
+            elif slide_type == "agenda":
+                if "items" in s and isinstance(s["items"], list):
+                    bullets.extend(str(item) for item in s["items"])
+            elif slide_type in ["chart_bar", "chart_pie", "chart_line"]:
+                if "insight" in s: bullets.append(f"Insight: {s['insight']}")
+                chart_data = s.get("chart", {}).get("data", [])
+                for item in chart_data:
+                    if "label" in item and "value" in item:
+                        bullets.append(f"• {item['label']}: {item['value']}")
+            elif slide_type == "table":
+                table_data = s.get("table", {})
+                headers = table_data.get("headers", [])
+                if headers:
+                    bullets.append(" | ".join(map(str, headers)))
+                rows = table_data.get("rows", [])
+                for row in rows:
+                    if isinstance(row, list):
+                        bullets.append(" | ".join(map(str, row)))
+            elif slide_type == "quote":
+                if "quote" in s: bullets.append(f'"{s["quote"]}"')
+                if "author" in s: bullets.append(f"— {s['author']}")
+            elif slide_type == "section":
+                if "subtitle" in s: bullets.append(str(s["subtitle"]))
+            elif slide_type == "conclusion":
+                if "key_takeaways" in s and isinstance(s["key_takeaways"], list):
+                    bullets.extend(str(k) for k in s["key_takeaways"])
+                if "call_to_action" in s: bullets.append(str(s["call_to_action"]))
+
+            slides.append(SlideData(
+                index=s.get("index", 0),
+                title=s.get("title", ""),
+                bullets=bullets,
                 speaker_notes=s.get("speaker_notes", ""),
-                slide_type=s.get("slide_type", "content"),
-            )
-            for s in slides_json
-        ]
+                slide_type=slide_type,
+                image_keyword=s.get("image_keyword", "")
+            ))
+        return slides

@@ -41,13 +41,20 @@ class PresentationPipeline:
         print(f"[Pipeline] {len(slides)} ta slayd generatsiya qilindi")
 
         if user_images:
-            final_images = user_images
+            final_images = []
+            while len(final_images) < len(slides):
+                final_images.extend(user_images)
+            final_images = final_images[:len(slides)]
         else:
             try:
-                final_images = await fetch_images_for_slides(topic, slide_count)
+                keywords = []
+                for s in slides:
+                    kw = s.image_keyword if s.image_keyword else f"{topic} professional presentation concept"
+                    keywords.append(kw)
+                final_images = await fetch_images_for_slides(keywords)
             except Exception as e:
-                print(f"[Pipeline] Unsplash xatosi: {e}")
-                final_images = []
+                print(f"[Pipeline] Rasm yuklash xatosi: {e}")
+                final_images = [None] * len(slides)
 
         _unsplash_images = final_images if not user_images else []
 

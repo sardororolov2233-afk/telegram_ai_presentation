@@ -20,6 +20,7 @@ except ImportError:
         bullets: list
         speaker_notes: str = ""
         slide_type: str = "content"
+        image_keyword: str = ""
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
@@ -186,9 +187,10 @@ def _build_presentation(
                 pass
 
         # Rasm qo'shish — faqat content/section/conclusion slaydlarga (title emas)
-        if user_images and sd.slide_type != "title":
-            img_path = user_images[i % len(user_images)]
-            _inject_image(new_slide, img_path, slide_width, slide_height)
+        if user_images and i < len(user_images):
+            img_path = user_images[i]
+            if img_path and sd.slide_type != "title":
+                _inject_image(new_slide, img_path, slide_width, slide_height)
 
     for i in range(original_count - 1, -1, -1):
         _delete_slide(prs, i)
