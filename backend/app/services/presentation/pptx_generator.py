@@ -93,6 +93,12 @@ def _inject_title(slide, title: str):
     for shape in slide.placeholders:
         if shape.placeholder_format.idx == 0:
             shape.text = title
+            # Majburiy tarzda sarlavhani eng tepaga olib chiqish:
+            try:
+                shape.top = Inches(0.4)
+                shape.height = Inches(0.8)
+            except Exception:
+                pass
             return
             
     # Agar 0-indeks topilmasa (shablon buzilgan bo'lsa), text framelarni qidiramiz
@@ -118,13 +124,13 @@ def get_theme_color(tmpl_idx: int) -> RGBColor:
 def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w, slide_h, tmpl_idx: int):
     # Birinchi navbatda sarlavha (idx ba'zan 0 bo'ladi) dan boshqa BARCHA body/text placeholderlarni o'chiramiz.
     for shape in list(slide.placeholders):
-        if shape.placeholder_format.idx != 0:
+        if shape.placeholder_format.idx != 0 or sd.slide_type == "quote":
             sp = shape._element
             sp.getparent().remove(sp)
             
-    # Asosiy koordinatalar (Sarlavha yozuvidan himoya qilish uchun margin_top ancha tortildi)
+    # Asosiy koordinatalar (Sarlavha tepaga surilgani sababli margin_top 1.5 ga tushirildi)
     margin_x = Inches(0.5)
-    margin_top = Inches(2.2) 
+    margin_top = Inches(1.5) 
     margin_bottom = Inches(0.5)
     
     content_w = slide_w - margin_x * 2
@@ -142,8 +148,8 @@ def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
             p.text = str(line)
             p.level = 0
-            # Silliq va katta yozuv shrifti
-            p.font.size = Pt(26)
+            # Silliq va matnga mos yozuv shrifti (200 so'zgacha sig'ishi uchun kichiklashtirildi)
+            p.font.size = Pt(18)
             p.font.color.rgb = txt_color
 
     def add_image(x, y, w, h, img_p):
@@ -241,14 +247,14 @@ def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w
         if author: text_lines.append(f"— {author}")
         if not text_lines: text_lines = sd.bullets
         
-        txBox = slide.shapes.add_textbox(margin_x, margin_top + Inches(1), content_w, Inches(2))
+        txBox = slide.shapes.add_textbox(margin_x, margin_top + Inches(0.5), content_w, Inches(3))
         tf = txBox.text_frame
         tf.word_wrap = True
         for i, line in enumerate(text_lines):
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
             p.text = line
             p.alignment = PP_ALIGN.CENTER
-            p.font.size = Pt(32 if i == 0 else 26)
+            p.font.size = Pt(36 if i == 0 else 24)
             p.font.italic = (i == 0)
             p.font.color.rgb = txt_color
 

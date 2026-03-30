@@ -10,8 +10,7 @@ from app.core.config import settings
 class SlideData:
     index: int
     title: str
-    bullets: list[str]
-    speaker_notes: str = ""
+    content_text: str = ""
     slide_type: str = "content"
     image_keyword: str = ""
     raw_data: dict = field(default_factory=dict)
@@ -21,9 +20,14 @@ class SlideData:
 #  SYSTEM PROMPT — Taqdimot uchun (Mukammal versiya)
 # ============================================================
  
-SYSTEM_PROMPT = """You are a world-class presentation architect and visual content strategist.
-Your task is to generate rich, structured slide content with advanced visual elements.
+SYSTEM_PROMPT = """You are a world-class presentation architect and academic visual content strategist.
+Your task is to generate rich, structured, and highly academic slide content.
  
+CRITICAL ACADEMIC REQUIREMENT:
+- Each slide MUST present a single, complete, and distinct academic concept (yaxlit bitta akademik ahamiyatga ega bo'lishi shart). 
+- Do not fragment a single thought across multiple slides.
+- Ensure high academic density but maintain visual clarity.
+
 SLIDE TYPE REFERENCE:
 - title              → Opening slide: big title + subtitle + tagline
 - agenda             → Table of contents
@@ -48,8 +52,9 @@ STRICT RULES:
 7. content_image_right / content_image_left → text and image are side by side, never overlapping
 8. image_keyword must always be in English (for image search accuracy)
 9. All visible text must be in the requested language
-10. speaker_notes must be 2–4 full sentences
-11. Bullets: 3–5 items per content slide, each bullet max 10 words
+10. content_text: EVERY slide MUST contain a single unified paragraph composed of up to 200 words (yaxlit matn). DO NOT use bullets (unless absolutely necessary for simple lists).
+11. Each slide must have a unified, singular academic focus preventing thin or fragmented content.
+12. NEVER output `speaker_notes`. Put all informational value directly into `content_text`.
 """
  
  
@@ -96,7 +101,7 @@ SLIDE SCHEMAS — use exact field names
   "title": "Main presentation title",
   "subtitle": "Descriptive subtitle",
   "tagline": "One powerful hook sentence",
-  "speaker_notes": "Full opening remarks."
+  "content_text": "A brief opening paragraph to introduce the topic."
 }}
  
 ▸ AGENDA
@@ -104,8 +109,8 @@ SLIDE SCHEMAS — use exact field names
   "index": 1,
   "slide_type": "agenda",
   "title": "Agenda",
-  "items": ["Topic 1", "Topic 2", "Topic 3", "Topic 4"],
-  "speaker_notes": "Brief walkthrough of what will be covered."
+  "content_text": "A unified text listing all the topics.",
+  "items": ["Topic 1", "Topic 2", "Topic 3", "Topic 4"]
 }}
  
 ▸ CONTENT (text only)
@@ -113,8 +118,7 @@ SLIDE SCHEMAS — use exact field names
   "index": 2,
   "slide_type": "content",
   "title": "Slide Title",
-  "bullets": ["Point one", "Point two", "Point three"],
-  "speaker_notes": "Explain each bullet in spoken language."
+  "content_text": "A unified, comprehensive academic paragraph of up to 200 words explaining the core concept in deep detail."
 }}
  
 ▸ CONTENT + IMAGE RIGHT  (text LEFT, image RIGHT — side by side, no overlap)
@@ -122,10 +126,8 @@ SLIDE SCHEMAS — use exact field names
   "index": 3,
   "slide_type": "content_image_right",
   "title": "Slide Title",
-  "bullets": ["Key insight one", "Key insight two", "Key insight three"],
-  "image_keyword": "relevant english keyword for image search",
-  "image_caption": "Short caption for the image",
-  "speaker_notes": "Describe the image and connect it to the content."
+  "content_text": "A comprehensive academic paragraph of up to 200 words analyzing the concept visually represented.",
+  "image_keyword": "relevant english keyword for image search"
 }}
  
 ▸ CONTENT + IMAGE LEFT  (image LEFT, text RIGHT — side by side, no overlap)
@@ -133,10 +135,8 @@ SLIDE SCHEMAS — use exact field names
   "index": 4,
   "slide_type": "content_image_left",
   "title": "Slide Title",
-  "bullets": ["Key insight one", "Key insight two", "Key insight three"],
-  "image_keyword": "relevant english keyword for image search",
-  "image_caption": "Short caption",
-  "speaker_notes": "Describe the visual element and its relevance."
+  "content_text": "A comprehensive academic paragraph of up to 200 words explaining the subject alongside the visual.",
+  "image_keyword": "relevant english keyword for image search"
 }}
  
 ▸ TABLE
@@ -152,7 +152,7 @@ SLIDE SCHEMAS — use exact field names
       ["Row 3 A", "Row 3 B", "Row 3 C", "Row 3 D"]
     ]
   }},
-  "speaker_notes": "Explain what the table shows and highlight key comparisons."
+  "content_text": "A paragraph explaining the findings shown in this data table."
 }}
  
 ▸ BAR CHART  ← ONLY title + chart data + insight (NO bullets, NO image)
@@ -171,7 +171,7 @@ SLIDE SCHEMAS — use exact field names
     ]
   }},
   "insight": "One key takeaway from this chart.",
-  "speaker_notes": "Walk through the data and explain the most important trend."
+  "content_text": "A descriptive paragraph analyzing the chart."
 }}
  
 ▸ PIE CHART  ← ONLY title + chart data + insight (NO bullets, NO image)
@@ -188,7 +188,7 @@ SLIDE SCHEMAS — use exact field names
     ]
   }},
   "insight": "Key observation about the distribution.",
-  "speaker_notes": "Explain what each segment represents and why the distribution matters."
+  "content_text": "A descriptive paragraph analyzing the chart."
 }}
  
 ▸ LINE CHART  ← ONLY title + chart data + insight (NO bullets, NO image)
@@ -208,7 +208,7 @@ SLIDE SCHEMAS — use exact field names
     ]
   }},
   "insight": "What this trend tells us.",
-  "speaker_notes": "Describe the trend and its implications."
+  "content_text": "A descriptive paragraph analyzing the overall trend."
 }}
  
 ▸ QUOTE
@@ -218,7 +218,7 @@ SLIDE SCHEMAS — use exact field names
   "title": "Key Insight",
   "quote": "A powerful statement or key statistic",
   "author": "Source or author (if applicable)",
-  "speaker_notes": "Explain why this quote or fact is significant."
+  "content_text": "A descriptive paragraph explaining why this quote is fundamentally important."
 }}
  
 ▸ SECTION DIVIDER
@@ -227,7 +227,7 @@ SLIDE SCHEMAS — use exact field names
   "slide_type": "section",
   "title": "Section Title",
   "subtitle": "Brief description of this section",
-  "speaker_notes": "Transition statement to this new section."
+  "content_text": "A short introductory text for the upcoming section."
 }}
  
 ▸ CONCLUSION
@@ -241,7 +241,7 @@ SLIDE SCHEMAS — use exact field names
     "Most important takeaway 3"
   ],
   "call_to_action": "What the audience should do or think next",
-  "speaker_notes": "Powerful closing statement."
+  "content_text": "A final summary paragraph closing the presentation powerfully."
 }}
  
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -319,13 +319,17 @@ class AIContentGenerator:
 
         slides = []
         for s in slides_json:
-            bullets = s.get("bullets", [])
-            if not isinstance(bullets, list):
-                bullets = []
-                
             slide_type = s.get("slide_type", "content")
             
-            # Matnlarni bullets ichiga jamlash
+            # Matn (bullets o'rnida)
+            bullets = []
+            
+            # 200 ta so'zgacha bo'lgan yagona yaxlit matn qo'shish
+            content_text = s.get("content_text", "")
+            if content_text:
+                bullets.append(content_text)
+
+            # Qo'shimcha (fallback yoki schema elementlari)
             if slide_type == "title":
                 if "subtitle" in s: bullets.append(str(s["subtitle"]))
                 if "tagline" in s: bullets.append(str(s["tagline"]))
@@ -334,41 +338,27 @@ class AIContentGenerator:
                     bullets.extend(str(item) for item in s["items"])
             elif slide_type in ["chart_bar", "chart_pie", "chart_line"]:
                 if "insight" in s: bullets.append(f"Insight: {s['insight']}")
-                chart_data = s.get("chart", {}).get("data", [])
-                for item in chart_data:
-                    if "label" in item and "value" in item:
-                        bullets.append(f"• {item['label']}: {item['value']}")
             elif slide_type == "table":
-                table_data = s.get("table", {})
-                headers = table_data.get("headers", [])
-                if headers:
-                    bullets.append(" | ".join(map(str, headers)))
-                rows = table_data.get("rows", [])
-                for row in rows:
-                    if isinstance(row, list):
-                        bullets.append(" | ".join(map(str, row)))
+                pass # Table o'zi table rendering funksiyasida ishlanadi, unga bullets qo'shib chalkashtirmaymiz, content_text yetarli
             elif slide_type == "quote":
                 if "quote" in s: bullets.append(f'"{s["quote"]}"')
                 if "author" in s: bullets.append(f"— {s['author']}")
-            elif slide_type == "section":
-                if "subtitle" in s: bullets.append(str(s["subtitle"]))
             elif slide_type == "conclusion":
                 if "key_takeaways" in s and isinstance(s["key_takeaways"], list):
                     bullets.extend(str(k) for k in s["key_takeaways"])
                 if "call_to_action" in s: bullets.append(str(s["call_to_action"]))
 
-            # Speaker notes dagi barcha matnlarni ro'yxatga olib kelamiz va speaker note ga g'oyib qilamiz
-            sp_notes = s.get("speaker_notes", "")
-            if sp_notes:
-                bullets.append(sp_notes)
+            # Eskicha bullets json dan bo'lsa uni qo'shib yuborish
+            legacy_bullets = s.get("bullets", [])
+            if isinstance(legacy_bullets, list):
+                bullets.extend(legacy_bullets)
 
             slides.append(SlideData(
                 index=s.get("index", 0),
                 title=s.get("title", ""),
-                bullets=bullets,
-                speaker_notes="",
+                bullets=bullets,  # Endi bullets list asosan 1 ta paragraph content_text va boshqa kerakli pointlar bilan band
                 slide_type=slide_type,
-                image_keyword=s.get("image_keyword", ""),
+                image_keyword=s.get("image_keyword", "") if s.get("image_keyword") else "",
                 raw_data=s
             ))
         return slides
