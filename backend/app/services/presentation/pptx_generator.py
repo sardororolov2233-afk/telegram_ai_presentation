@@ -310,9 +310,10 @@ def _build_presentation(
         # Dinamik Inch yordamida har bir elementni to'liq kafolatlangan chizish va ranglash
         _render_slide_content(new_slide, sd, img_path, slide_width, slide_height, actual_template_index)
         
-        if sd.speaker_notes: # Biz ai_generator.py orqali buni bo'shatdik asosiysi, lekin bo'lsa ishlayveradi
+        notes = getattr(sd, 'speaker_notes', '')  # speaker_notes maydoni bo'lmasa xato chiqmasin
+        if notes:
             try:
-                _inject_notes(new_slide, sd.speaker_notes)
+                _inject_notes(new_slide, notes)
             except Exception:
                 pass
 

@@ -1,5 +1,6 @@
 import uuid
 import os
+import traceback
 from typing import Optional
 
 from app.services.presentation.ai_generator import AIContentGenerator
@@ -56,7 +57,8 @@ class PresentationPipeline:
                 print(f"[Pipeline] Rasm yuklash xatosi: {e}")
                 final_images = [None] * len(slides)
 
-        _unsplash_images = final_images if not user_images else []
+        # Faqat biz yuklaganlarni kuzatamiz (user_images bo'lsa ularni o'chirmaymiz)
+        _fetched_images = final_images if not user_images else []
 
         try:
             await generate_pptx(
@@ -69,12 +71,13 @@ class PresentationPipeline:
             pptx_ok = True
         except Exception as e:
             print(f"[Pipeline] PPTX xatosi: {e}")
+            traceback.print_exc()  # To'liq xato izini ko'rsatish
             pptx_ok = False
         finally:
-            # Unsplash dan yuklangan vaqtinchalik rasmlarni o'chirish
-            if _unsplash_images:
-                cleanup_images(_unsplash_images)
-                print(f"[Pipeline] {len(_unsplash_images)} ta vaqtinchalik rasm o'chirildi")
+            # Vaqtinchalik rasmlarni PPTX dan keyin o'chirish
+            if _fetched_images:
+                cleanup_images(_fetched_images)
+                print(f"[Pipeline] {len(_fetched_images)} ta vaqtinchalik rasm o'chirildi")
 
         telegram_sent = False
         if telegram_id and pptx_ok:

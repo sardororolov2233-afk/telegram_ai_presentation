@@ -22,14 +22,13 @@ def cleanup_images(image_paths: list) -> None:
 
 
 async def fetch_image_for_topic(query: str, index: int = 0) -> Optional[str]:
-    """Pollinations.ai dan rasm yuklab olish (Bepul, no API key)."""
+    """Pollinations.ai dan rasm yuklab olish, 429 bo'lsa qayta urinadi."""
     if not query:
         return None
         
     os.makedirs(IMAGES_DIR, exist_ok=True)
 
     safe_query = urllib.parse.quote(query)
-    # Using pollinations to ensure no API key limits + add unique seed for variation
     url = f"https://image.pollinations.ai/prompt/{safe_query}?width=800&height=600&nologo=true&seed={index}"
 
     headers = {
@@ -37,14 +36,26 @@ async def fetch_image_for_topic(query: str, index: int = 0) -> Optional[str]:
         "Accept": "*/*"
     }
 
+    import asyncio
+
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.get(url, follow_redirects=True, headers=headers)
-            if resp.status_code != 200:
-                print(f"[ImageFetcher] Pollinations xatosi {resp.status_code}, zaxira rasm olinadi")
-                # Fallback to Picsum
-                resp = await client.get(f"https://picsum.photos/seed/{uuid.uuid4().hex}/800/600", follow_redirects=True, headers=headers)
+        async with httpx.AsyncClient(timeout=45) as client:
+            resp = None
+            # Pollinations dan olishga 2 marta urinish
+            for attempt in range(2):
+                resp = await client.get(url, follow_redirects=True, headers=headers)
+                if resp.status_code == 200:
+                    break
+                print(f"[ImageFetcher] Pollinations xatosi {resp.status_code}, {'qayta urinish...' if attempt == 0 else 'zaxira rasm olinadi'}")
+                if attempt == 0:
+                    await asyncio.sleep(3)  # 429 uchun kuting
+
+            # Pollinations ishlamasa — picsum fallback
+            if resp is None or resp.status_code != 200:
+                picsum_url = f"https://picsum.photos/seed/{uuid.uuid4().hex}/800/600"
+                resp = await client.get(picsum_url, follow_redirects=True, headers=headers)
                 if resp.status_code != 200:
+                    print(f"[ImageFetcher] Picsum ham ishlamadi, rasm o'tkazib yuborildi")
                     return None
 
             img_path = os.path.join(IMAGES_DIR, f"{uuid.uuid4().hex}.jpg")
@@ -64,13 +75,13 @@ async def fetch_images_for_slides(keywords: list) -> list:
     """
     import asyncio
 
-    # Bir vaqtning o'zida pollinations ni juda ko'p yuklamaslik uchun semafor (ko'pi bilan 3 ta)
-    sem = asyncio.Semaphore(3)
+    # Bir vaqtning o'zida pollinations ni juda ko'p yuklamaslik uchun semafor (ko'pi bilan 2 ta)
+    sem = asyncio.Semaphore(2)
 
     async def _fetch_with_sem(q, idx):
         async with sem:
-            # ozgina kutish (rate-limit ni chetlab o'tish uchun)
-            await asyncio.sleep(idx * 0.2)
+            # Har bir so'rov orasida 1.5 soniya kutish (rate-limit chetlab o'tish)
+            await asyncio.sleep(idx * 1.5)
             return await fetch_image_for_topic(q, idx)
 
     tasks = [_fetch_with_sem(q, idx) for idx, q in enumerate(keywords)]
