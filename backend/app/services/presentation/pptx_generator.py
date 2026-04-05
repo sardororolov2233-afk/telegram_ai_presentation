@@ -155,12 +155,9 @@ def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w
     def add_image(x, y, w, h, img_p):
         if img_p and os.path.exists(img_p):
             try:
-                # To'rtburchak o'rniga qirralari silliqlangan (Rounded Rectangle) shakl yaratamiz
-                shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, x, y, w, h)
-                shape.fill.user_picture(img_p)
-                # Chekka chiziqni yo'qotamiz
-                shape.line.fill.background()
-                print(f"[PptxGen] Silliqlangan rasm qo'shildi: {img_p}")
+                # To'g'ri usul: add_picture orqali rasm qo'shish (python-pptx standart API)
+                pic = slide.shapes.add_picture(img_p, x, y, w, h)
+                print(f"[PptxGen] Rasm qo'shildi: {img_p}")
             except Exception as e:
                 print(f"[PptxGen] Rasm xatosi: {e}")
 
