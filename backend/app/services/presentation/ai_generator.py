@@ -11,6 +11,7 @@ class SlideData:
     index: int
     title: str
     content_text: str = ""
+    bullets: list = field(default_factory=list)
     slide_type: str = "content"
     image_keyword: str = ""
     raw_data: dict = field(default_factory=dict)
