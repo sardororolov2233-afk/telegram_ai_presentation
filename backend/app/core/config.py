@@ -66,6 +66,7 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = _get_int("ACCESS_TOKEN_EXPIRE_MINUTES", 10080)
 
     GROQ_API_KEY: Optional[str] = _get("GROQ_API_KEY")
+    OPENROUTER_API_KEY: Optional[str] = _get("OPENROUTER_API_KEY")
     UNSPLASH_ACCESS_KEY: Optional[str] = _get("UNSPLASH_ACCESS_KEY")
 
     SUPABASE_URL: str = _get_str("SUPABASE_URL")

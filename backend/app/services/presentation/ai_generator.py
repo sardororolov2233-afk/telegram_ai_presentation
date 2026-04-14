@@ -1,4 +1,5 @@
 import json
+import re
 import httpx
 from dataclasses import dataclass, field
 from typing import Optional
@@ -18,51 +19,63 @@ class SlideData:
 
 
 # ============================================================
-#  SYSTEM PROMPT — Taqdimot uchun (Mukammal versiya)
+#  SYSTEM PROMPT — Kuchaytirilgan versiya (DeepSeek R1T2 Chimera)
 # ============================================================
- 
-SYSTEM_PROMPT = """You are a world-class presentation architect and academic visual content strategist.
-Your task is to generate rich, structured, and highly academic slide content.
- 
-CRITICAL ACADEMIC REQUIREMENT:
-- Each slide MUST present a single, complete, and distinct academic concept (yaxlit bitta akademik ahamiyatga ega bo'lishi shart). 
-- Do not fragment a single thought across multiple slides.
-- Ensure high academic density but maintain visual clarity.
 
-SLIDE TYPE REFERENCE:
-- title              → Opening slide: big title + subtitle + tagline
-- agenda             → Table of contents
-- content            → Text only: title + bullets (3–5 items)
-- content_image_right→ LEFT: title + bullets | RIGHT: image in rounded rectangle frame
-- content_image_left → LEFT: image in rounded rectangle frame | RIGHT: title + bullets
-- table              → Title + data table (headers + rows)
-- chart_bar          → Title + bar chart data + ONE insight sentence (NO image, NO long text)
-- chart_pie          → Title + pie chart data + ONE insight sentence (NO image, NO long text)
-- chart_line         → Title + line chart data + ONE insight sentence (NO image, NO long text)
-- quote              → Big quote or key statistic highlight
-- section            → Chapter divider: title + subtitle
-- conclusion         → Final slide: key takeaways + call to action
- 
-STRICT RULES:
-1. Return ONLY a valid JSON array — no markdown, no explanation, no code fences
+SYSTEM_PROMPT = """You are a world-class academic presentation architect with deep expertise in \
+pedagogy, visual communication, and subject-matter knowledge across all disciplines.
+
+Your mission: generate presentation slide content that is:
+- Substantive: each slide delivers ONE complete, standalone academic idea (not a fragment)
+- Dense but clear: 100–180 words per content_text, zero filler phrases
+- Specific: use real names, real numbers, real comparisons — never vague generalities
+- Logically progressive: slides must build on each other like chapters of a textbook
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTENT QUALITY RULES (STRICTLY ENFORCED)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+content_text MUST:
+✓ Open with a strong topic sentence that states the core idea immediately
+✓ Provide 2–3 supporting points with specific details, examples, or evidence
+✓ Close with a synthesis or implication sentence
+✗ NEVER start with "This slide discusses..." or "In this section..."
+✗ NEVER use placeholder phrases like "various factors" or "many aspects"
+✗ NEVER repeat the slide title verbatim in the first sentence
+
+TABLE slides MUST:
+✓ Contain factually realistic, topic-specific data (not generic "Row 1 A" placeholders)
+✓ Headers must be descriptive category labels, not generic ("Criterion", "Value")
+✓ Minimum 3 data rows, maximum 6 rows
+✓ content_text must interpret the table, not just describe it
+
+CHART slides MUST:
+✓ Use realistic numeric values relevant to the specific topic
+✓ Values must show meaningful variation (not all similar numbers)
+✓ insight must state the most surprising or actionable finding, not the obvious one
+✓ chart_bar: 4–6 categories; chart_line: 4–7 time points; chart_pie: 3–5 segments summing to 100
+
+IMAGE slides (content_image_right / content_image_left) MUST:
+✓ image_keyword: 3–5 English words, highly specific (e.g. "ancient Samarkand Silk Road market" not "city")
+✓ content_text must directly relate to what the image would show
+✓ Text and image are ALWAYS side by side — never overlapping
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Return ONLY a valid JSON array — no markdown fences, no explanation text, no thinking tags
 2. First slide MUST be type "title", last slide MUST be type "conclusion"
-3. MUST include at least 1 image slide (content_image_right or content_image_left)
-4. MUST include at least 1 table slide
-5. MUST include at least 1 chart slide (bar, pie, or line)
-6. chart_bar / chart_pie / chart_line → ONLY: title + chart data + insight. NO bullets, NO image_keyword
-7. content_image_right / content_image_left → text and image are side by side, never overlapping
-8. image_keyword must always be in English (for image search accuracy)
-9. All visible text must be in the requested language
-10. content_text: EVERY slide MUST contain a single unified paragraph composed of up to 200 words (yaxlit matn). DO NOT use bullets (unless absolutely necessary for simple lists).
-11. Each slide must have a unified, singular academic focus preventing thin or fragmented content.
-12. NEVER output `speaker_notes`. Put all informational value directly into `content_text`.
+3. MUST include ≥1 image slide, ≥1 table slide, ≥1 chart slide
+4. NEVER output `speaker_notes` — all value goes into `content_text`
+5. All visible text in the requested language; image_keyword always in English
+6. Do NOT wrap the JSON in any XML/HTML tags or code blocks — output the raw JSON array directly
 """
- 
- 
+
+
 # ============================================================
-#  USER PROMPT — Mukammal, to'liq strukturali
+#  USER PROMPT — To'liq schema bilan (kuchaytirilgan)
 # ============================================================
- 
+
 def build_user_prompt(
     topic: str,
     language: str,
@@ -72,7 +85,7 @@ def build_user_prompt(
     audience: Optional[str] = None,
     purpose: Optional[str] = None,
 ) -> str:
- 
+
     lang_map = {
         "uz": "Uzbek — O'zbek tili (lotin yozuvi, rasmiy akademik uslub)",
         "ru": "Russian — Русский язык (официальный академический стиль)",
@@ -82,197 +95,210 @@ def build_user_prompt(
     audience_line = f"Target audience: {audience}" if audience else "Target audience: university students / professionals"
     purpose_line  = f"Purpose: {purpose}"          if purpose  else "Purpose: educational / informational presentation"
     extra_line    = f"Additional context: {extra_context}" if extra_context else ""
- 
-    return f"""Create a {slide_count}-slide presentation about: "{topic}"
- 
+
+    return f"""Generate a {slide_count}-slide presentation on: "{topic}"
+
 Language: {lang_name}
 Style: {style}
 {audience_line}
 {purpose_line}
 {extra_line}
- 
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTENT DEPTH REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Each slide must cover ONE distinct, substantive aspect of "{topic}".
+Do NOT fragment a single idea across multiple slides.
+Use specific terminology, real examples, and factual claims relevant to "{topic}".
+content_text: 100–180 words, single paragraph, no bullet points inside it.
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SLIDE SCHEMAS — use exact field names
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- 
+
 ▸ TITLE
 {{
   "index": 0,
   "slide_type": "title",
-  "title": "Main presentation title",
-  "subtitle": "Descriptive subtitle",
-  "tagline": "One powerful hook sentence",
-  "content_text": "A brief opening paragraph to introduce the topic."
+  "title": "Compelling main title for '{topic}'",
+  "subtitle": "Informative subtitle that frames the scope",
+  "tagline": "One powerful hook sentence that creates curiosity",
+  "content_text": "120–150 word opening paragraph that introduces the central argument or significance of {topic}, establishes why it matters, and previews the structure of the presentation."
 }}
- 
+
 ▸ AGENDA
 {{
   "index": 1,
   "slide_type": "agenda",
   "title": "Agenda",
-  "content_text": "A unified text listing all the topics.",
-  "items": ["Topic 1", "Topic 2", "Topic 3", "Topic 4"]
+  "content_text": "Brief paragraph listing and connecting all main sections covered.",
+  "items": ["Section 1: specific title", "Section 2: specific title", "Section 3: specific title", "Section 4: specific title"]
 }}
- 
+
 ▸ CONTENT (text only)
 {{
   "index": 2,
   "slide_type": "content",
-  "title": "Slide Title",
-  "content_text": "A unified, comprehensive academic paragraph of up to 200 words explaining the core concept in deep detail."
+  "title": "Specific descriptive slide title",
+  "content_text": "100–180 word paragraph. Open with a strong topic sentence. Provide 2–3 specific supporting points with real examples or evidence. Close with an implication or synthesis. No generic filler. Every sentence must add information."
 }}
- 
-▸ CONTENT + IMAGE RIGHT  (text LEFT, image RIGHT — side by side, no overlap)
+
+▸ CONTENT + IMAGE RIGHT
 {{
   "index": 3,
   "slide_type": "content_image_right",
-  "title": "Slide Title",
-  "content_text": "A comprehensive academic paragraph of up to 200 words analyzing the concept visually represented.",
-  "image_keyword": "relevant english keyword for image search"
+  "title": "Specific descriptive slide title",
+  "content_text": "100–180 word paragraph that directly describes or analyzes what the image depicts. Open with the visual concept, develop it with specific details, close with its significance.",
+  "image_keyword": "specific 3-5 word English phrase for image search"
 }}
- 
-▸ CONTENT + IMAGE LEFT  (image LEFT, text RIGHT — side by side, no overlap)
+
+▸ CONTENT + IMAGE LEFT
 {{
   "index": 4,
   "slide_type": "content_image_left",
-  "title": "Slide Title",
-  "content_text": "A comprehensive academic paragraph of up to 200 words explaining the subject alongside the visual.",
-  "image_keyword": "relevant english keyword for image search"
+  "title": "Specific descriptive slide title",
+  "content_text": "100–180 word paragraph related to the image. Specific, dense, no filler.",
+  "image_keyword": "specific 3-5 word English phrase for image search"
 }}
- 
-▸ TABLE
+
+▸ TABLE (MUST have real, topic-specific data)
 {{
   "index": 5,
   "slide_type": "table",
-  "title": "Comparison / Data Table",
+  "title": "Descriptive title explaining what is being compared",
   "table": {{
-    "headers": ["Column A", "Column B", "Column C", "Column D"],
+    "headers": ["Specific Category", "Specific Metric A", "Specific Metric B", "Specific Metric C"],
     "rows": [
-      ["Row 1 A", "Row 1 B", "Row 1 C", "Row 1 D"],
-      ["Row 2 A", "Row 2 B", "Row 2 C", "Row 2 D"],
-      ["Row 3 A", "Row 3 B", "Row 3 C", "Row 3 D"]
+      ["Real Item 1", "Real Value", "Real Value", "Real Value"],
+      ["Real Item 2", "Real Value", "Real Value", "Real Value"],
+      ["Real Item 3", "Real Value", "Real Value", "Real Value"],
+      ["Real Item 4", "Real Value", "Real Value", "Real Value"]
     ]
   }},
-  "content_text": "A paragraph explaining the findings shown in this data table."
+  "content_text": "80–120 word paragraph interpreting the most important pattern or insight revealed by this table. Do not just describe what columns exist — explain what the data means."
 }}
- 
-▸ BAR CHART  ← ONLY title + chart data + insight (NO bullets, NO image)
+
+▸ BAR CHART
 {{
   "index": 6,
   "slide_type": "chart_bar",
-  "title": "Chart Title",
+  "title": "Descriptive chart title",
   "chart": {{
     "x_label": "Category axis label",
-    "y_label": "Value axis label",
+    "y_label": "Value axis label (with units)",
     "data": [
-      {{"label": "Category A", "value": 75}},
-      {{"label": "Category B", "value": 42}},
-      {{"label": "Category C", "value": 88}},
-      {{"label": "Category D", "value": 60}}
+      {{"label": "Specific Category A", "value": 74}},
+      {{"label": "Specific Category B", "value": 38}},
+      {{"label": "Specific Category C", "value": 91}},
+      {{"label": "Specific Category D", "value": 55}},
+      {{"label": "Specific Category E", "value": 63}}
     ]
   }},
-  "insight": "One key takeaway from this chart.",
-  "content_text": "A descriptive paragraph analyzing the chart."
+  "insight": "Non-obvious key finding: what does the highest/lowest bar reveal about {topic}?",
+  "content_text": "80–120 word paragraph analyzing the distribution, identifying the most significant finding, and explaining its real-world implication for {topic}."
 }}
- 
-▸ PIE CHART  ← ONLY title + chart data + insight (NO bullets, NO image)
+
+▸ PIE CHART
 {{
   "index": 7,
   "slide_type": "chart_pie",
-  "title": "Chart Title",
+  "title": "Descriptive chart title",
   "chart": {{
     "data": [
-      {{"label": "Segment A", "value": 35}},
-      {{"label": "Segment B", "value": 25}},
-      {{"label": "Segment C", "value": 20}},
-      {{"label": "Segment D", "value": 20}}
+      {{"label": "Segment A", "value": 38}},
+      {{"label": "Segment B", "value": 27}},
+      {{"label": "Segment C", "value": 21}},
+      {{"label": "Segment D", "value": 14}}
     ]
   }},
-  "insight": "Key observation about the distribution.",
-  "content_text": "A descriptive paragraph analyzing the chart."
+  "insight": "What does the dominant segment reveal? Why is the smallest segment significant?",
+  "content_text": "80–120 word paragraph explaining the proportional breakdown and its implications for understanding {topic}."
 }}
- 
-▸ LINE CHART  ← ONLY title + chart data + insight (NO bullets, NO image)
+
+▸ LINE CHART
 {{
   "index": 8,
   "slide_type": "chart_line",
-  "title": "Trend Over Time",
+  "title": "Trend title with time period",
   "chart": {{
     "x_label": "Time period",
-    "y_label": "Value",
+    "y_label": "Value (with units)",
     "data": [
-      {{"label": "2019", "value": 30}},
-      {{"label": "2020", "value": 45}},
-      {{"label": "2021", "value": 38}},
-      {{"label": "2022", "value": 62}},
-      {{"label": "2023", "value": 80}}
+      {{"label": "2019", "value": 28}},
+      {{"label": "2020", "value": 19}},
+      {{"label": "2021", "value": 34}},
+      {{"label": "2022", "value": 51}},
+      {{"label": "2023", "value": 67}},
+      {{"label": "2024", "value": 79}}
     ]
   }},
-  "insight": "What this trend tells us.",
-  "content_text": "A descriptive paragraph analyzing the overall trend."
+  "insight": "Explain the inflection point — what caused the sharpest change?",
+  "content_text": "80–120 word paragraph analyzing the overall trend trajectory, identifying turning points, and contextualizing changes within real-world events related to {topic}."
 }}
- 
+
 ▸ QUOTE
 {{
   "index": 9,
   "slide_type": "quote",
   "title": "Key Insight",
-  "quote": "A powerful statement or key statistic",
-  "author": "Source or author (if applicable)",
-  "content_text": "A descriptive paragraph explaining why this quote is fundamentally important."
+  "quote": "A powerful statement, statistic, or principle central to {topic}",
+  "author": "Real source, expert, or institution",
+  "content_text": "80–120 word paragraph explaining why this quote or statistic is foundational to understanding {topic} and how it connects to the broader argument of this presentation."
 }}
- 
+
 ▸ SECTION DIVIDER
 {{
   "index": 10,
   "slide_type": "section",
   "title": "Section Title",
-  "subtitle": "Brief description of this section",
-  "content_text": "A short introductory text for the upcoming section."
+  "subtitle": "Specific description of what this section covers",
+  "content_text": "60–80 word bridge paragraph connecting the previous section to this one and previewing the key questions this section will answer."
 }}
- 
+
 ▸ CONCLUSION
 {{
   "index": 11,
   "slide_type": "conclusion",
   "title": "Conclusion",
   "key_takeaways": [
-    "Most important takeaway 1",
-    "Most important takeaway 2",
-    "Most important takeaway 3"
+    "Specific takeaway 1 with concrete claim about {topic}",
+    "Specific takeaway 2 with concrete claim about {topic}",
+    "Specific takeaway 3 with concrete claim about {topic}"
   ],
-  "call_to_action": "What the audience should do or think next",
-  "content_text": "A final summary paragraph closing the presentation powerfully."
+  "call_to_action": "Specific, actionable next step for the audience",
+  "content_text": "120–160 word closing paragraph that synthesizes the main argument, reinforces the most important evidence presented, and ends with a forward-looking implication or challenge for the audience."
 }}
- 
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SLIDE DISTRIBUTION for {slide_count} slides:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Slide 1       → title
-Slide 2       → agenda
-Slides 3–{slide_count - 1} → mix of: content, content_image_right, content_image_left,
-                table, chart_bar / chart_pie / chart_line, quote, section
-                MUST include: ≥1 image slide, ≥1 table slide, ≥1 chart slide
-Slide {slide_count}   → conclusion
- 
-IMPORTANT:
-- Chart values must be realistic numbers relevant to "{topic}"
-- Table data must be factually reasonable for "{topic}"
-- image_keyword describes the visual clearly in English
- 
+Slide 1         → title
+Slide 2         → agenda
+Slides 3–{slide_count - 1} → mix of content types
+                  MUST include: ≥1 content_image slide, ≥1 table, ≥1 chart
+Slide {slide_count} → conclusion
+
+CRITICAL OUTPUT FORMAT INSTRUCTION:
 Return ONLY the JSON array. Exactly {slide_count} slides. No extra text.
+Do NOT wrap in code fences. Do NOT add any explanation before or after.
+Output must start with [ and end with ].
 """
 
+
+# ============================================================
+#  OpenRouter + DeepSeek R1T2 Chimera Generator
+# ============================================================
+
 class AIContentGenerator:
-    GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-    MODEL = "llama-3.3-70b-versatile"
+    OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+    MODEL = "deepseek/deepseek-r1t2-chimera:free"
 
     def __init__(self):
-        self.api_key = getattr(settings, "GROQ_API_KEY", None)
+        self.api_key = getattr(settings, "OPENROUTER_API_KEY", None)
         if not self.api_key:
             raise RuntimeError(
-                "GROQ_API_KEY .env faylida topilmadi. "
-                "Uni qo'shing: GROQ_API_KEY=gsk_..."
+                "OPENROUTER_API_KEY .env faylida topilmadi. "
+                "Uni qo'shing: OPENROUTER_API_KEY=sk-or-..."
             )
 
     async def generate_slides(
@@ -282,12 +308,22 @@ class AIContentGenerator:
         slide_count: int = 8,
         style: str = "professional",
         extra_context: Optional[str] = None,
+        audience: Optional[str] = None,
+        purpose: Optional[str] = None,
     ) -> list[SlideData]:
-        prompt = build_user_prompt(topic, language, slide_count, style, extra_context)
+        prompt = build_user_prompt(
+            topic=topic,
+            language=language,
+            slide_count=slide_count,
+            style=style,
+            extra_context=extra_context,
+            audience=audience,
+            purpose=purpose,
+        )
 
         payload = {
             "model": self.MODEL,
-            "max_tokens": 4096,
+            "max_tokens": 16000,
             "temperature": 0.7,
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
@@ -298,68 +334,91 @@ class AIContentGenerator:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
+            "HTTP-Referer": "https://acadai.uz",
+            "X-Title": "AcadAI Presentation Generator",
         }
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            response = await client.post(self.GROQ_API_URL, json=payload, headers=headers)
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            response = await client.post(
+                self.OPENROUTER_API_URL,
+                json=payload,
+                headers=headers,
+            )
             response.raise_for_status()
             data = response.json()
 
         raw_text = data["choices"][0]["message"]["content"].strip()
 
+        # DeepSeek R1 thinking taglarini tozalash
+        raw_text = re.sub(r"<think>.*?</think>", "", raw_text, flags=re.DOTALL).strip()
+
         # Markdown kod blokini tozalash: ```json ... ``` yoki ``` ... ```
         if raw_text.startswith("```"):
             lines = raw_text.splitlines()
-            # Birinchi va oxirgi ``` qatorlarini olib tashlaymiz
             inner_lines = lines[1:] if lines else lines
             if inner_lines and inner_lines[-1].strip() == "```":
                 inner_lines = inner_lines[:-1]
             raw_text = "\n".join(inner_lines).strip()
 
-        slides_json = json.loads(raw_text)
+        # JSON arrayni topish (agar qo'shimcha matn bo'lsa)
+        json_match = re.search(r"\[.*\]", raw_text, flags=re.DOTALL)
+        if json_match:
+            raw_text = json_match.group(0)
 
+        slides_json = json.loads(raw_text)
+        return self._parse_slides(slides_json)
+
+    def _parse_slides(self, slides_json: list) -> list[SlideData]:
         slides = []
         for s in slides_json:
             slide_type = s.get("slide_type", "content")
-            
-            # Matn (bullets o'rnida)
+
             bullets = []
-            
-            # 200 ta so'zgacha bo'lgan yagona yaxlit matn qo'shish
+
+            # content_text — asosiy paragraf
             content_text = s.get("content_text", "")
             if content_text:
                 bullets.append(content_text)
 
-            # Qo'shimcha (fallback yoki schema elementlari)
+            # Slide-type specific qo'shimchalar
             if slide_type == "title":
-                if "subtitle" in s: bullets.append(str(s["subtitle"]))
-                if "tagline" in s: bullets.append(str(s["tagline"]))
+                if "subtitle" in s:
+                    bullets.append(str(s["subtitle"]))
+                if "tagline" in s:
+                    bullets.append(str(s["tagline"]))
+
             elif slide_type == "agenda":
                 if "items" in s and isinstance(s["items"], list):
                     bullets.extend(str(item) for item in s["items"])
+
             elif slide_type in ["chart_bar", "chart_pie", "chart_line"]:
-                if "insight" in s: bullets.append(f"Insight: {s['insight']}")
-            elif slide_type == "table":
-                pass # Table o'zi table rendering funksiyasida ishlanadi, unga bullets qo'shib chalkashtirmaymiz, content_text yetarli
+                if "insight" in s:
+                    bullets.append(f"Xulosa: {s['insight']}")
+
             elif slide_type == "quote":
-                if "quote" in s: bullets.append(f'"{s["quote"]}"')
-                if "author" in s: bullets.append(f"— {s['author']}")
+                if "quote" in s:
+                    bullets.insert(0, f'"{s["quote"]}"')
+                if "author" in s:
+                    bullets.append(f"— {s['author']}")
+
             elif slide_type == "conclusion":
                 if "key_takeaways" in s and isinstance(s["key_takeaways"], list):
                     bullets.extend(str(k) for k in s["key_takeaways"])
-                if "call_to_action" in s: bullets.append(str(s["call_to_action"]))
+                if "call_to_action" in s:
+                    bullets.append(str(s["call_to_action"]))
 
-            # Eskicha bullets json dan bo'lsa uni qo'shib yuborish
-            legacy_bullets = s.get("bullets", [])
-            if isinstance(legacy_bullets, list):
-                bullets.extend(legacy_bullets)
+            # Legacy bullets (agar model hali ham chiqarsa)
+            legacy = s.get("bullets", [])
+            if isinstance(legacy, list):
+                bullets.extend(legacy)
 
             slides.append(SlideData(
                 index=s.get("index", 0),
                 title=s.get("title", ""),
-                bullets=bullets,  # Endi bullets list asosan 1 ta paragraph content_text va boshqa kerakli pointlar bilan band
+                bullets=bullets,
                 slide_type=slide_type,
                 image_keyword=s.get("image_keyword", "") if s.get("image_keyword") else "",
-                raw_data=s
+                raw_data=s,
             ))
+
         return slides
