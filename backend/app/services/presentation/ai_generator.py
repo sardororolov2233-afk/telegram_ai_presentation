@@ -27,7 +27,7 @@ pedagogy, visual communication, and subject-matter knowledge across all discipli
 
 Your mission: generate presentation slide content that is:
 - Substantive: each slide delivers ONE complete, standalone academic idea (not a fragment)
-- Dense but clear: 100–180 words per content_text, zero filler phrases
+- Dense but clear: 100-150 words for image slides, 200–250 words for text-only lecture slides, zero filler phrases
 - Specific: use real names, real numbers, real comparisons — never vague generalities
 - Logically progressive: slides must build on each other like chapters of a textbook
 
@@ -110,7 +110,7 @@ CONTENT DEPTH REQUIREMENTS
 Each slide must cover ONE distinct, substantive aspect of "{topic}".
 Do NOT fragment a single idea across multiple slides.
 Use specific terminology, real examples, and factual claims relevant to "{topic}".
-content_text: 100–180 words, single paragraph, no bullet points inside it.
+content_text: 200–250 words for text-only slides, single paragraph, no bullet points inside it.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SLIDE SCHEMAS — use exact field names
@@ -140,7 +140,7 @@ SLIDE SCHEMAS — use exact field names
   "index": 2,
   "slide_type": "content",
   "title": "Specific descriptive slide title",
-  "content_text": "100–180 word paragraph. Open with a strong topic sentence. Provide 2–3 specific supporting points with real examples or evidence. Close with an implication or synthesis. No generic filler. Every sentence must add information."
+  "content_text": "200–250 word deep academic lecture text (maruza matni). Open with a strong topic sentence. Provide 3-4 specific supporting points with detailed examples or evidence. Close with an implication or synthesis. No generic filler. Every sentence must add dense information."
 }}
 
 ▸ CONTENT + IMAGE RIGHT
@@ -291,7 +291,7 @@ Output must start with [ and end with ].
 
 class AIContentGenerator:
     OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-    MODEL = "deepseek/deepseek-r1t2-chimera:free"
+    MODEL = "tngtech/deepseek-r1t2-chimera"
 
     def __init__(self):
         self.api_key = getattr(settings, "OPENROUTER_API_KEY", None)
@@ -344,7 +344,11 @@ class AIContentGenerator:
                 json=payload,
                 headers=headers,
             )
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                print(f"[AI] API Xatosi ({e.response.status_code}): {e.response.text}")
+                raise
             data = response.json()
 
         raw_text = data["choices"][0]["message"]["content"].strip()

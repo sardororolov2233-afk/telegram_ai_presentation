@@ -7,7 +7,7 @@ from typing import Optional
 
 from pptx import Presentation
 from pptx.util import Inches, Pt
-from pptx.enum.text import PP_ALIGN
+from pptx.enum.text import PP_ALIGN, MSO_AUTO_SIZE
 from pptx.chart.data import CategoryChartData
 from pptx.enum.chart import XL_CHART_TYPE
 from pptx.enum.shapes import MSO_SHAPE
@@ -139,17 +139,29 @@ def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w
     stype = sd.slide_type
     txt_color = get_theme_color(tmpl_idx)
     
-    def add_text_box(x, y, w, h, text_lines):
+    def add_text_box(x, y, w, h, text_lines, is_full_text=False):
         if not text_lines: return
         txBox = slide.shapes.add_textbox(x, y, w, h)
         tf = txBox.text_frame
         tf.word_wrap = True
+        
+        if is_full_text:
+            tf.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
+        else:
+            tf.auto_size = MSO_AUTO_SIZE.SHAPE_TO_FIT_TEXT
+            
         for i, line in enumerate(text_lines):
             p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
             p.text = str(line)
             p.level = 0
-            # Silliq va matnga mos yozuv shrifti (200 so'zgacha sig'ishi uchun kichiklashtirildi)
-            p.font.size = Pt(18)
+            
+            if is_full_text:
+                p.font.size = Pt(28)
+                p.alignment = PP_ALIGN.JUSTIFY
+            else:
+                p.font.size = Pt(18)
+                p.alignment = PP_ALIGN.LEFT
+                
             p.font.color.rgb = txt_color
 
     def add_image(x, y, w, h, img_p):
@@ -197,7 +209,7 @@ def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w
                             tbl.cell(row_idx, col_idx).text = str(c_text)
                 row_idx += 1
         else:
-            add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets)
+            add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets, is_full_text=True)
 
     elif stype in ["chart_bar", "chart_pie", "chart_line"]:
         raw = sd.raw_data or {}
@@ -230,9 +242,9 @@ def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w
                     add_text_box(margin_x, margin_top + chart_h + Inches(0.1), content_w, content_h * 0.15, [f"Xulosa: {insight}"])
             except Exception as e:
                 print(f"[PptxGen] Chart xatosi: {e}")
-                add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets)
+                add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets, is_full_text=True)
         else:
-            add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets)
+            add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets, is_full_text=True)
 
     elif stype == "quote":
         raw = sd.raw_data or {}
@@ -258,7 +270,7 @@ def _render_slide_content(slide, sd: SlideData, img_path: Optional[str], slide_w
     else:
         # Odatiy matn slayd (content, conclusion, section, agenda va title)
         if stype != "title":
-            add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets)
+            add_text_box(margin_x, margin_top, content_w, content_h, sd.bullets, is_full_text=True)
 
 
 def _delete_slide(prs: Presentation, slide_index: int):
