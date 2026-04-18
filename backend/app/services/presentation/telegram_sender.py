@@ -4,6 +4,22 @@ from app.core.config import settings
 
 TELEGRAM_API = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}"
 
+async def send_status_message(telegram_id: int, message: str) -> bool:
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            await client.post(
+                f"{TELEGRAM_API}/sendMessage",
+                json={
+                    "chat_id": telegram_id,
+                    "text": message,
+                    "parse_mode": "HTML",
+                },
+            )
+            return True
+        except Exception as e:
+            print(f"[Telegram] Error sending status message: {e}")
+            return False
+
 async def send_presentation_to_telegram(
     telegram_id: int,
     topic: str,

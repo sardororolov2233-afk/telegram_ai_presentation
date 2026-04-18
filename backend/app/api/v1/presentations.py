@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile, BackgroundTasks
 from supabase import Client
 import asyncio
 from pydantic import BaseModel
@@ -10,8 +10,35 @@ import aiofiles
 from app.core.database import get_db
 from app.routes.deps import get_current_user
 from app.services.presentation.pipeline import PresentationPipeline
+from app.services.presentation.telegram_sender import send_status_message
 
 router = APIRouter(prefix="/presentations", tags=["Presentations"])
+
+async def run_pipeline_background(
+    pipeline: PresentationPipeline,
+    topic: str,
+    language: str,
+    slide_count: int,
+    style: str,
+    extra_context: Optional[str],
+    design_template: int,
+    telegram_id: Optional[int],
+    user_image_paths: list,
+):
+    try:
+        await pipeline.run(
+            topic=topic,
+            language=language,
+            slide_count=slide_count,
+            style=style,
+            extra_context=extra_context,
+            design_template=design_template,
+            telegram_id=telegram_id,
+            user_images=user_image_paths,
+        )
+    except Exception as e:
+        print(f"[Pipeline_bg] Background task failed: {e}")
+
 
 class PresentationResponse(BaseModel):
     id: str
@@ -20,6 +47,7 @@ class PresentationResponse(BaseModel):
 
 @router.post("/generate", response_model=PresentationResponse)
 async def generate_presentation(
+    background_tasks: BackgroundTasks,
     topic: str = Form(...),
     language: str = Form("uz"),
     slide_count: int = Form(8),
@@ -27,6 +55,8 @@ async def generate_presentation(
     extra_context: Optional[str] = Form(None),
     design_template: int = Form(1),
     send_to_telegram: bool = Form(True),
+    is_pro: bool = Form(False),
+    document_format: str = Form("ppt"),
     images: List[UploadFile] = File(default=[]),
     db: Client = Depends(get_db),
     user: dict = Depends(get_current_user),
@@ -34,8 +64,9 @@ async def generate_presentation(
     if slide_count < 3 or slide_count > 20:
         raise HTTPException(status_code=400, detail="Slaydlar soni 3-20 oralig'ida bo'lishi kerak")
 
-    price = slide_count * 600
+    price = slide_count * (500 if is_pro else 300)
     if user.get("balance", 0.0) < price:
+        raise HTTPException(status_code=402, detail="Balansingiz yetarli emas.")
         raise HTTPException(status_code=402, detail="Balansingiz yetarli emas.")
 
     user_image_paths = []
@@ -56,17 +87,6 @@ async def generate_presentation(
 
     pipeline = PresentationPipeline()
 
-    result = await pipeline.run(
-        topic=topic,
-        language=language,
-        slide_count=slide_count,
-        style=style,
-        extra_context=extra_context,
-        design_template=design_template,
-        telegram_id=user["telegram_id"] if send_to_telegram else None,
-        user_images=user_image_paths,
-    )
-
     new_balance = user.get("balance", 0.0) - price
     try:
         await asyncio.to_thread(
@@ -74,5 +94,27 @@ async def generate_presentation(
         )
     except Exception as e:
         print(f"[API] Balansni yechishda xato: {e}")
+        raise HTTPException(status_code=500, detail="Balansni yangilashda xato yuz berdi.")
 
-    return PresentationResponse(**result)
+    if send_to_telegram and user.get("telegram_id"):
+        await send_status_message(user["telegram_id"], "Fayl yaratilmoqda tayyor bo'lgach sizga taqdim etiladi")
+
+    # Queue the long-running task
+    background_tasks.add_task(
+        run_pipeline_background,
+        pipeline,
+        topic,
+        language,
+        slide_count,
+        style,
+        extra_context,
+        design_template,
+        user.get("telegram_id") if send_to_telegram else None,
+        user_image_paths,
+    )
+
+    return PresentationResponse(
+        id=str(uuid.uuid4())[:12],
+        telegram_sent=True,
+        slide_count=slide_count
+    )
