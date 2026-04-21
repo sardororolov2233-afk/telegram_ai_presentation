@@ -79,3 +79,41 @@ async def send_presentation_to_telegram(
 
     return True
 
+async def send_url_document_to_telegram(
+    telegram_id: int,
+    topic: str,
+    download_url: str,
+    slide_count: int,
+) -> bool:
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            safe_html_topic = html.escape(topic)
+            await client.post(
+                f"{TELEGRAM_API}/sendMessage",
+                json={
+                    "chat_id": telegram_id,
+                    "text": f"Taqdimotingiz tayyor!\n\nMavzu: {safe_html_topic}\nSlaydlar: {slide_count}",
+                    "parse_mode": "HTML",
+                },
+            )
+        except Exception as e:
+            print(f"[Telegram] Error sending info message: {e}")
+
+        try:
+            res_doc = await client.post(
+                f"{TELEGRAM_API}/sendDocument",
+                json={
+                    "chat_id": telegram_id,
+                    "document": download_url,
+                    "caption": "Sizning taqdimotingiz tayyor! 📁✨",
+                },
+            )
+            res_doc.raise_for_status()
+        except Exception as e:
+            text = getattr(e, 'response', None)
+            text = text.text if text else ''
+            print(f"[Telegram] Error sending URL document: {e}. {text}")
+            raise
+
+    return True
+

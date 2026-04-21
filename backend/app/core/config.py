@@ -72,5 +72,7 @@ class Settings:
     SUPABASE_URL: str = _get_str("SUPABASE_URL")
     SUPABASE_KEY: str = _get_str("SUPABASE_KEY")
 
+    TWOSLIDES_API_KEY: Optional[str] = _get("TWOSLIDES_API_KEY")
+
 
 settings = Settings()

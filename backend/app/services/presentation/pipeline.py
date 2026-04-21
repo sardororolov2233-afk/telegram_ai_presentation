@@ -5,7 +5,8 @@ from typing import Optional
 
 from app.services.presentation.ai_generator import AIContentGenerator
 from app.services.presentation.pptx_generator import generate_pptx
-from app.services.presentation.telegram_sender import send_presentation_to_telegram
+from app.services.presentation.telegram_sender import send_presentation_to_telegram, send_url_document_to_telegram
+from app.services.presentation.twoslides_api import generate_presentation_from_2slides
 from app.services.presentation.image_fetcher import fetch_images_for_slides, cleanup_images
 
 PRESENTATIONS_DIR = "/tmp/presentations"
@@ -28,6 +29,7 @@ class PresentationPipeline:
         telegram_id: Optional[int] = None,
         user_images: Optional[list] = None,
         is_pro: bool = False,
+        is_2slides: bool = False,
         author: Optional[str] = None,
         pro_plan_count: int = 5,
         pro_bibliography_type: str = "none",

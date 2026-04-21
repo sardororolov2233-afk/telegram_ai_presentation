@@ -25,6 +25,7 @@ async def run_pipeline_background(
     telegram_id: Optional[int],
     user_image_paths: list,
     is_pro: bool = False,
+    is_2slides: bool = False,
     author: Optional[str] = None,
     pro_plan_count: int = 5,
     pro_bibliography_type: str = "none",
@@ -44,6 +45,7 @@ async def run_pipeline_background(
             telegram_id=telegram_id,
             user_images=user_image_paths,
             is_pro=is_pro,
+            is_2slides=is_2slides,
             author=author,
             pro_plan_count=pro_plan_count,
             pro_bibliography_type=pro_bibliography_type,
@@ -72,6 +74,7 @@ async def generate_presentation(
     design_template: int = Form(1),
     send_to_telegram: bool = Form(True),
     is_pro: bool = Form(False),
+    is_2slides: bool = Form(False),
     document_format: str = Form("ppt"),
     author: Optional[str] = Form(None),
     pro_plan_count: int = Form(5),
@@ -86,7 +89,7 @@ async def generate_presentation(
     if slide_count < 3 or slide_count > 20:
         raise HTTPException(status_code=400, detail="Slaydlar soni 3-20 oralig'ida bo'lishi kerak")
 
-    price = slide_count * (500 if is_pro else 300)
+    price = slide_count * (500 if (is_pro or is_2slides) else 300)
     if user.get("balance", 0.0) < price:
         raise HTTPException(status_code=402, detail="Balansingiz yetarli emas.")
         raise HTTPException(status_code=402, detail="Balansingiz yetarli emas.")
@@ -139,6 +142,7 @@ async def generate_presentation(
         user.get("telegram_id") if send_to_telegram else None,
         user_image_paths,
         is_pro,
+        is_2slides,
         author,
         pro_plan_count,
         pro_bibliography_type,
