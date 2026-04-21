@@ -444,44 +444,86 @@ class AIContentGenerator:
         }
         lang_name = lang_map.get(language, "Uzbek")
         
-        reja_keys = ", ".join([f'"reja_{i}"' for i in range(1, pro_plan_count + 1)])
-        reja_matni_keys = ", ".join([f'"reja_{i}_matni"' for i in range(1, pro_plan_count + 1)])
+        schema_dict = {
+            "topic": f"The main topic of the presentation (Topic: {topic})",
+            "ism_sharif": f"Author name: {author}",
+            "ism_familya": f"Author name: {author}",
+            "muallif": f"Author name: {author}",
+            "reja": "The section title for 'Reja' (Agenda)",
+            "kirish": "The section title for 'Kirish' (Introduction)",
+            "kirish_matni": "Highly detailed and very long comprehensive introduction lecture text (300-450 words) exploring the core of the topic deeply.",
+            "fraza": "A powerful quote, principle, or central phrase relevant to the presentation.",
+            "xulosa": "The section title for 'Xulosa' (Conclusion)",
+            "xulosa_matni": "Highly detailed and very long conclusion paragraph summarizing the key takeaways profoundly (300-450 words).",
+            "yakun": "A brief final sentence or thank you note to conclude the presentation.",
+            "adabiyotlar": "The section title for 'Adabiyotlar' (References)",
+            "adabiyotlar_ro_yxati": "Detailed list of used references and sources.",
+            
+            "fakt_1": "First key fact or concept (short, 2-5 words)",
+            "fakt_1_asosi": "Deep explanation or basis of fact 1 (150-250 words)",
+            "fakt_2": "Second key fact or concept (short, 2-5 words)",
+            "fakt_2_asosi": "Deep explanation or basis of fact 2 (150-250 words)",
+            "fakt_3": "Third key fact or concept (short, 2-5 words)",
+            "fakt_3_asosi": "Deep explanation or basis of fact 3 (150-250 words)",
+            
+            "analiz": "The section title for Analysis or Metrics",
+            "analiz_ustunlari_1": "1st key metric, percentage, or indicator with short context",
+            "analiz_ustunlari_2": "2nd key metric, percentage, or indicator with short context",
+            "analiz_ustunlari_3": "3rd key metric, percentage, or indicator with short context",
+            "analiz_ustunlari_4": "4th key metric, percentage, or indicator with short context",
+            
+            "line_graph_topic": "Topic or title for a line graph trend analysis",
+            "birinchi_liniya": "1st item/trend line category",
+            "birinchi_liniya_sharxi": "Deep explanation of the 1st trend/item (80-150 words)",
+            "ikkinchi_liniya": "2nd item/trend line category",
+            "ikkinchi_liniya_sharxi": "Deep explanation of the 2nd trend/item (80-150 words)",
+            "uchinchi_liniya": "3rd item/trend line category",
+            "uchinchi_liniya_sharxi": "Deep explanation of the 3rd trend/item (80-150 words)",
+            
+            "gorizantal": "Title for a horizontal comparison or feature",
+            "gorizantal_fakt": "A specific fact related to the horizontal aspect",
+            "gorizantal_reason": "Deep reasoning or deep analysis for this aspect (80-150 words)",
+            "vertikal": "Title for a vertical comparison or feature",
+            "vertikal_fakt": "A specific fact related to the vertical aspect",
+            "vertikal_reason": "Deep reasoning or deep analysis for this aspect (80-150 words)",
+            
+            "positiv": "Positive aspects, advantages, or opportunities (very detailed, 100-200 words)",
+            "negative": "Negative aspects, disadvantages, or threats (very detailed, 100-200 words)",
+            
+            "photo_name": "A short descriptive name for the presentation's visual theme",
+            "image_keywords": [
+                 f"keyword 1 (English, highly specific real-life stock photo concept related to '{topic}')", 
+                 "keyword 2", 
+                 "keyword 3", 
+                 "keyword 4", 
+                 "keyword 5"
+            ]
+        }
         
-        json_schema = f"""
-{{
-  "topic": "{topic}",
-  "ism_sharif": "{author}",
-  "reja": "Reja",
-  {reja_keys}: "Short titles for the plan",
-  "kirish": "Kirish",
-  "kirish_matni": "Comprehensive introduction paragraph...",
-  {reja_matni_keys}: "Comprehensive paragraphs for each plan item...",
-  "fraza": "A powerful quote or phrase",
-  "xulosa": "Xulosa",
-  "xulosa_matni": "Comprehensive conclusion paragraph...",
-  "aadabiyotlar": "Foydalanilgan adabiyotlar",
-  "adabiyotlar_ro'yxati": "List of references",
-  "image_keywords": ["keyword 1", "keyword 2", "keyword 3", "keyword 4", "keyword 5"]
-}}
-"""
+        # Add dynamic Reja fields strictly up to pro_plan_count
+        for i in range(1, pro_plan_count + 1):
+            schema_dict[f"reja_{i}"] = f"Title for plan/agenda item {i} (2-5 words)"
+            schema_dict[f"reja_{i}_matni"] = f"Extremely detailed, in-depth academic lecture text for plan item {i} (350-500 words). Expand as much as possible."
+            
+        json_schema_str = json.dumps(schema_dict, indent=2, ensure_ascii=False)
 
         biblio_instruction = ""
         if pro_bibliography_type == "ai":
-            biblio_instruction = "Generate a list of 3-5 real academic references."
+            biblio_instruction = "Generate a reliable and academic list of references."
         else:
-            biblio_instruction = f"Use exactly this text: {json.dumps(pro_bibliography_text or '')}"
+            biblio_instruction = f"For references, use EXACTLY this text and nothing else: {json.dumps(pro_bibliography_text or '')}"
 
-        prompt = f"""You are a professional presentation generator.
+        prompt = f"""You are a professional academic presentation generator.
 Language: {lang_name}
 Topic: {topic}
 
-Generate content that strictly matches the following JSON schema. Provide high-quality, academic content.
+Generate content that strictly matches the following JSON schema. 
+This JSON defines the placeholder tags used in a PowerPoint template. 
+You MUST provide high-quality, academic content for EVERY SINGLE KEY in this schema. Do not leave any key empty!
 {biblio_instruction}
 
-Ensure `image_keywords` contains exactly {min(5, pro_plan_count + 2)} English keywords tailored for fetching beautiful stock photos related to the topic.
-
 Return ONLY the JSON object. Do not wrap in markdown or explanation.
-{json_schema}
+{json_schema_str}
 """
 
         payload = {
@@ -527,6 +569,9 @@ Return ONLY the JSON object. Do not wrap in markdown or explanation.
                 result = json.loads(json_match.group(0))
             else:
                 raise ValueError("AI did not return valid JSON for PRO mode.")
+
+        # Fill any missing Reja capitalizations for edge cases
+        result["Reja_4_matni"] = result.get("reja_4_matni", "")
 
         image_keywords = result.pop("image_keywords", [])
         if not image_keywords:

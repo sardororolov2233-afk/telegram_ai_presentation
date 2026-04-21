@@ -101,6 +101,8 @@ class PresentationPipeline:
                     user_images=final_images,
                     pro_design=pro_design,
                     pro_design_variant=pro_design_variant,
+                    pro_plan_count=pro_plan_count,
+                    pro_bibliography_type=pro_bibliography_type,
                 )
             else:
                 pptx_path_res, total_slides = await generate_pptx(

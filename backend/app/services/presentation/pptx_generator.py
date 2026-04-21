@@ -389,9 +389,12 @@ async def generate_pro_pptx(
     user_images: Optional[list] = None,
     pro_design: Optional[str] = None,
     pro_design_variant: int = 1,
+    pro_plan_count: int = 5,
+    pro_bibliography_type: str = "none",
 ) -> str:
     from pptx import Presentation
     import os
+    import re
     TEMPLATE_PATH = _get_pro_template_path(pro_design, pro_design_variant)
 
     if not os.path.exists(TEMPLATE_PATH):
@@ -399,6 +402,67 @@ async def generate_pro_pptx(
         
     print(f"[PptxGen] PRO Shablon ochilmoqda: {TEMPLATE_PATH}")
     prs = Presentation(TEMPLATE_PATH)
+    
+    # 1. ORTIQCHA SLAYDLAR VA ELEMENTLARNI TOZALASH
+    slides_to_delete = []
+    
+    for idx, slide in enumerate(prs.slides):
+        delete_this_slide = False
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                text_lower = shape.text.lower().replace("'", "_")
+                
+                # Agar slide reja_X_matni yoki xulosa matnini o'z ichiga olsa va X > pro_plan_count bo'lsa, slaydni o'chiramiz
+                matches = re.findall(r'\{\{reja_(\d+)_matni', text_lower)
+                for num_str in matches:
+                    if int(num_str) > pro_plan_count:
+                        delete_this_slide = True
+                        break
+                        
+                matches_x = re.findall(r'\{\{reja_(\d+)_xulosa', text_lower)
+                for num_str in matches_x:
+                    if int(num_str) > pro_plan_count:
+                        delete_this_slide = True
+                        break
+
+                if delete_this_slide:
+                    break
+                        
+                # Adabiyotlar keraksiz bo'lsa, qidirib o'chiramiz
+                if pro_bibliography_type == "none" and "{{adabiyotlar" in text_lower:
+                    delete_this_slide = True
+                    break
+                    
+        if delete_this_slide:
+            slides_to_delete.append(idx)
+            
+    # Slaydlarni orqadan oldinga aylanib o'chiramiz (index siljib ketmasligi uchun)
+    for idx in reversed(slides_to_delete):
+        _delete_slide(prs, idx)
+
+    # Qolgan slaydlarda (masalan asosiy Reja slaydi) oshiqcha punklarni o'chiramiz
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                paragraphs = shape.text_frame.paragraphs
+                for p_idx in reversed(range(len(paragraphs))):
+                    p = paragraphs[p_idx]
+                    p_text_lower = p.text.lower()
+                    should_delete_p = False
+                    
+                    matches = re.findall(r'\{\{reja_(\d+)\}\}', p_text_lower)
+                    for num_str in matches:
+                        if int(num_str) > pro_plan_count:
+                            should_delete_p = True
+                            break
+                            
+                    if should_delete_p:
+                        try:
+                            p._element.getparent().remove(p._element)
+                        except Exception:
+                            p.text = ""
+
+
     
     image_replacements = {
         "ASOSIY RASM": 0,
