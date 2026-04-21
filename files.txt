@@ -1,0 +1,17 @@
+d:/Новая папка\Literature Review Slides.pptx
+d:/Новая папка\backend\app\services\presentation\pro_templates\adabiyot\id_1.pptx
+d:/Новая папка\backend\app\services\presentation\pro_templates\adabiyot\id_2.pptx
+d:/Новая папка\backend\app\services\presentation\pro_templates\bank\id_1.pptx
+d:/Новая папка\backend\app\services\presentation\pro_templates\bank\id_2.pptx
+d:/Новая папка\backend\app\services\presentation\pro_templates\fizika\Albert Einstein Slides, копия.pptx
+d:/Новая папка\backend\app\services\presentation\pro_templates\minimalizm\id_1.pptx
+d:/Новая папка\backend\app\services\presentation\templates\dizayn_ 1.pptx
+d:/Новая папка\backend\app\services\presentation\templates\dizayn_ 10.pptx
+d:/Новая папка\backend\app\services\presentation\templates\dizayn_ 2.pptx
+d:/Новая папка\backend\app\services\presentation\templates\dizayn_ 3.pptx
+d:/Новая папка\backend\app\services\presentation\templates\dizayn_ 4.pptx
+d:/Новая папка\backend\app\services\presentation\templates\dizayn_ 5.pptx
+d:/Новая папка\backend\app\services\presentation\templates\dizayn_ 6.pptx
+d:/Новая папка\backend\app\services\presentation\templates\dizayn_ 7.pptx
+d:/Новая папка\backend\app\services\presentation\templates\dizayn_ 8.pptx
+d:/Новая папка\backend\app\services\presentation\templates\dizayn_ 9.pptx

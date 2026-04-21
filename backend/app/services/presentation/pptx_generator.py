@@ -333,8 +333,9 @@ def _build_presentation(
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
     prs.save(output_path)
-    print(f"[PptxGen] Saqlandi: {output_path}")
-    return output_path
+    count = len(prs.slides)
+    print(f"[PptxGen] Saqlandi: {output_path} ({count} slayd)")
+    return output_path, count
 
 
 async def generate_pptx(
@@ -343,7 +344,7 @@ async def generate_pptx(
     style: str = "professional",
     template_index: Optional[int] = None,
     user_images: Optional[list] = None,
-) -> str:
+) -> tuple[str, int]:
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(
         None,
@@ -354,3 +355,137 @@ async def generate_pptx(
         user_images,
     )
     return result
+
+PRO_TEMPLATES_DIR = Path(__file__).parent / "pro_templates"
+
+
+def _get_pro_template_path(pro_design: Optional[str] = None, pro_design_variant: int = 1) -> str:
+    """pro_design bo'limi va variant raqami bo'yicha PPTX faylini qaytaradi."""
+    if pro_design:
+        folder = PRO_TEMPLATES_DIR / pro_design
+        if folder.exists():
+            pptx_files = sorted(folder.glob("*.pptx"))
+            if pptx_files:
+                # variant 1 → birinchi fayl, variant 2 → ikkinchi fayl (agar mavjud bo'lsa)
+                idx = min(pro_design_variant - 1, len(pptx_files) - 1)
+                chosen = pptx_files[idx]
+                print(f"[PptxGen] PRO shablon tanlandi: {chosen} (bo'lim={pro_design}, variant=#{pro_design_variant})")
+                return str(chosen)
+
+    # Fallback: barcha bo'limlar ichidan birorta .pptx topamiz
+    for folder in PRO_TEMPLATES_DIR.iterdir():
+        if folder.is_dir():
+            pptx_files = sorted(folder.glob("*.pptx"))
+            if pptx_files:
+                print(f"[PptxGen] PRO shablon fallback: {pptx_files[0]}")
+                return str(pptx_files[0])
+
+    raise FileNotFoundError(f"PRO shablonlar topilmadi: {PRO_TEMPLATES_DIR}")
+
+
+async def generate_pro_pptx(
+    slides_data: dict,
+    output_path: str,
+    user_images: Optional[list] = None,
+    pro_design: Optional[str] = None,
+    pro_design_variant: int = 1,
+) -> str:
+    from pptx import Presentation
+    import os
+    TEMPLATE_PATH = _get_pro_template_path(pro_design, pro_design_variant)
+
+    if not os.path.exists(TEMPLATE_PATH):
+        raise FileNotFoundError(f"PRO Shablon topilmadi: {TEMPLATE_PATH}")
+        
+    print(f"[PptxGen] PRO Shablon ochilmoqda: {TEMPLATE_PATH}")
+    prs = Presentation(TEMPLATE_PATH)
+    
+    image_replacements = {
+        "ASOSIY RASM": 0,
+        "PHOTO_2": 1,
+        "PHOTO_3": 2,
+        "PHOTO_4": 3,
+        "PHOTO_5": 4
+    }
+    
+    import re
+    for slide in prs.slides:
+        # Bir xil slaydda bitta teglarni necha marta takrorlanganini hisoblaymiz
+        tag_counts = {}
+        for shape in list(slide.shapes):
+            if shape.has_text_frame:
+                shape_text = shape.text.replace("{{adabiyotlar_ro'yxati}}", "{{adabiyotlar_ro_yxati}}")
+                for key in slides_data.keys():
+                    tag = f"{{{{{key}}}}}"
+                    occ = shape_text.count(tag)
+                    if occ > 0:
+                        tag_counts[key] = tag_counts.get(key, 0) + occ
+        
+        tag_current_index = {k: 0 for k in tag_counts}
+        
+        for shape in list(slide.shapes):
+            if shape.has_text_frame:
+                for paragraph in shape.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        if "{{" in run.text and "}}" in run.text:
+                            # Edge case ni to'g'irlash
+                            run.text = run.text.replace("{{adabiyotlar_ro'yxati}}", "{{adabiyotlar_ro_yxati}}")
+                            
+                            for key, value in slides_data.items():
+                                tag = f"{{{{{key}}}}}"
+                                occ_in_run = run.text.count(tag)
+                                for _ in range(occ_in_run):
+                                    total_occ = tag_counts.get(key, 1)
+                                    is_long = isinstance(value, str) and len(str(value)) > 60
+                                    
+                                    # Agar bitta slaydda bitta teg bir necha marta kelsa, matnni teng qismlarga bo'lamiz
+                                    if total_occ > 1 and (is_long or str(key).endswith('_matni') or str(key).endswith('_xulosa')):
+                                        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', str(value)) if s.strip()]
+                                        idx = tag_current_index.get(key, 0)
+                                        
+                                        lst = sentences if len(sentences) >= total_occ else str(value).split()
+                                        
+                                        # Ro'yxatni total_occ ga mutanosib ravishda kesish
+                                        k, m = divmod(len(lst), total_occ)
+                                        start = idx * k + min(idx, m)
+                                        end = (idx + 1) * k + min(idx + 1, m)
+                                        chunk_items = lst[start:end]
+                                        
+                                        replacement_text = " ".join(chunk_items)
+                                        tag_current_index[key] = idx + 1
+                                    else:
+                                        replacement_text = str(value)
+                                        
+                                    run.text = run.text.replace(tag, replacement_text, 1)
+            
+            pic_idx = None
+            if hasattr(shape, "name"):
+                pic_idx = image_replacements.get(shape.name.upper().strip())
+            
+            if pic_idx is None and shape.has_text_frame:
+                content = shape.text.upper().strip()
+                pic_idx = image_replacements.get(content)
+            
+            if pic_idx is not None and user_images and pic_idx < len(user_images) and user_images[pic_idx]:
+                img_path = user_images[pic_idx]
+                if os.path.exists(img_path):
+                    left = shape.left
+                    top = shape.top
+                    width = shape.width
+                    height = shape.height
+                    
+                    try:
+                        sp = shape._element
+                        sp.getparent().remove(sp)
+                        slide.shapes.add_picture(img_path, left, top, width, height)
+                    except Exception as e:
+                        print(f"Rasm joylashda xato: {e}")
+
+    out_dir = os.path.dirname(output_path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+    prs.save(output_path)
+    final_slide_count = len(prs.slides)
+    print(f"[PptxGen] PRO taqdimot saqlandi: {output_path} ({final_slide_count} slayd)")
+    return output_path, final_slide_count
+

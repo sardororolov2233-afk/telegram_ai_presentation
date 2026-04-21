@@ -1,0 +1,6 @@
+d:/Новая папка/backend/app/services/presentation/pro_templates\minimalizm\id_1.pptx: Tue Apr 21 18:09:21 2026
+d:/Новая папка/backend/app/services/presentation/pro_templates\bank\id_2.pptx: Tue Apr 21 09:13:04 2026
+d:/Новая папка/backend/app/services/presentation/pro_templates\bank\id_1.pptx: Tue Apr 21 00:44:38 2026
+d:/Новая папка/backend/app/services/presentation/pro_templates\adabiyot\id_1.pptx: Tue Apr 21 00:05:28 2026
+d:/Новая папка/backend/app/services/presentation/pro_templates\adabiyot\id_2.pptx: Mon Apr 20 23:59:45 2026
+d:/Новая папка/backend/app/services/presentation/pro_templates\fizika\id_1.pptx: Sun Apr 19 23:56:29 2026

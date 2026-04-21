@@ -24,6 +24,13 @@ async def run_pipeline_background(
     design_template: int,
     telegram_id: Optional[int],
     user_image_paths: list,
+    is_pro: bool = False,
+    author: Optional[str] = None,
+    pro_plan_count: int = 5,
+    pro_bibliography_type: str = "none",
+    pro_bibliography_text: Optional[str] = None,
+    pro_design: Optional[str] = None,
+    pro_design_variant: int = 1,
 ):
     try:
         await pipeline.run(
@@ -35,6 +42,13 @@ async def run_pipeline_background(
             design_template=design_template,
             telegram_id=telegram_id,
             user_images=user_image_paths,
+            is_pro=is_pro,
+            author=author,
+            pro_plan_count=pro_plan_count,
+            pro_bibliography_type=pro_bibliography_type,
+            pro_bibliography_text=pro_bibliography_text,
+            pro_design=pro_design,
+            pro_design_variant=pro_design_variant,
         )
     except Exception as e:
         print(f"[Pipeline_bg] Background task failed: {e}")
@@ -57,6 +71,12 @@ async def generate_presentation(
     send_to_telegram: bool = Form(True),
     is_pro: bool = Form(False),
     document_format: str = Form("ppt"),
+    author: Optional[str] = Form(None),
+    pro_plan_count: int = Form(5),
+    pro_bibliography_type: str = Form("none"),
+    pro_bibliography_text: Optional[str] = Form(None),
+    pro_design: Optional[str] = Form(None),
+    pro_design_variant: int = Form(1),
     images: List[UploadFile] = File(default=[]),
     db: Client = Depends(get_db),
     user: dict = Depends(get_current_user),
@@ -97,7 +117,12 @@ async def generate_presentation(
         raise HTTPException(status_code=500, detail="Balansni yangilashda xato yuz berdi.")
 
     if send_to_telegram and user.get("telegram_id"):
-        await send_status_message(user["telegram_id"], "Fayl yaratilmoqda tayyor bo'lgach sizga taqdim etiladi")
+        design_info = f"{pro_design} (variant #{pro_design_variant})" if is_pro and pro_design else ""
+        design_line = f"\n📐 Shablon: {design_info}" if design_info else ""
+        await send_status_message(
+            user["telegram_id"],
+            f"⏳ Fayl yaratilmoqda, tayyor bo'lgach sizga taqdim etiladi{design_line}"
+        )
 
     # Queue the long-running task
     background_tasks.add_task(
@@ -111,6 +136,13 @@ async def generate_presentation(
         design_template,
         user.get("telegram_id") if send_to_telegram else None,
         user_image_paths,
+        is_pro,
+        author,
+        pro_plan_count,
+        pro_bibliography_type,
+        pro_bibliography_text,
+        pro_design,
+        pro_design_variant,
     )
 
     return PresentationResponse(

@@ -1,0 +1,63 @@
+D:/Yordamchi_AI/src\components\Header.tsx: interface HeaderProps {
+D:/Yordamchi_AI/src\components\Header.tsx: export const Header: React.FC<HeaderProps> = ({
+D:/Yordamchi_AI/src\components\PresentationForm.tsx: interface PresentationFormProps {
+D:/Yordamchi_AI/src\components\PresentationForm.tsx: export const PresentationForm: React.FC<PresentationFormProps> = ({
+D:/Yordamchi_AI/src\components\TemplateSelector.tsx: interface TemplateSelectorProps {
+D:/Yordamchi_AI/src\components\TemplateSelector.tsx: export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
+D:/Yordamchi_AI/src\api\client.ts: ): Promise<T> {
+D:/Yordamchi_AI/src\api\client.ts: export async function getMyProfile() {
+D:/Yordamchi_AI/src\api\client.ts:     is_pro?: boolean;
+D:/Yordamchi_AI/src\api\client.ts:     // Pro fields
+D:/Yordamchi_AI/src\api\client.ts:     pro_plan_count?: number;
+D:/Yordamchi_AI/src\api\client.ts:     pro_bibliography_type?: string;
+D:/Yordamchi_AI/src\api\client.ts:     pro_bibliography_text?: string;
+D:/Yordamchi_AI/src\api\client.ts:     pro_design?: string;
+D:/Yordamchi_AI/src\api\client.ts:     pro_design_variant?: number;
+D:/Yordamchi_AI/src\api\client.ts:     if (data.is_pro !== undefined) formData.append('is_pro', String(data.is_pro));
+D:/Yordamchi_AI/src\api\client.ts:     // Pro fields
+D:/Yordamchi_AI/src\api\client.ts:     if (data.pro_plan_count !== undefined) formData.append('pro_plan_count', String(data.pro_plan_count));
+D:/Yordamchi_AI/src\api\client.ts:     if (data.pro_bibliography_type) formData.append('pro_bibliography_type', data.pro_bibliography_type);
+D:/Yordamchi_AI/src\api\client.ts:     if (data.pro_bibliography_text) formData.append('pro_bibliography_text', data.pro_bibliography_text);
+D:/Yordamchi_AI/src\api\client.ts:     if (data.pro_design) formData.append('pro_design', data.pro_design);
+D:/Yordamchi_AI/src\api\client.ts:     if (data.pro_design_variant !== undefined) formData.append('pro_design_variant', String(data.pro_design_variant));
+D:/Yordamchi_AI/src\constants\proTemplates.ts: export const proTemplates = [
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/adabiyot/Снимок экрана 2026-04-20 165903.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/adabiyot/Снимок экрана 2026-04-20 171051.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/bank/Снимок экрана 2026-04-20 173154.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/bank/Снимок экрана 2026-04-20 173212.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/biologiya/Снимок экрана 2026-04-20 170347.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/biologiya/Снимок экрана 2026-04-20 170404.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/cyber/Снимок экрана 2026-04-20 170550.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/cyber/Снимок экрана 2026-04-20 170643.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/enlish/Снимок экрана 2026-04-20 173233.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/enlish/Снимок экрана 2026-04-20 173304.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/fizika/Снимок экрана 2026-04-20 162348.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/fizika/Снимок экрана 2026-04-20 171749.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/geografiya/Снимок экрана 2026-04-20 172820.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/geografiya/Снимок экрана 2026-04-20 172857.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/huquq/Снимок экрана 2026-04-20 173116.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/huquq/Снимок экрана 2026-04-20 173135.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/kimyo/Снимок экрана 2026-04-20 172736.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/kimyo/Снимок экрана 2026-04-20 172755.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/maktabgacha talim/Снимок экрана 2026-04-20 172455.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/maktabgacha talim/Снимок экрана 2026-04-20 172513.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/marketing/Снимок экрана 2026-04-20 172540.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/marketing/Снимок экрана 2026-04-20 172559.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/matematika/Снимок экрана 2026-04-20 173611.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/matematika/Снимок экрана 2026-04-20 173628.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/minimalizm/Снимок экрана 2026-04-20 165940.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/minimalizm/Снимок экрана 2026-04-20 171027.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/moliya/Снимок экрана 2026-04-20 170708.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/moliya/Снимок экрана 2026-04-20 170729.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/sport/Снимок экрана 2026-04-20 172256.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/sport/Снимок экрана 2026-04-20 172314.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/tarix/Снимок экрана 2026-04-20 170251.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/tarix/Снимок экрана 2026-04-20 170313.png"
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/tibbiyot/Снимок экрана 2026-04-20 170842.png",
+D:/Yordamchi_AI/src\constants\proTemplates.ts:       "/pro_perviews/tibbiyot/Снимок экрана 2026-04-20 170907.png"
+D:/Yordamchi_AI/src\hooks\useTelegramAuth.ts: import { telegramLogin, getMyProfile } from '../api/client';
+D:/Yordamchi_AI/src\hooks\useTelegramAuth.ts:                         const profile = await getMyProfile();
+D:/Yordamchi_AI/src\hooks\useTelegramAuth.ts:                         setUser(profile);
+D:/Yordamchi_AI/src\hooks\useTelegramAuth.ts:                     // To'liq profil
+D:/Yordamchi_AI/src\hooks\useTelegramAuth.ts:                     const profile = await getMyProfile();
+D:/Yordamchi_AI/src\hooks\useTelegramAuth.ts:                     setUser(profile);

@@ -426,3 +426,111 @@ class AIContentGenerator:
             ))
 
         return slides
+
+    async def generate_pro_slides(
+        self,
+        topic: str,
+        author: str,
+        language: str,
+        pro_plan_count: int,
+        pro_bibliography_type: str,
+        pro_bibliography_text: Optional[str],
+    ) -> tuple[dict, list[str]]:
+        
+        lang_map = {
+            "uz": "Uzbek — O'zbek tili (lotin yozuvi)",
+            "ru": "Russian — Русский язык",
+            "en": "English",
+        }
+        lang_name = lang_map.get(language, "Uzbek")
+        
+        reja_keys = ", ".join([f'"reja_{i}"' for i in range(1, pro_plan_count + 1)])
+        reja_matni_keys = ", ".join([f'"reja_{i}_matni"' for i in range(1, pro_plan_count + 1)])
+        
+        json_schema = f"""
+{{
+  "topic": "{topic}",
+  "ism_sharif": "{author}",
+  "reja": "Reja",
+  {reja_keys}: "Short titles for the plan",
+  "kirish": "Kirish",
+  "kirish_matni": "Comprehensive introduction paragraph...",
+  {reja_matni_keys}: "Comprehensive paragraphs for each plan item...",
+  "fraza": "A powerful quote or phrase",
+  "xulosa": "Xulosa",
+  "xulosa_matni": "Comprehensive conclusion paragraph...",
+  "aadabiyotlar": "Foydalanilgan adabiyotlar",
+  "adabiyotlar_ro'yxati": "List of references",
+  "image_keywords": ["keyword 1", "keyword 2", "keyword 3", "keyword 4", "keyword 5"]
+}}
+"""
+
+        biblio_instruction = ""
+        if pro_bibliography_type == "ai":
+            biblio_instruction = "Generate a list of 3-5 real academic references."
+        else:
+            biblio_instruction = f"Use exactly this text: {json.dumps(pro_bibliography_text or '')}"
+
+        prompt = f"""You are a professional presentation generator.
+Language: {lang_name}
+Topic: {topic}
+
+Generate content that strictly matches the following JSON schema. Provide high-quality, academic content.
+{biblio_instruction}
+
+Ensure `image_keywords` contains exactly {min(5, pro_plan_count + 2)} English keywords tailored for fetching beautiful stock photos related to the topic.
+
+Return ONLY the JSON object. Do not wrap in markdown or explanation.
+{json_schema}
+"""
+
+        payload = {
+            "model": self.MODEL,
+            "max_tokens": 8000,
+            "temperature": 0.7,
+            "messages": [
+                {"role": "user", "content": prompt},
+            ],
+            "response_format": {"type": "json_object"}
+        }
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://acadai.uz",
+            "X-Title": "AcadAI Presentation Generator",
+        }
+
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            response = await client.post(
+                self.OPENROUTER_API_URL,
+                json=payload,
+                headers=headers,
+            )
+            response.raise_for_status()
+            data = response.json()
+
+        raw_text = data["choices"][0]["message"]["content"].strip()
+        raw_text = re.sub(r"<think>.*?</think>", "", raw_text, flags=re.DOTALL).strip()
+        if raw_text.startswith("```"):
+            lines = raw_text.splitlines()
+            inner_lines = lines[1:] if lines else lines
+            if inner_lines and inner_lines[-1].strip() == "```":
+                inner_lines = inner_lines[:-1]
+            raw_text = "\n".join(inner_lines).strip()
+        
+        try:
+            result = json.loads(raw_text)
+        except Exception:
+            json_match = re.search(r"\{.*\}", raw_text, flags=re.DOTALL)
+            if json_match:
+                result = json.loads(json_match.group(0))
+            else:
+                raise ValueError("AI did not return valid JSON for PRO mode.")
+
+        image_keywords = result.pop("image_keywords", [])
+        if not image_keywords:
+            image_keywords = [f"{topic} professional concept"] * 5
+            
+        return result, image_keywords
+
