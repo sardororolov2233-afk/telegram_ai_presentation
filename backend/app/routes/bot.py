@@ -19,15 +19,19 @@ async def send_message(chat_id: int, text: str, reply_markup: dict = None):
         await client.post(f"{TELEGRAM_API}/sendMessage", json=payload)
 
 
-async def send_mini_app_button(chat_id: int, text: str, button_text: str, web_app_url: str):
+async def send_mini_app_buttons(chat_id: int, text: str, web_app_url: str):
     await send_message(
         chat_id=chat_id,
         text=text,
         reply_markup={
             "inline_keyboard": [[
                 {
-                    "text": button_text,
-                    "web_app": {"url": web_app_url}
+                    "text": "Standart",
+                    "web_app": {"url": f"{web_app_url}?tab=standard"}
+                },
+                {
+                    "text": "Yordamchi PRO ⭐",
+                    "web_app": {"url": f"{web_app_url}?tab=pro"}
                 }
             ]]
         }
@@ -46,10 +50,9 @@ async def bot_webhook(request: Request, db: Client = Depends(get_db)):
 
         if text == "/start":
             mini_app_url = settings.FRONTEND_URL or "https://orzu-two.vercel.app"
-            await send_mini_app_button(
+            await send_mini_app_buttons(
                 chat_id=chat_id,
-                text=f"Salom, <b>{user.get('first_name', 'Foydalanuvchi')}</b>! Ilovamizga xush kelibsiz!",
-                button_text="Ilovani ochish",
+                text=f"Salom, <b>{user.get('first_name', 'Foydalanuvchi')}</b>! Ilovamizga xush kelibsiz! O'zingizga qulay bo'lgan tarif nushasini tanlang:",
                 web_app_url=mini_app_url,
             )
 

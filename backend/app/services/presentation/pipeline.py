@@ -34,9 +34,11 @@ class PresentationPipeline:
         pro_bibliography_text: Optional[str] = None,
         pro_design: Optional[str] = None,
         pro_design_variant: int = 1,
+        document_format: str = "ppt",
     ) -> dict:
         presentation_id = str(uuid.uuid4())[:12]
         pptx_path = f"{PRESENTATIONS_DIR}/{presentation_id}.pptx"
+        final_doc_path = ""
 
         if is_pro:
             print(f"[Pipeline] AI mazmun generatsiya (PRO): '{topic}' | Shablon: {pro_design} #{pro_design_variant}")
@@ -112,15 +114,26 @@ class PresentationPipeline:
                     template_index=design_template,
                     user_images=final_images,
                 )
-            # Update pptx_path just in case (though it should be the same)
             pptx_path = pptx_path_res
+            final_doc_path = pptx_path
+            
+            if is_pro and document_format == "pdf":
+                try:
+                    import asyncio
+                    from app.services.presentation.pdf_converter import convert_pptx_to_pdf
+                    print(f"[Pipeline] PDF yaratilmoqda: {pptx_path}")
+                    pdf_path = await asyncio.to_thread(convert_pptx_to_pdf, pptx_path)
+                    final_doc_path = pdf_path
+                    print(f"[Pipeline] PDF muvaffaqiyatli saqlandi: {pdf_path}")
+                except Exception as pdf_err:
+                    print(f"[Pipeline] PDF ga o'girishda xato: {pdf_err}")
+
             pptx_ok = True
         except Exception as e:
             print(f"[Pipeline] PPTX xatosi: {e}")
-            traceback.print_exc()  # To'liq xato izini ko'rsatish
+            traceback.print_exc()
             pptx_ok = False
         finally:
-            # Vaqtinchalik rasmlarni PPTX dan keyin o'chirish
             if _fetched_images:
                 cleanup_images(_fetched_images)
                 print(f"[Pipeline] {len(_fetched_images)} ta vaqtinchalik rasm o'chirildi")
@@ -131,16 +144,18 @@ class PresentationPipeline:
                 await send_presentation_to_telegram(
                     telegram_id=telegram_id,
                     topic=topic,
-                    pptx_path=pptx_path,
+                    pptx_path=final_doc_path,
                     slide_count=total_slides if 'total_slides' in locals() else len(slides),
                 )
                 telegram_sent = True
             except Exception as e:
                 print(f"[Pipeline] Telegram xatosi: {e}")
             finally:
-                # Faylni o'chirish � Telegram ga yuborilgandan keyin kerak emas
                 try:
-                    os.remove(pptx_path)
+                    if final_doc_path and os.path.exists(final_doc_path):
+                        os.remove(final_doc_path)
+                    if pptx_path and os.path.exists(pptx_path) and pptx_path != final_doc_path:
+                        os.remove(pptx_path)
                 except Exception:
                     pass
 

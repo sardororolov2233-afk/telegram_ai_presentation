@@ -53,17 +53,22 @@ async def send_presentation_to_telegram(
             try:
                 # Sanitize topic for filename to avoid Telegram API breaking on bad characters
                 safe_topic = re.sub(r'[^a-zA-Z0-9_\-\u0400-\u04FF\u0510-\u0513 ]', '', topic)
-                file_name = f"{safe_topic[:40].strip() or 'Taqdimot'}.pptx"
+                
+                is_pdf = pptx_path.lower().endswith('.pdf')
+                ext = 'pdf' if is_pdf else 'pptx'
+                mime_type = "application/pdf" if is_pdf else "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                caption = "Taqdimot (.pdf)" if is_pdf else "PowerPoint taqdimot (.pptx)"
+                
+                file_name = f"{safe_topic[:40].strip() or 'Taqdimot'}.{ext}"
                 
                 with open(pptx_path, "rb") as f:
                     res_doc = await client.post(
                         f"{TELEGRAM_API}/sendDocument",
                         data={
                             "chat_id": str(telegram_id),
-                            "caption": "PowerPoint taqdimot (.pptx)",
+                            "caption": caption,
                         },
-                        files={"document": (file_name, f,
-                               "application/vnd.openxmlformats-officedocument.presentationml.presentation")},
+                        files={"document": (file_name, f, mime_type)},
                     )
                     res_doc.raise_for_status()
             except Exception as e:

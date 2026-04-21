@@ -31,6 +31,7 @@ async def run_pipeline_background(
     pro_bibliography_text: Optional[str] = None,
     pro_design: Optional[str] = None,
     pro_design_variant: int = 1,
+    document_format: str = "ppt",
 ):
     try:
         await pipeline.run(
@@ -49,6 +50,7 @@ async def run_pipeline_background(
             pro_bibliography_text=pro_bibliography_text,
             pro_design=pro_design,
             pro_design_variant=pro_design_variant,
+            document_format=document_format,
         )
     except Exception as e:
         print(f"[Pipeline_bg] Background task failed: {e}")
