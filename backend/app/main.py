@@ -25,7 +25,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import os
+from fastapi.staticfiles import StaticFiles
+
 app.include_router(api_router, prefix="/api/v1")
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+static_dir = os.path.abspath(os.path.join(current_dir, "../../static"))
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 @app.get("/health")
 async def health_check():

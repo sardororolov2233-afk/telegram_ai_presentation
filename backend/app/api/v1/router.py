@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import auth, users, bot, presentations
+from app.api.v1 import auth, users, bot, presentations, designs
 
 api_router = APIRouter()
 
@@ -8,3 +8,4 @@ api_router.include_router(users.router)
 
 api_router.include_router(bot.router)
 api_router.include_router(presentations.router)
+api_router.include_router(designs.router)

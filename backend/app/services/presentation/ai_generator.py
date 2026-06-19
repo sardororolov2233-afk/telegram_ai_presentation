@@ -460,11 +460,11 @@ class AIContentGenerator:
             "adabiyotlar_ro_yxati": "Detailed list of used references and sources.",
             
             "fakt_1": "First key fact or concept (short, 2-5 words)",
-            "fakt_1_asosi": "Deep explanation or basis of fact 1 (150-250 words)",
+            "fakt_1_asosi": "Deep explanation or basis of fact 1 (120-150 words)",
             "fakt_2": "Second key fact or concept (short, 2-5 words)",
-            "fakt_2_asosi": "Deep explanation or basis of fact 2 (150-250 words)",
+            "fakt_2_asosi": "Deep explanation or basis of fact 2 (120-150 words)",
             "fakt_3": "Third key fact or concept (short, 2-5 words)",
-            "fakt_3_asosi": "Deep explanation or basis of fact 3 (150-250 words)",
+            "fakt_3_asosi": "Detailed explanation or basis of fact 3 (60-120 words)",
             
             "analiz": "The section title for Analysis or Metrics",
             "analiz_ustunlari_1": "1st key metric, percentage, or indicator with short context",
