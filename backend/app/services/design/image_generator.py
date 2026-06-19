@@ -14,7 +14,7 @@ from typing import Optional
 from app.core.config import settings
 
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-FLUX_MODEL = "black-forest-labs/flux.2-klein-4b"
+FLUX_MODEL = "black-forest-labs/flux.2-pro"
 
 # Rasmlar saqlanadigan papka
 STATIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../static"))
@@ -51,8 +51,8 @@ async def generate_image_with_flux(
     # Har bir variant uchun prompt ni biroz o'zgartiramiz — noyob natijalar uchun
     variant_modifiers = [
         "",  # Original prompt — o'zgarishsiz
-        ", alternative creative composition, different color arrangement",
-        ", unique artistic interpretation, bold visual approach",
+        ", different camera angle, alternative color palette and layout",
+        ", different composition layout, unique visual arrangement",
     ]
     modifier = variant_modifiers[variant_index % len(variant_modifiers)]
     full_prompt = f"{prompt}{modifier}"

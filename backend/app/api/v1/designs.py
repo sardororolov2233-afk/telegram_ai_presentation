@@ -181,16 +181,39 @@ async def generate_design(
         except Exception as tg_err:
             print(f"[Designs API] ❌ Telegram yuborish xatosi: {tg_err}")
 
-    # ── 6. Rasm URL larini yaratish ─────────────────────────
-    base_url = str(request.base_url).rstrip("/")
-    # Production da HTTPS ishlatish
-    if "127.0.0.1" not in base_url and "localhost" not in base_url:
-        base_url = base_url.replace("http://", "https://")
-    
-    image_urls = [f"{base_url}/static/{fname}" for fname in filenames]
+    # ── 6. Rasmlarni base64 data URL ga aylantirish ───────────
+    import base64
+    image_data_urls = []
+    for fname in filenames:
+        fpath = os.path.join(STATIC_DIR, fname)
+        if os.path.exists(fpath):
+            try:
+                with open(fpath, "rb") as f:
+                    raw_bytes = f.read()
+                
+                # MIME type aniqlash
+                if raw_bytes[:4] == b'\x89PNG':
+                    mime = "image/png"
+                elif raw_bytes[:2] == b'\xff\xd8':
+                    mime = "image/jpeg"
+                else:
+                    mime = "image/png"
+                
+                b64 = base64.b64encode(raw_bytes).decode("utf-8")
+                data_url = f"data:{mime};base64,{b64}"
+                image_data_urls.append(data_url)
+                print(f"[Designs API] 📦 {fname} → base64 ({len(raw_bytes) // 1024} KB)")
+            except Exception as e:
+                print(f"[Designs API] ❌ Base64 xatosi ({fname}): {e}")
+            finally:
+                # Faylni o'chirish (endi kerak emas)
+                try:
+                    os.remove(fpath)
+                except Exception:
+                    pass
 
     return DesignResponse(
         id=str(uuid.uuid4())[:12],
         telegram_sent=telegram_sent,
-        images=image_urls,
+        images=image_data_urls,
     )

@@ -1,6 +1,9 @@
 """
 Prompt Enhancer — Groq (Llama 3) yordamida foydalanuvchi promptini
-ingliz tiliga tarjima qiladi va FLUX uchun professional darajada optimallashtiradi.
+FLUX uchun professional darajada optimallashtiradi.
+
+MUHIM: Foydalanuvchi yozgan barcha matnlarni (o'zbek tilida) 
+AYNAN SHU HOLATDA saqlaydi va FLUX ga uzatadi.
 Bepul API — qo'shimcha xarajat yo'q.
 """
 import httpx
@@ -9,56 +12,76 @@ from app.core.config import settings
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "llama-3.3-70b-versatile"
 
-SYSTEM_PROMPT = """You are an elite graphic design prompt engineer specializing in creating prompts for AI image generation (FLUX model). 
+SYSTEM_PROMPT = """You are an expert graphic design prompt engineer for AI image generation (FLUX Pro model which CAN render text accurately).
 
-Your task: Take the user's design description (in ANY language — Uzbek, Russian, English, etc.) and transform it into a masterful English prompt optimized for FLUX image generation.
+Your task: Take the user's design description and create an optimized English prompt for FLUX image generation.
 
-CRITICAL RULES:
-1. OUTPUT ONLY THE ENHANCED PROMPT — no explanations, no introductions, no markdown
-2. Always write in English
-3. Include specific visual details: exact colors (e.g. "deep indigo #4F46E5"), lighting type, composition
-4. Specify typography style if text is needed: "bold modern sans-serif", "elegant serif"
-5. If the user mentions TEXT that should appear ON the design, preserve it EXACTLY in its original language and wrap in quotes. Example: text reading "DASTURLASH KURSLARI"
-6. Describe layout structure: "centered composition", "left-aligned text with right visual"
-7. Include mood/atmosphere: "corporate professional", "vibrant energetic", "sleek futuristic"
-8. Add quality boosters: "ultra high resolution", "sharp details", "professional commercial design"
-9. Mention what the design is FOR: "social media banner", "advertisement poster", "promotional flyer"
-10. Keep between 80-180 words — detailed but focused
-11. NEVER include negative prompts or what to avoid
-12. Start directly with the design description"""
+STEP 1 — CLASSIFY the user's words into two categories:
+
+CATEGORY A — "INSTRUCTIONS" (do NOT put on image, use as visual guidance):
+  These are requests/commands about how the design should look.
+  Examples: "menga yasab ber", "ranglar qizil bo'lsin", "chiroyli qilib", "fon qora bo'lsin", "rasmni katta qil", "reklamasi", "banner kerak", "professional bo'lsin"
+  → Convert these into English visual descriptions (colors, style, composition)
+
+CATEGORY B — "AD TEXT" (MUST appear on the image exactly as written):
+  These are slogans, prices, discounts, product names, phone numbers, addresses, brand names.
+  Examples: "15% chegirma", "35 000 so'm", "JUMA AKSIYASI", "+998 90 123 45 67", "GRAND LAVASH", "Bepul yetkazib berish"
+  → Preserve EXACTLY in original language, wrap with: text reading "EXACT TEXT"
+
+STEP 2 — BUILD the prompt:
+1. First describe the VISUAL scene in English (from Category A + your design knowledge)
+2. Then specify each Category B text with placement, size, font, and color
+
+EXAMPLES:
+
+User: "menga lavash reklamasi yasab ber, juma aksiyasi 15% chegirma, narxi 35000 so'm, fon qora rangda bo'lsin"
+Analysis: "menga yasab ber" = instruction, "lavash reklamasi" = instruction (make lavash ad), "fon qora rangda" = instruction → dark background, "juma aksiyasi" = ad text, "15% chegirma" = ad text, "narxi 35000 so'm" = ad text
+Prompt: "Professional food advertisement, appetizing golden lavash flatbread with steam, dark black elegant background, warm studio lighting, top-down angle. Large bold text reading "JUMA AKSIYASI" at top in white impact font. Bright yellow text reading "-15% CHEGIRMA" in bold. Text reading "35 000 so'm" in white elegant font at bottom. Commercial food photography, 8K."
+
+User: "IT akademiya uchun chiroyli reklama, kurslar boshlanadi, narxi arzon, zamonaviy dizayn bo'lsin"
+Analysis: "uchun chiroyli reklama" = instruction, "zamonaviy dizayn bo'lsin" = instruction, "kurslar boshlanadi" = ad text, "narxi arzon" = ad text
+Prompt: "Modern futuristic IT academy advertisement, sleek dark blue and neon purple background, floating code snippets and holographic laptop, glowing circuit patterns. Bold text reading "KURSLAR BOSHLANADI" in glowing cyan sans-serif. Text reading "NARXI ARZON" in white bold font. Ultra modern tech aesthetic, high resolution."
+
+OUTPUT RULES:
+- Output ONLY the prompt, no explanations
+- Visual parts in English, ad text in original language
+- 80-150 words
+- Include quality boosters: "professional", "high resolution", "8K"
+- Start directly with the description"""
 
 
 async def enhance_prompt(description: str, format: str, style: str) -> str:
     """
-    Foydalanuvchining o'zbek/rus tilidagi tavsifini FLUX uchun
-    ingliz tilida optimallashtirilgan professional promptga aylantiradi.
+    Foydalanuvchining o'zbek tilidagi tavsifini FLUX uchun
+    optimallashtirilgan promptga aylantiradi.
+    Barcha matnlar o'zbek tilida saqlanadi.
     """
     
-    # Format va uslub uchun kontekst
     format_context = {
-        "instagram": "square Instagram post (1:1 aspect ratio), social media optimized",
-        "telegram": "landscape Telegram channel banner (4:3 aspect ratio), messaging platform optimized",
-        "story": "vertical mobile Story/Reels format (9:16 aspect ratio), full-screen mobile experience",
+        "instagram": "square Instagram post (1:1 aspect ratio, 1024x1024)",
+        "telegram": "landscape Telegram banner (4:3 aspect ratio, 1024x768)",
+        "story": "vertical Story/Reels (9:16 aspect ratio, 576x1024)",
     }
     
     style_context = {
-        "infographic": "modern infographic style — clean data visualization, structured grid layout, bold iconography, professional color-coded sections, sleek flat design elements",
-        "photorealistic": "photorealistic style — natural studio lighting, realistic textures and materials, cinematic depth of field, commercial photography aesthetic",
-        "3d": "3D illustration style — volumetric rendered objects, isometric perspective, vibrant neon gradients, glossy surfaces, dynamic floating elements with ambient glow",
-        "minimalism": "minimalist style — generous whitespace, refined typography hierarchy, muted elegant color palette, clean geometric shapes, sophisticated restraint",
+        "infographic": "modern infographic style — clean layout, bold color blocks, structured sections, professional icons",
+        "photorealistic": "photorealistic style — studio photography lighting, realistic textures, cinematic depth, commercial aesthetic",
+        "3d": "3D illustration style — volumetric objects, neon gradients, glossy surfaces, floating elements, ambient glow",
+        "minimalism": "minimalist style — clean whitespace, elegant composition, muted palette, refined geometry",
     }
     
     fmt_desc = format_context.get(format, format_context["instagram"])
     sty_desc = style_context.get(style, style_context["infographic"])
     
-    user_message = f"""Transform this design request into an optimized FLUX image generation prompt:
+    user_message = f"""Create a FLUX image generation prompt for this design request.
 
-USER'S REQUEST: {description}
+USER'S REQUEST (preserve ALL text in original language): {description}
 
-DESIGN FORMAT: {fmt_desc}
-DESIGN STYLE: {sty_desc}
+FORMAT: {fmt_desc}
+STYLE: {sty_desc}
 
-Create the perfect prompt now."""
+IMPORTANT: Keep ALL user's text (product names, prices, slogans, discounts) in their ORIGINAL language. Do NOT translate them. Wrap each text in: text reading "EXACT TEXT"
+Generate the prompt now."""
 
     api_key = settings.GROQ_API_KEY
     if not api_key:
@@ -79,7 +102,7 @@ Create the perfect prompt now."""
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": user_message},
                     ],
-                    "temperature": 0.75,
+                    "temperature": 0.7,
                     "max_tokens": 500,
                 },
             )
@@ -87,7 +110,7 @@ Create the perfect prompt now."""
             data = resp.json()
             enhanced = data["choices"][0]["message"]["content"].strip()
             
-            # Tozalash — ba'zan model qo'shimcha belgilar qo'shadi
+            # Tozalash
             if enhanced.startswith('"') and enhanced.endswith('"'):
                 enhanced = enhanced[1:-1]
             if enhanced.startswith("```"):
@@ -95,6 +118,7 @@ Create the perfect prompt now."""
                 enhanced = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
             
             print(f"[PromptEnhancer] ✅ Prompt optimallashtirildi ({len(enhanced)} belgi)")
+            print(f"[PromptEnhancer] 📝 Natija: {enhanced[:200]}...")
             return enhanced
             
     except Exception as e:
@@ -103,12 +127,12 @@ Create the perfect prompt now."""
 
 
 def _fallback_prompt(description: str, format: str, style: str) -> str:
-    """Groq ishlamasa, oddiy inglizcha prompt yaratish."""
+    """Groq ishlamasa, oddiy prompt yaratish — matnlar saqlanadi."""
     style_words = {
-        "infographic": "modern infographic with bold typography and clean layout",
+        "infographic": "modern infographic with clean layout",
         "photorealistic": "photorealistic commercial photography with studio lighting",
         "3d": "vibrant 3D illustration with glossy surfaces and neon accents",
-        "minimalism": "minimalist design with elegant typography and whitespace",
+        "minimalism": "minimalist design with elegant composition",
     }
     sw = style_words.get(style, "professional design")
-    return f"Professional graphic design banner, {sw}, about: {description}, ultra high resolution, sharp details, commercial quality, {format} format"
+    return f'Professional advertisement banner, {sw}, {description}, ultra high resolution, sharp details, commercial quality, {format} format'
