@@ -26,7 +26,9 @@ CATEGORY A — "INSTRUCTIONS" (do NOT put on image, use as visual guidance):
 CATEGORY B — "AD TEXT" (MUST appear on the image exactly as written):
   These are slogans, prices, discounts, product names, phone numbers, addresses, brand names.
   Examples: "15% chegirma", "35 000 so'm", "JUMA AKSIYASI", "+998 90 123 45 67", "GRAND LAVASH", "Bepul yetkazib berish"
-  → Preserve EXACTLY in original language, wrap with: text reading "EXACT TEXT"
+  → Preserve EXACTLY in original language. You MUST wrap each text EXACTLY in this format:
+  text reading "YOUR EXACT TEXT"
+  Do not use any other phrasing for text (no "written as", no "with the words"). ONLY use: text reading "..."
 
 STEP 2 — BUILD the prompt:
 1. First describe the VISUAL scene in English (from Category A + your design knowledge)
@@ -50,12 +52,19 @@ OUTPUT RULES:
 - Start directly with the description"""
 
 
-async def enhance_prompt(description: str, format: str, style: str) -> str:
+async def enhance_prompt(description: str, format: str, style: str, lang: str = "uz") -> str:
     """
-    Foydalanuvchining o'zbek tilidagi tavsifini FLUX uchun
-    optimallashtirilgan promptga aylantiradi.
-    Barcha matnlar o'zbek tilida saqlanadi.
+    Foydalanuvchining tavsifini FLUX uchun optimallashtirilgan promptga aylantiradi.
+    Barcha matnlar tanlangan tilda saqlanadi yoki o'sha tilga moslashtiriladi.
     """
+    
+    lang_mapping = {
+        "uz": "Uzbek language",
+        "kaa": "Karakalpak language",
+        "ru": "Russian language",
+        "en": "English language"
+    }
+    target_lang_desc = lang_mapping.get(lang, "Uzbek language")
     
     format_context = {
         "instagram": "square Instagram post (1:1 aspect ratio, 1024x1024)",
@@ -75,18 +84,20 @@ async def enhance_prompt(description: str, format: str, style: str) -> str:
     
     user_message = f"""Create a FLUX image generation prompt for this design request.
 
-USER'S REQUEST (preserve ALL text in original language): {description}
+USER'S REQUEST: {description}
 
 FORMAT: {fmt_desc}
 STYLE: {sty_desc}
+TARGET LANGUAGE FOR ALL TEXTS: {target_lang_desc}
 
-IMPORTANT: Keep ALL user's text (product names, prices, slogans, discounts) in their ORIGINAL language. Do NOT translate them. Wrap each text in: text reading "EXACT TEXT"
+IMPORTANT: Keep ALL Category B ad text elements in the target language ({target_lang_desc}). If the user wrote texts in another language but requested {target_lang_desc}, translate the slogan/discount text to {target_lang_desc} but preserve prices/numbers. 
+CRITICAL: You MUST wrap each text element strictly in: text reading "EXACT TEXT".
 Generate the prompt now."""
 
     api_key = settings.GROQ_API_KEY
     if not api_key:
         print("[PromptEnhancer] Groq API kaliti topilmadi. Oddiy prompt ishlatilmoqda.")
-        return _fallback_prompt(description, format, style)
+        return _fallback_prompt(description, format, style, lang)
     
     try:
         async with httpx.AsyncClient(timeout=15) as client:
@@ -123,10 +134,10 @@ Generate the prompt now."""
             
     except Exception as e:
         print(f"[PromptEnhancer] ❌ Groq xatosi: {e}. Fallback prompt ishlatilmoqda.")
-        return _fallback_prompt(description, format, style)
+        return _fallback_prompt(description, format, style, lang)
 
 
-def _fallback_prompt(description: str, format: str, style: str) -> str:
+def _fallback_prompt(description: str, format: str, style: str, lang: str = "uz") -> str:
     """Groq ishlamasa, oddiy prompt yaratish — matnlar saqlanadi."""
     style_words = {
         "infographic": "modern infographic with clean layout",
@@ -135,4 +146,4 @@ def _fallback_prompt(description: str, format: str, style: str) -> str:
         "minimalism": "minimalist design with elegant composition",
     }
     sw = style_words.get(style, "professional design")
-    return f'Professional advertisement banner, {sw}, {description}, ultra high resolution, sharp details, commercial quality, {format} format'
+    return f'Professional advertisement banner, {sw}, {description}, language: {lang}, ultra high resolution, sharp details, commercial quality, {format} format'

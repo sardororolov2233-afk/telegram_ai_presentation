@@ -31,6 +31,7 @@ class DesignRequest(BaseModel):
     description: str
     format: str       # instagram | telegram | story
     style: str        # infographic | photorealistic | 3d | minimalism
+    lang: str = "uz"  # uz | kaa | ru | en
     send_to_telegram: bool = True
 
 
@@ -57,6 +58,9 @@ async def generate_design(
     if body.style not in ("infographic", "photorealistic", "3d", "minimalism"):
         raise HTTPException(status_code=400, detail="Noto'g'ri uslub. Mavjud: infographic, photorealistic, 3d, minimalism")
 
+    if body.lang not in ("uz", "kaa", "ru", "en"):
+        raise HTTPException(status_code=400, detail="Noto'g'ri til. Mavjud: uz, kaa, ru, en")
+
     # ── 2. Balans tekshirish ────────────────────────────────
     balance = user.get("balance", 0.0)
     if balance < DESIGN_PRICE:
@@ -81,6 +85,7 @@ async def generate_design(
             description=body.description,
             format=body.format,
             style=body.style,
+            lang=body.lang,
             variant_count=3,
         )
     except Exception as e:

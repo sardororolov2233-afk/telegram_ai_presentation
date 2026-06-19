@@ -24,6 +24,7 @@ async def run_design_pipeline(
     description: str,
     format: str,
     style: str,
+    lang: str = "uz",
     variant_count: int = 3,
 ) -> list[str]:
     """
@@ -33,6 +34,7 @@ async def run_design_pipeline(
         description: Foydalanuvchining tavsifi (o'zbek/rus/ingliz)
         format: Banner formati (instagram, telegram, story)
         style: Dizayn uslubi (infographic, photorealistic, 3d, minimalism)
+        lang: Reklama matni tili (uz, kaa, ru, en)
         variant_count: Nechta variant yaratish (default: 3)
     
     Returns:
@@ -45,11 +47,11 @@ async def run_design_pipeline(
     print(f"\n{'='*60}")
     print(f"[Pipeline] 🚀 Dizayn pipeline boshlandi")
     print(f"[Pipeline] 📝 Tavsif: {description[:100]}...")
-    print(f"[Pipeline] 📐 Format: {format} | 🎨 Uslub: {style}")
+    print(f"[Pipeline] 📐 Format: {format} | 🎨 Uslub: {style} | 🌐 Til: {lang}")
     print(f"{'='*60}\n")
     
     print("[Pipeline] 1️⃣  Prompt optimallashtirish (Groq Llama 3)...")
-    enhanced_prompt = await enhance_prompt(description, format, style)
+    enhanced_prompt = await enhance_prompt(description, format, style, lang)
     print(f"[Pipeline] ✅ Optimallashtirilgan prompt: {enhanced_prompt[:150]}...")
     
     # ═══════════════════════════════════════════════

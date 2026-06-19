@@ -48,14 +48,8 @@ async def generate_image_with_flux(
         print("[ImageGen] OpenRouter API kaliti topilmadi!")
         return None
 
-    # Har bir variant uchun prompt ni biroz o'zgartiramiz — noyob natijalar uchun
-    variant_modifiers = [
-        "",  # Original prompt — o'zgarishsiz
-        ", different camera angle, alternative color palette and layout",
-        ", different composition layout, unique visual arrangement",
-    ]
-    modifier = variant_modifiers[variant_index % len(variant_modifiers)]
-    full_prompt = f"{prompt}{modifier}"
+    # Modifiers can break strict typographic instructions, so we use the raw prompt
+    full_prompt = prompt
 
     try:
         payload = {
@@ -81,12 +75,30 @@ async def generate_image_with_flux(
             resp = await client.post(OPENROUTER_API_URL, json=payload, headers=headers)
             resp.raise_for_status()
             data = resp.json()
-
-            content = data["choices"][0]["message"].get("content", "")
+            message = data["choices"][0]["message"]
             
-            # Rasmni ajratib olish (bir necha format bo'lishi mumkin)
+            # Rasmni ajratib olish
             filename = f"design_{uuid.uuid4().hex}.png"
             filepath = os.path.join(STATIC_DIR, filename)
+
+            # Yangi OpenRouter FLUX.2 API si rasmni to'g'ridan-to'g'ri 'images' arrayda qaytaradi
+            if "images" in message and message["images"]:
+                img_url = message["images"][0].get("image_url", {}).get("url", "")
+                if img_url.startswith("data:image"):
+                    b64_data = img_url.split(",", 1)[1]
+                    with open(filepath, "wb") as f:
+                        f.write(base64.b64decode(b64_data))
+                    print(f"[ImageGen] ✅ Variant #{variant_index + 1} saqlandi (new OpenRouter images base64)")
+                    return filename
+                elif img_url:
+                    img_resp = await client.get(img_url, timeout=30)
+                    if img_resp.status_code == 200:
+                        with open(filepath, "wb") as f:
+                            f.write(img_resp.content)
+                        print(f"[ImageGen] ✅ Variant #{variant_index + 1} saqlandi (new OpenRouter images URL)")
+                        return filename
+
+            content = message.get("content", "") or ""
 
             # 1: Markdown link qidirish: ![alt](url)
             img_match = re.search(r"!\[.*?\]\((.*?)\)", content)
@@ -153,7 +165,7 @@ async def generate_image_fallback(
     
     safe_query = urllib.parse.quote(prompt[:500])  # URL uzunligi cheklov
     seed = variant_index * 1000 + 42  # Deterministic seed har bir variant uchun
-    url = f"https://image.pollinations.ai/prompt/{safe_query}?width={width}&height={height}&nologo=true&seed={seed}"
+    url = f"https://image.pollinations.ai/prompt/{safe_query}?width={width}&height={height}&nologo=true&seed={seed}&model=flux"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
