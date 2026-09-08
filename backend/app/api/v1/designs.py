@@ -2,7 +2,7 @@
 Design Generation API — Grafik dizayn yaratish endpointi.
 
 Pipeline:
-  1. Balans tekshirish va yechish (2000 so'm)
+  1. Balans tekshirish va yechish (5000 so'm)
   2. Groq (Llama 3) → Prompt optimallashtirish (BEPUL)
   3. FLUX.2 Klein 4B → 3 ta professional rasm yaratish (~$0.045)
   4. Telegram → Rasmlarni foydalanuvchiga yuborish
@@ -24,7 +24,7 @@ from app.services.design.image_generator import STATIC_DIR
 
 router = APIRouter(prefix="/designs", tags=["Designs"])
 
-DESIGN_PRICE = 2000  # so'm
+DESIGN_PRICE = 5000  # so'm
 
 
 class DesignRequest(BaseModel):

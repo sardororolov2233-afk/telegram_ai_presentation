@@ -117,3 +117,33 @@ async def send_url_document_to_telegram(
 
     return True
 
+
+async def send_document(
+    telegram_id: int,
+    file_path: str,
+    caption: str = "",
+) -> bool:
+    if not os.path.exists(file_path):
+        print(f"[Telegram] File not found: {file_path}")
+        return False
+
+    async with httpx.AsyncClient(timeout=180.0) as client:
+        try:
+            file_name = os.path.basename(file_path)
+            with open(file_path, "rb") as f:
+                res_doc = await client.post(
+                    f"{TELEGRAM_API}/sendDocument",
+                    data={
+                        "chat_id": str(telegram_id),
+                        "caption": caption,
+                    },
+                    files={"document": (file_name, f)},
+                )
+                res_doc.raise_for_status()
+            return True
+        except Exception as e:
+            text = getattr(e, 'response', None)
+            text = text.text if text else ''
+            print(f"[Telegram] Error sending document: {e}. {text}")
+            return False
+

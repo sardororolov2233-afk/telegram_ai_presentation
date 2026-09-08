@@ -74,9 +74,9 @@ class PresentationPipeline:
         elif is_pro:
             # Pro image generation logic
             try:
-                from app.services.presentation.pro_image_fetcher import fetch_pro_images_with_gemini
+                from app.services.presentation.pro_image_fetcher import fetch_pro_images_with_flux
                 kw_to_fetch = pro_keywords if 'pro_keywords' in locals() else [f"{topic} professional presentation"] * 5
-                final_images = await fetch_pro_images_with_gemini(kw_to_fetch[:5])
+                final_images = await fetch_pro_images_with_flux(kw_to_fetch[:5])
             except Exception as e:
                 print(f"[Pipeline] PRO Rasm yuklash xatosi: {e}")
                 final_images = []

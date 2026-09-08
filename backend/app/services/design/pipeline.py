@@ -6,7 +6,7 @@ Oqim:
   2. FLUX.2 Klein 4B → optimallashtirilgan prompt asosida 3 ta rasm yaratish (~$0.045)
   3. Telegram → yaratilgan rasmlarni foydalanuvchiga yuborish
   
-Jami xarajat: ~580 so'm | Foydalanuvchi to'lovi: 2000 so'm | Foyda: ~1420 so'm
+Jami xarajat: ~580 so'm | Foydalanuvchi to'lovi: 5000 so'm | Foyda: ~4420 so'm
 """
 import asyncio
 import os

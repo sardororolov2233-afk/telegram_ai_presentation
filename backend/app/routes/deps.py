@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.utils.telegram_auth import decode_access_token
 
 security = HTTPBearer()
+security_optional = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
@@ -36,6 +37,31 @@ async def get_current_user(
         )
 
     return resp.data[0]
+
+
+async def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_optional),
+    db: Client = Depends(get_db),
+) -> dict | None:
+    if not credentials:
+        return None
+    token = credentials.credentials
+    telegram_id = decode_access_token(token)
+    if not telegram_id:
+        return None
+
+    try:
+        resp = await asyncio.to_thread(
+            db.table("users")
+            .select("*")
+            .eq("telegram_id", telegram_id)
+            .execute
+        )
+        if resp.data and resp.data[0].get("is_active"):
+            return resp.data[0]
+    except Exception as e:
+        print(f"[get_current_user_optional] DB error: {e}")
+    return None
 
 
 async def require_admin(user: dict = Depends(get_current_user)) -> dict:

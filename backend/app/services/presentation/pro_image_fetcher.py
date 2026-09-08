@@ -1,24 +1,28 @@
 import base64
-import json
+import os
+import uuid
+import httpx
+import asyncio
 import re
+from app.core.config import settings
+from app.services.presentation.image_fetcher import fetch_image_for_topic, IMAGES_DIR
 
-async def fetch_pro_images_with_gemini(keywords: list) -> list:
-    """
-    OpenRouter API yordamida google/gemini-2.5-flash-image modeli orqali rasmlar yaratadi.
-    Agar xato bersa, Pollinations'ga fallback qiladi.
-    """
-    import asyncio
-    import os
-    import uuid
-    import httpx
-    from app.core.config import settings
-    # image_fetcher ga qaramlikdan saqlanish
-    from app.services.presentation.image_fetcher import fetch_image_for_topic, IMAGES_DIR
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = "llama-3.3-70b-versatile"
+OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+FLUX_MODEL = "black-forest-labs/flux.2-pro"
 
-    api_key = settings.OPENROUTER_API_KEY
-    if not api_key:
-        print("[ImageFetcher] OpenRouter API kaliti yo'q. Standart usulga o'tilmoqda.")
-        # fallback
+async def fetch_pro_images_with_flux(keywords: list) -> list:
+    """
+    Groq orqali slayd matni uchun inglizcha prompt yaratadi va
+    OpenRouter API yordamida FLUX.2 Pro modeli orqali rasmlar yaratadi.
+    Agar xato bersa, standart image fetcher'ga fallback qiladi.
+    """
+    groq_api_key = settings.GROQ_API_KEY
+    or_api_key = settings.OPENROUTER_API_KEY
+    
+    if not groq_api_key or not or_api_key:
+        print("[ImageFetcher] Groq yoki OpenRouter API kaliti yo'q. Standart usulga o'tilmoqda.")
         tasks = [fetch_image_for_topic(q, i) for i, q in enumerate(keywords)]
         return await asyncio.gather(*tasks)
 
@@ -29,66 +33,117 @@ async def fetch_pro_images_with_gemini(keywords: list) -> list:
         async with sem:
             await asyncio.sleep(idx * 2) # rate limitdan qochish
             try:
-                payload = {
-                    "model": "google/gemini-2.5-flash", 
-                    # Eslatma: Gemini 2.5 Flash yopilgan bo'lishi mumkinligi uchun prompt maxsus qilingan. 
-                    # "google/gemini-2.5-flash" rasm generatori emas, lekin multimodal. 
-                    # Openrouter'ning rasm modeli esa misol uchun openai/dall-e-3. Lekin user qat'iy Google talab qilgan.
-                    # Aslida model: google/gemini-2.5-flash ni beramiz, lekin o'zi tekst chiqaradi odatda.
-                    # Qidiruv malumotiga kora model nomi: google/gemini-2.5-flash-image.
-                    "messages": [{"role": "user", "content": f"Generate a highly detailed, professional, high-resolution photograph for a presentation slide about: {q}. ONLY output the image or image markdown. Do not describe it."}],
-                }
-                
-                payload["model"] = "google/gemini-2.5-flash-image"
-
-                headers = {
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                }
-                
-                async with httpx.AsyncClient(timeout=60) as client:
-                    resp = await client.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
-                    resp.raise_for_status()
-                    data = resp.json()
-                    content = data["choices"][0]["message"].get("content", "")
+                async with httpx.AsyncClient(timeout=90) as client:
+                    # 1. Groq orqali prompt yaratish
+                    groq_payload = {
+                        "model": GROQ_MODEL,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are an expert prompt engineer. You will receive a text or keyword from a presentation slide. Your task is to write a highly detailed, professional, high-resolution English prompt for FLUX.2 Pro to generate a suitable illustration/photograph for this slide. Do not include any text in the image. Output ONLY the prompt text, no explanations."
+                            },
+                            {
+                                "role": "user",
+                                "content": str(q)
+                            }
+                        ],
+                        "temperature": 0.7,
+                        "max_tokens": 250,
+                    }
                     
-                    # 1: Markdown link qidirish ![alt](url)
+                    groq_resp = await client.post(
+                        GROQ_API_URL, 
+                        json=groq_payload, 
+                        headers={"Authorization": f"Bearer {groq_api_key}", "Content-Type": "application/json"}
+                    )
+                    groq_resp.raise_for_status()
+                    english_prompt = groq_resp.json()["choices"][0]["message"]["content"].strip()
+                    print(f"[ImageFetcher] Groq prompt ({idx}): {english_prompt[:100]}...")
+
+                    # 2. FLUX.2 Pro orqali rasm yaratish
+                    flux_payload = {
+                        "model": FLUX_MODEL,
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": english_prompt
+                            }
+                        ],
+                        "modalities": ["image"],
+                    }
+                    
+                    flux_headers = {
+                        "Authorization": f"Bearer {or_api_key}",
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "https://orzu-two.vercel.app",
+                        "X-Title": "Yordamchi AI Presentation Generator",
+                    }
+                    
+                    flux_resp = await client.post(
+                        OPENROUTER_API_URL, 
+                        json=flux_payload, 
+                        headers=flux_headers
+                    )
+                    flux_resp.raise_for_status()
+                    data = flux_resp.json()
+                    message = data["choices"][0]["message"]
+                    
+                    filename = f"pro_{uuid.uuid4().hex}.jpg"
+                    img_path = os.path.join(IMAGES_DIR, filename)
+
+                    # Rasmni olish strategiyasi
+                    if "images" in message and message["images"]:
+                        img_url = message["images"][0].get("image_url", {}).get("url", "")
+                        if img_url.startswith("data:image"):
+                            b64_data = img_url.split(",", 1)[1]
+                            with open(img_path, "wb") as f:
+                                f.write(base64.b64decode(b64_data))
+                            return img_path
+                        elif img_url:
+                            img_resp = await client.get(img_url, timeout=30)
+                            if img_resp.status_code == 200:
+                                with open(img_path, "wb") as f:
+                                    f.write(img_resp.content)
+                                return img_path
+
+                    content = message.get("content", "") or ""
+
                     img_match = re.search(r"!\[.*?\]\((.*?)\)", content)
                     if img_match:
                         img_url = img_match.group(1)
                         if img_url.startswith("data:image"):
-                            # Base64 inline
-                            b64_data = img_url.split(",")[1]
-                            img_path = os.path.join(IMAGES_DIR, f"pro_{uuid.uuid4().hex}.jpg")
+                            b64_data = img_url.split(",", 1)[1]
                             with open(img_path, "wb") as f:
                                 f.write(base64.b64decode(b64_data))
                             return img_path
                         else:
-                            # Standard URL download
-                            img_resp = await client.get(img_url)
-                            img_path = os.path.join(IMAGES_DIR, f"pro_{uuid.uuid4().hex}.jpg")
-                            with open(img_path, "wb") as f:
-                                f.write(img_resp.content)
-                            return img_path
-                            
-                    # 2: Xom base64 qaytargan bo'lsa
-                    b64_match = re.search(r"data:image/.*?;base64,([A-Za-z0-9+/=]+)", content)
-                    if not b64_match:
-                        # Quruq base64 bo'lishi ham mumkin
-                        if len(content) > 100 and not " " in content[:100] and content.startswith("/9j/"): # JPEG sarlavhasi
-                            b64_data = content
-                        else:
-                            # Hech qanday rasm topilmadi. Fallback qilinadi
-                            raise ValueError("Gemini rasm qaytarmadi: " + content[:50])
-                    else:
+                            img_resp = await client.get(img_url, timeout=30)
+                            if img_resp.status_code == 200:
+                                with open(img_path, "wb") as f:
+                                    f.write(img_resp.content)
+                                return img_path
+
+                    b64_match = re.search(r"data:image/[^;]+;base64,([A-Za-z0-9+/=]+)", content)
+                    if b64_match:
                         b64_data = b64_match.group(1)
-                        
-                    img_path = os.path.join(IMAGES_DIR, f"pro_{uuid.uuid4().hex}.jpg")
-                    with open(img_path, "wb") as f:
-                        f.write(base64.b64decode(b64_data))
-                    return img_path
+                        with open(img_path, "wb") as f:
+                            f.write(base64.b64decode(b64_data))
+                        return img_path
+
+                    if len(content) > 200 and " " not in content[:200]:
+                        try:
+                            raw_bytes = base64.b64decode(content)
+                            if raw_bytes[:2] == b'\xff\xd8' or raw_bytes[:4] == b'\x89PNG':
+                                with open(img_path, "wb") as f:
+                                    f.write(raw_bytes)
+                                return img_path
+                        except Exception:
+                            pass
+
+                    raise ValueError("FLUX rasm qaytarmadi: " + content[:50])
+
             except Exception as e:
-                print(f"[ImageFetcher] Gemini Xatosi ({q}): {e}. Fallback ishlatilmoqda.")
+                print(f"[ImageFetcher] FLUX/Groq Xatosi ({str(q)[:30]}): {e}. Fallback ishlatilmoqda.")
                 return await fetch_image_for_topic(q, idx)
 
     tasks = [_fetch(q, idx) for idx, q in enumerate(keywords)]
@@ -101,5 +156,5 @@ async def fetch_pro_images_with_gemini(keywords: list) -> list:
         else:
             images.append(None)
     
-    print(f"[ImageFetcher] PRO rejim: {sum(1 for i in images if i)} ta rasm olindi.")
+    print(f"[ImageFetcher] PRO rejim (FLUX): {sum(1 for i in images if i)} ta rasm olindi.")
     return images
