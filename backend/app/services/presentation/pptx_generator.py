@@ -395,12 +395,31 @@ async def generate_pro_pptx(
     from pptx import Presentation
     import os
     import re
+    import asyncio
     TEMPLATE_PATH = _get_pro_template_path(pro_design, pro_design_variant)
 
     if not os.path.exists(TEMPLATE_PATH):
         raise FileNotFoundError(f"PRO Shablon topilmadi: {TEMPLATE_PATH}")
         
     print(f"[PptxGen] PRO Shablon ochilmoqda: {TEMPLATE_PATH}")
+
+    if pro_design == "biologiya":
+        from .fill_template import fill_template
+        # Convert user_images list into a dict for fill_template
+        images_dict = {}
+        if user_images:
+            for i, img_path in enumerate(user_images):
+                if img_path and os.path.exists(img_path):
+                    # For biology, image placeholders might map to image_1, image_2...
+                    # Usually, image_3 to image_13 are content placeholders. We'll map them sequentially
+                    # But if we just map sequentially starting from 3... Let's just use what's available
+                    # The instructions say: "Kontent uchun image_3 ... image_13 ni ishlating."
+                    images_dict[f"image_{i+3}"] = img_path
+        
+        await asyncio.to_thread(fill_template, TEMPLATE_PATH, slides_data, output_path, images_dict, False)
+        # Using Presentation just to count slides easily, or assume 20 slides
+        return output_path, 20
+
     prs = Presentation(TEMPLATE_PATH)
     
     # 1. ORTIQCHA SLAYDLAR VA ELEMENTLARNI TOZALASH

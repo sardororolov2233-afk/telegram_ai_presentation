@@ -435,6 +435,7 @@ class AIContentGenerator:
         pro_plan_count: int,
         pro_bibliography_type: str,
         pro_bibliography_text: Optional[str],
+        pro_design: Optional[str] = None,
     ) -> tuple[dict, list[str]]:
         
         lang_map = {
@@ -444,66 +445,70 @@ class AIContentGenerator:
         }
         lang_name = lang_map.get(language, "Uzbek")
         
-        schema_dict = {
-            "topic": f"The main topic of the presentation (Topic: {topic})",
-            "ism_sharif": f"Author name: {author}",
-            "ism_familya": f"Author name: {author}",
-            "muallif": f"Author name: {author}",
-            "reja": "The section title for 'Reja' (Agenda)",
-            "kirish": "The section title for 'Kirish' (Introduction)",
-            "kirish_matni": "Highly detailed and very long comprehensive introduction lecture text (300-450 words) exploring the core of the topic deeply.",
-            "fraza": "A powerful quote, principle, or central phrase relevant to the presentation.",
-            "xulosa": "The section title for 'Xulosa' (Conclusion)",
-            "xulosa_matni": "Highly detailed and very long conclusion paragraph summarizing the key takeaways profoundly (300-450 words).",
-            "yakun": "A brief final sentence or thank you note to conclude the presentation.",
-            "adabiyotlar": "The section title for 'Adabiyotlar' (References)",
-            "adabiyotlar_ro_yxati": "Detailed list of used references and sources.",
+        if pro_design == "biologiya":
+            from .schema_20_slayd import build_schema
+            schema_dict = build_schema(topic, author, pro_plan_count)
+        else:
+            schema_dict = {
+                "topic": f"The main topic of the presentation (Topic: {topic})",
+                "ism_sharif": f"Author name: {author}",
+                "ism_familya": f"Author name: {author}",
+                "muallif": f"Author name: {author}",
+                "reja": "The section title for 'Reja' (Agenda)",
+                "kirish": "The section title for 'Kirish' (Introduction)",
+                "kirish_matni": "Highly detailed and very long comprehensive introduction lecture text (300-450 words) exploring the core of the topic deeply.",
+                "fraza": "A powerful quote, principle, or central phrase relevant to the presentation.",
+                "xulosa": "The section title for 'Xulosa' (Conclusion)",
+                "xulosa_matni": "Highly detailed and very long conclusion paragraph summarizing the key takeaways profoundly (300-450 words).",
+                "yakun": "A brief final sentence or thank you note to conclude the presentation.",
+                "adabiyotlar": "The section title for 'Adabiyotlar' (References)",
+                "adabiyotlar_ro_yxati": "Detailed list of used references and sources.",
+                
+                "fakt_1": "First key fact or concept (short, 2-5 words)",
+                "fakt_1_asosi": "Deep explanation or basis of fact 1 (120-150 words)",
+                "fakt_2": "Second key fact or concept (short, 2-5 words)",
+                "fakt_2_asosi": "Deep explanation or basis of fact 2 (120-150 words)",
+                "fakt_3": "Third key fact or concept (short, 2-5 words)",
+                "fakt_3_asosi": "Detailed explanation or basis of fact 3 (60-120 words)",
+                
+                "analiz": "The section title for Analysis or Metrics",
+                "analiz_ustunlari_1": "1st key metric, percentage, or indicator with short context",
+                "analiz_ustunlari_2": "2nd key metric, percentage, or indicator with short context",
+                "analiz_ustunlari_3": "3rd key metric, percentage, or indicator with short context",
+                "analiz_ustunlari_4": "4th key metric, percentage, or indicator with short context",
+                
+                "line_graph_topic": "Topic or title for a line graph trend analysis",
+                "birinchi_liniya": "1st item/trend line category",
+                "birinchi_liniya_sharxi": "Deep explanation of the 1st trend/item (80-150 words)",
+                "ikkinchi_liniya": "2nd item/trend line category",
+                "ikkinchi_liniya_sharxi": "Deep explanation of the 2nd trend/item (80-150 words)",
+                "uchinchi_liniya": "3rd item/trend line category",
+                "uchinchi_liniya_sharxi": "Deep explanation of the 3rd trend/item (80-150 words)",
+                
+                "gorizantal": "Title for a horizontal comparison or feature",
+                "gorizantal_fakt": "A specific fact related to the horizontal aspect",
+                "gorizantal_reason": "Deep reasoning or deep analysis for this aspect (80-150 words)",
+                "vertikal": "Title for a vertical comparison or feature",
+                "vertikal_fakt": "A specific fact related to the vertical aspect",
+                "vertikal_reason": "Deep reasoning or deep analysis for this aspect (80-150 words)",
+                
+                "positiv": "Positive aspects, advantages, or opportunities (very detailed, 100-200 words)",
+                "negative": "Negative aspects, disadvantages, or threats (very detailed, 100-200 words)",
+                
+                "photo_name": "A short descriptive name for the presentation's visual theme",
+                "image_keywords": [
+                     f"keyword 1 (English, highly specific real-life stock photo concept related to '{topic}')", 
+                     "keyword 2", 
+                     "keyword 3", 
+                     "keyword 4", 
+                     "keyword 5"
+                ]
+            }
             
-            "fakt_1": "First key fact or concept (short, 2-5 words)",
-            "fakt_1_asosi": "Deep explanation or basis of fact 1 (120-150 words)",
-            "fakt_2": "Second key fact or concept (short, 2-5 words)",
-            "fakt_2_asosi": "Deep explanation or basis of fact 2 (120-150 words)",
-            "fakt_3": "Third key fact or concept (short, 2-5 words)",
-            "fakt_3_asosi": "Detailed explanation or basis of fact 3 (60-120 words)",
-            
-            "analiz": "The section title for Analysis or Metrics",
-            "analiz_ustunlari_1": "1st key metric, percentage, or indicator with short context",
-            "analiz_ustunlari_2": "2nd key metric, percentage, or indicator with short context",
-            "analiz_ustunlari_3": "3rd key metric, percentage, or indicator with short context",
-            "analiz_ustunlari_4": "4th key metric, percentage, or indicator with short context",
-            
-            "line_graph_topic": "Topic or title for a line graph trend analysis",
-            "birinchi_liniya": "1st item/trend line category",
-            "birinchi_liniya_sharxi": "Deep explanation of the 1st trend/item (80-150 words)",
-            "ikkinchi_liniya": "2nd item/trend line category",
-            "ikkinchi_liniya_sharxi": "Deep explanation of the 2nd trend/item (80-150 words)",
-            "uchinchi_liniya": "3rd item/trend line category",
-            "uchinchi_liniya_sharxi": "Deep explanation of the 3rd trend/item (80-150 words)",
-            
-            "gorizantal": "Title for a horizontal comparison or feature",
-            "gorizantal_fakt": "A specific fact related to the horizontal aspect",
-            "gorizantal_reason": "Deep reasoning or deep analysis for this aspect (80-150 words)",
-            "vertikal": "Title for a vertical comparison or feature",
-            "vertikal_fakt": "A specific fact related to the vertical aspect",
-            "vertikal_reason": "Deep reasoning or deep analysis for this aspect (80-150 words)",
-            
-            "positiv": "Positive aspects, advantages, or opportunities (very detailed, 100-200 words)",
-            "negative": "Negative aspects, disadvantages, or threats (very detailed, 100-200 words)",
-            
-            "photo_name": "A short descriptive name for the presentation's visual theme",
-            "image_keywords": [
-                 f"keyword 1 (English, highly specific real-life stock photo concept related to '{topic}')", 
-                 "keyword 2", 
-                 "keyword 3", 
-                 "keyword 4", 
-                 "keyword 5"
-            ]
-        }
-        
-        # Add dynamic Reja fields strictly up to pro_plan_count
-        for i in range(1, pro_plan_count + 1):
-            schema_dict[f"reja_{i}"] = f"Title for plan/agenda item {i} (2-5 words)"
-            schema_dict[f"reja_{i}_matni"] = f"Extremely detailed, in-depth academic lecture text for plan item {i} (350-500 words). Expand as much as possible."
+            # Add dynamic Reja fields strictly up to pro_plan_count
+            for i in range(1, pro_plan_count + 1):
+                schema_dict[f"reja_{i}"] = f"Title for plan/agenda item {i} (2-5 words)"
+                schema_dict[f"reja_{i}_matni"] = f"Extremely detailed, in-depth academic lecture text for plan item {i} (350-500 words). Expand as much as possible."
             
         json_schema_str = json.dumps(schema_dict, indent=2, ensure_ascii=False)
 

@@ -41,8 +41,9 @@ class PresentationPipeline:
         presentation_id = str(uuid.uuid4())[:12]
         pptx_path = f"{PRESENTATIONS_DIR}/{presentation_id}.pptx"
         final_doc_path = ""
-
         if is_pro:
+            if pro_design == "biologiya":
+                pro_plan_count = 4
             print(f"[Pipeline] AI mazmun generatsiya (PRO): '{topic}' | Shablon: {pro_design} #{pro_design_variant}")
             slides_dict, pro_keywords = await self.ai.generate_pro_slides(
                 topic=topic,
@@ -51,6 +52,7 @@ class PresentationPipeline:
                 pro_plan_count=pro_plan_count,
                 pro_bibliography_type=pro_bibliography_type,
                 pro_bibliography_text=pro_bibliography_text,
+                pro_design=pro_design,
             )
             slides = slides_dict # For compatibility with other parts if needed
             print(f"[Pipeline] PRO rejimda ma'lumotlar generatsiya qilindi | Bo'lim: {pro_design}, Variant: #{pro_design_variant}")
@@ -75,8 +77,10 @@ class PresentationPipeline:
             # Pro image generation logic
             try:
                 from app.services.presentation.pro_image_fetcher import fetch_pro_images_with_flux
-                kw_to_fetch = pro_keywords if 'pro_keywords' in locals() else [f"{topic} professional presentation"] * 5
-                final_images = await fetch_pro_images_with_flux(kw_to_fetch[:5])
+                kw_to_fetch = pro_keywords if 'pro_keywords' in locals() else [f"{topic} professional presentation"] * 13
+                fetch_limit = 11 if pro_design == "biologiya" else 5
+                
+                final_images = await fetch_pro_images_with_flux(kw_to_fetch[:fetch_limit])
             except Exception as e:
                 print(f"[Pipeline] PRO Rasm yuklash xatosi: {e}")
                 final_images = []
