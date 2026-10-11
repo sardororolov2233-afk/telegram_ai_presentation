@@ -1,0 +1,665 @@
+{
+  "version": 1,
+  "subject": "minimalizm",
+  "variant": 1,
+  "label": "Minimalizm",
+  "source_name": "Blue Grey Abstract Minimalist Presentation.pptx",
+  "source_bytes": 450430,
+  "template": "id_1.pptx",
+  "slide_count": 20,
+  "plan_count": 4,
+  "size_bytes": 255606,
+  "fields": {
+    "topic": {
+      "kind": "title",
+      "max_chars": 11,
+      "description": "Mavzuning qisqa nomi, mazmunini saqlang."
+    },
+    "muallif": {
+      "kind": "label",
+      "max_chars": 42,
+      "description": "Foydalanuvchi bergan ism-familiya."
+    },
+    "yakun": {
+      "kind": "title",
+      "max_chars": 12,
+      "description": "Qisqa minnatdorchilik."
+    },
+    "reja": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 2,
+      "role": "agenda",
+      "section": null,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "reja_1": {
+      "kind": "label",
+      "max_chars": 36,
+      "section": 1,
+      "description": "Mavzuga mos reja bandi."
+    },
+    "reja_2": {
+      "kind": "label",
+      "max_chars": 36,
+      "section": 2,
+      "description": "Mavzuga mos reja bandi."
+    },
+    "reja_3": {
+      "kind": "label",
+      "max_chars": 36,
+      "section": 3,
+      "description": "Mavzuga mos reja bandi."
+    },
+    "reja_4": {
+      "kind": "label",
+      "max_chars": 36,
+      "section": 4,
+      "description": "Mavzuga mos reja bandi."
+    },
+    "s03_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 3,
+      "role": "introduction",
+      "section": null,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s03_text_1": {
+      "kind": "text",
+      "max_chars": 212,
+      "slide": 3,
+      "role": "introduction",
+      "section": null,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s04_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 4,
+      "role": "concept",
+      "section": 1,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s04_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 4,
+      "role": "concept",
+      "section": 1,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s04_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 4,
+      "role": "concept",
+      "section": 1,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s05_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 5,
+      "role": "explanation",
+      "section": 1,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s05_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 5,
+      "role": "explanation",
+      "section": 1,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s05_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 5,
+      "role": "explanation",
+      "section": 1,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s06_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 6,
+      "role": "example",
+      "section": 1,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s06_text_1": {
+      "kind": "text",
+      "max_chars": 187,
+      "slide": 6,
+      "role": "example",
+      "section": 1,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s07_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 7,
+      "role": "concept",
+      "section": 2,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s07_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 7,
+      "role": "concept",
+      "section": 2,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s07_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 7,
+      "role": "concept",
+      "section": 2,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s08_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 8,
+      "role": "explanation",
+      "section": 2,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s08_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 8,
+      "role": "explanation",
+      "section": 2,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s08_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 8,
+      "role": "explanation",
+      "section": 2,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s09_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 9,
+      "role": "example",
+      "section": 2,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s09_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 9,
+      "role": "example",
+      "section": 2,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s09_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 9,
+      "role": "example",
+      "section": 2,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s10_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 10,
+      "role": "concept",
+      "section": 3,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s10_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 10,
+      "role": "concept",
+      "section": 3,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s10_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 10,
+      "role": "concept",
+      "section": 3,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s11_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 11,
+      "role": "explanation",
+      "section": 3,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s11_text_1": {
+      "kind": "text",
+      "max_chars": 187,
+      "slide": 11,
+      "role": "explanation",
+      "section": 3,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s12_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 12,
+      "role": "example",
+      "section": 3,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s12_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 12,
+      "role": "example",
+      "section": 3,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s12_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 12,
+      "role": "example",
+      "section": 3,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s13_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 13,
+      "role": "concept",
+      "section": 4,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s13_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 13,
+      "role": "concept",
+      "section": 4,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s13_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 13,
+      "role": "concept",
+      "section": 4,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s14_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 14,
+      "role": "explanation",
+      "section": 4,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s14_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 14,
+      "role": "explanation",
+      "section": 4,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s14_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 14,
+      "role": "explanation",
+      "section": 4,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s15_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 15,
+      "role": "example",
+      "section": 4,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s15_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 15,
+      "role": "example",
+      "section": 4,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s15_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 15,
+      "role": "example",
+      "section": 4,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s16_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 16,
+      "role": "application",
+      "section": null,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s16_text_1": {
+      "kind": "text",
+      "max_chars": 187,
+      "slide": 16,
+      "role": "application",
+      "section": null,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s17_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 17,
+      "role": "conclusion",
+      "section": null,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s17_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 17,
+      "role": "conclusion",
+      "section": null,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s17_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 17,
+      "role": "conclusion",
+      "section": null,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s18_title": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 18,
+      "role": "questions",
+      "section": null,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "s18_text_1": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 18,
+      "role": "questions",
+      "section": null,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "s18_text_2": {
+      "kind": "text",
+      "max_chars": 91,
+      "slide": 18,
+      "role": "questions",
+      "section": null,
+      "description": "Shu slaydga tegishli alohida izoh. Qo‘shni blok mazmunini takrorlamang."
+    },
+    "adabiyotlar": {
+      "kind": "title",
+      "max_chars": 11,
+      "slide": 19,
+      "role": "references",
+      "section": null,
+      "description": "Slayd mazmunini bildiruvchi qisqa sarlavha."
+    },
+    "adabiyotlar_ro_yxati": {
+      "kind": "references",
+      "role": "references",
+      "max_chars": 351,
+      "slide": 19,
+      "description": "3–4 ta haqiqiy yoki foydalanuvchi bergan manba. Har biri yangi qatorda. Soxta manba yoki URL yozmang."
+    }
+  },
+  "slides": [
+    {
+      "number": 1,
+      "role": "cover",
+      "section": null,
+      "source_slide": 1,
+      "text_keys": [
+        "topic",
+        "muallif"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 2,
+      "role": "agenda",
+      "section": null,
+      "source_slide": 2,
+      "text_keys": [
+        "reja",
+        "reja_1",
+        "reja_2",
+        "reja_3",
+        "reja_4"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 3,
+      "role": "introduction",
+      "section": null,
+      "source_slide": 2,
+      "text_keys": [
+        "s03_title",
+        "s03_text_1"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 4,
+      "role": "concept",
+      "section": 1,
+      "source_slide": 3,
+      "text_keys": [
+        "s04_title",
+        "s04_text_1",
+        "s04_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 5,
+      "role": "explanation",
+      "section": 1,
+      "source_slide": 4,
+      "text_keys": [
+        "s05_title",
+        "s05_text_1",
+        "s05_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 6,
+      "role": "example",
+      "section": 1,
+      "source_slide": 7,
+      "text_keys": [
+        "s06_title",
+        "s06_text_1"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 7,
+      "role": "concept",
+      "section": 2,
+      "source_slide": 8,
+      "text_keys": [
+        "s07_title",
+        "s07_text_1",
+        "s07_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 8,
+      "role": "explanation",
+      "section": 2,
+      "source_slide": 9,
+      "text_keys": [
+        "s08_title",
+        "s08_text_1",
+        "s08_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 9,
+      "role": "example",
+      "section": 2,
+      "source_slide": 3,
+      "text_keys": [
+        "s09_title",
+        "s09_text_1",
+        "s09_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 10,
+      "role": "concept",
+      "section": 3,
+      "source_slide": 4,
+      "text_keys": [
+        "s10_title",
+        "s10_text_1",
+        "s10_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 11,
+      "role": "explanation",
+      "section": 3,
+      "source_slide": 7,
+      "text_keys": [
+        "s11_title",
+        "s11_text_1"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 12,
+      "role": "example",
+      "section": 3,
+      "source_slide": 8,
+      "text_keys": [
+        "s12_title",
+        "s12_text_1",
+        "s12_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 13,
+      "role": "concept",
+      "section": 4,
+      "source_slide": 9,
+      "text_keys": [
+        "s13_title",
+        "s13_text_1",
+        "s13_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 14,
+      "role": "explanation",
+      "section": 4,
+      "source_slide": 3,
+      "text_keys": [
+        "s14_title",
+        "s14_text_1",
+        "s14_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 15,
+      "role": "example",
+      "section": 4,
+      "source_slide": 4,
+      "text_keys": [
+        "s15_title",
+        "s15_text_1",
+        "s15_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 16,
+      "role": "application",
+      "section": null,
+      "source_slide": 7,
+      "text_keys": [
+        "s16_title",
+        "s16_text_1"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 17,
+      "role": "conclusion",
+      "section": null,
+      "source_slide": 9,
+      "text_keys": [
+        "s17_title",
+        "s17_text_1",
+        "s17_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 18,
+      "role": "questions",
+      "section": null,
+      "source_slide": 4,
+      "text_keys": [
+        "s18_title",
+        "s18_text_1",
+        "s18_text_2"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 19,
+      "role": "references",
+      "section": null,
+      "source_slide": 2,
+      "text_keys": [
+        "adabiyotlar",
+        "adabiyotlar_ro_yxati"
+      ],
+      "image_keys": []
+    },
+    {
+      "number": 20,
+      "role": "closing",
+      "section": null,
+      "source_slide": 10,
+      "text_keys": [
+        "yakun"
+      ],
+      "image_keys": []
+    }
+  ],
+  "image_slots": []
+}

@@ -1,0 +1,11 @@
+{
+  "label": "Marketing",
+  "guidance": "Mahsulot yoki xizmat, auditoriya va marketing maqsadini aniq belgilang. Mijoz muammosi, taklif, kanal va natija mezonini bog‘lang. Kampaniya rejasida budjet, davr va o‘lchov usulini ko‘rsating. CTR, konversiya va boshqa ko‘rsatkichlarda formula hamda birlikni ajrating. Misol uchun berilgan raqamlarni faraz deb belgilang. O‘ylab topilgan mijoz izohi, natija, bozor ulushi yoki platforma statistikasi bermang. Natijani kafolatlamang.",
+  "sections": [
+    "Auditoriya va ehtiyoj",
+    "Taklif va pozitsiyalash",
+    "Kanallar va kampaniya",
+    "Budjet va natija mezonlari"
+  ],
+  "image_rule": "Mavzudagi mahsulot, auditoriya yoki marketing jarayoniga mos foto. Mahsulot fotosi foydalanuvchi bergan bo‘lsa uni saqlang. Generativ tasvirdagi brend, mahsulot yoki raqamni haqiqiy dalil deb ko‘rsatmang."
+}

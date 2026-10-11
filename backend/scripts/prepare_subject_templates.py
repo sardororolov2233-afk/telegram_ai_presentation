@@ -1,4 +1,4 @@
-"""Prepare the five supplied ZIP archives for the bot, preserving OOXML artwork.
+"""Prepare selected supplied ZIP archives for the bot, preserving OOXML artwork.
 
 Usage: python backend/scripts/prepare_subject_templates.py /path/to/uploads
 Offline preparation additionally requires fonttools. Never edits input ZIPs.
@@ -48,7 +48,45 @@ SUBJECTS = {
  "cyber": {"label": "Kiberxavfsizlik", "guidance": "Aktiv, tahdid, zaiflik va himoya choralarini aniq farqlang. Tahdidni real hayotga yaqin, uydirma deb belgilangan vaziyat orqali tushuntiring. Aniqlash, oldini olish va tiklanish ketma-ketligini ko‘rsating. Hujum ko‘rsatmalaridan ko‘ra himoya va ruxsatli laboratoriya ta’limiga e’tibor bering. Statistika va standart raqamini to‘qimang.", "sections": ["Aktivlar va xavfsizlik", "Tahdid va zaifliklar", "Himoya usullari", "Hodisa va tiklanish"], "image_rule": "Mavzuga mos qurilma yoki himoya vaziyati. Shaxsiy ma’lumotlar, haqiqiy parollar va soxta interfeys yozuvlari ko‘rsatilmasin."},
  "huquq": {"label": "Huquq", "guidance": "Mavzu qaysi yurisdiksiyaga tegishli ekanini aniqlang. Mamlakat, hujjat nomi va tahrir sanasi noma’lum bo‘lsa aniq modda raqami yoki amaldagi norma haqida taxmin yozmang. Huquqiy tushuncha, norma, uydirma o‘quv vaziyati va tahlilni ajrating. Huquq va majburiyatni farqlang. Tekshirilmagan sud qarori, jazo miqdori yoki qonun manbasini keltirmang.", "sections": ["Tushuncha va manbalar", "Huquqiy norma", "Vaziyat va tahlil", "Huquqni himoya qilish"], "image_rule": "Huquqiy institut, hujjat yoki kasbiy vaziyatga mos foto. Fotosurat aniq real sud ishi dalili deb talqin qilinmasin."},
  "geografiya": {"label": "Geografiya", "guidance": "Hududning o‘rni va miqyosini ko‘rsating. Tabiiy hamda ijtimoiy jarayonlarni sabab va oqibat bilan tushuntiring. Sonli ko‘rsatkichga birlik, hudud, yil va manba kerak. Xarita uchun koordinata, yo‘nalish va legendani faqat tekshirilgan ma’lumot asosida yozing. Uydirma koordinata yoki xarita bermang. Hududlar solishtirishida bir xil davr va birlikdan foydalaning.", "sections": ["Geografik o‘rin", "Tabiiy sharoit", "Hududiy jarayonlar", "Taqqoslash va muammolar"], "image_rule": "Hudud yoki tabiiy jarayonning haqiqiy fotosi. Ilmiy xaritani generativ foto bilan almashtirmang; xarita uchun foydalanuvchi tasdiqlagan fayl kerak."},
+ "tibbiyot": {"label": "Tibbiyot", "guidance": "O‘quv mazmunida anatomiya, fiziologik jarayon va kasallik belgilarini mavzuga mos ajrating. Terminlarni sodda izohlang. Klinik misol bo‘lsa uni uydirma o‘quv vaziyati deb belgilang. Individual tashxis, dori dozasi yoki shaxsiy davolash tavsiyasini bermang. Kasallik statistikasi, qo‘llanma sanasi va davolash dalillarini faqat tekshirilgan manbaga tayangan holda keltiring. Tekshirilmagan klinik tavsiyani amaldagi qoida sifatida yozmang.", "sections": ["Tushuncha va tuzilish", "Jarayon va mexanizm", "O‘quv vaziyati va tahlil", "Profilaktika va xulosa"], "image_rule": "Mavzuga mos tibbiy jihoz yoki o‘quv vaziyati. Aniq anatomiya, diagnostik tasvir yoki ilmiy sxema kerak bo‘lsa ishonchli manba yoki foydalanuvchi faylidan foydalaning. Generativ tasvirni klinik dalil deb ko‘rsatmang."},
+ "tarix": {"label": "Tarix", "guidance": "Davr, hudud va asosiy voqealarni aniq belgilang. Voqealar ketma-ketligi, sabab va oqibatni farqlang. Birlamchi manba, tarixchi talqini va bahsli taxminni ajrating. Sana, shaxs nomi, iqtibos yoki arxeologik topilmani to‘qimang. Manbalarda farq bo‘lsa uni qisqa ko‘rsating. Tarixiy xarita, davr kiyimi va yodgorlikni tegishli kontekst bilan izohlang.", "sections": ["Davr va tarixiy sharoit", "Asosiy voqealar", "Manba va talqin", "Oqibat va tarixiy ahamiyat"], "image_rule": "Davrga mos yodgorlik, muzey buyumi yoki ishonchli manbali tarixiy surat. Zamonaviy foto va rekonstruksiyani asl voqea tasviri bilan aralashtirmang. Aniq xarita yoki hujjat uchun tekshirilgan fayl kerak."},
+ "sport": {"label": "Sport", "guidance": "Sport turi, asosiy qoida va harakat texnikasini mavzuga mos tushuntiring. Mashq misolini tayyorgarlik darajasi va maqsad bilan bog‘lang. Yuklama, dam olish va jarohatning oldini olishni umumiy o‘quv doirasida izohlang. Shaxsiy tibbiy reja, ekstremal yuklama yoki kafolatlangan natija bermang. Rekord, musobaqa sanasi va qoida tahririni tekshirilgan manbasiz yozmang.", "sections": ["Sport turi va qoidalar", "Texnika va ko‘nikmalar", "Mashg‘ulot va tahlil", "Xavfsizlik va amaliy vazifa"], "image_rule": "Mavzudagi sport turi, anjom yoki mashg‘ulotga mos tasvir. Murabbiy portreti yoki mukofot fotosini haqiqiy mutaxassis va yutuq dalili deb ko‘rsatmang. Harakat texnikasi tasviri mazmun bilan mos bo‘lsin."},
+ "moliya": {"label": "Moliya", "guidance": "Daromad, xarajat, foyda, pul oqimi va moliyaviy riskni aniq farqlang. Har bir raqamga valyuta, birlik va davr bering. Haqiqiy natija, prognoz va o‘quv farazini alohida belgilang. O‘quv hisobida formula va qisqa yechim ko‘rsating. Jami summalar hamda foizlarni tekshiring. Kafolatlangan daromad yoki individual investitsiya tavsiyasi bermang. Bozor narxi, stavka, soliq yoki statistikani tekshirilmagan holda amaldagi raqam sifatida yozmang.", "sections": ["Moliyaviy tushunchalar", "Budjet va pul oqimi", "Hisoblash va tahlil", "Risk va qaror mezonlari"], "image_rule": "Moliyaviy faoliyat yoki ish jarayoniga mos foto. Grafik va hisobot raqamlari generativ rasm ichida yozilmasin. Aniq jadval yoki diagramma uchun tasdiqlangan ma’lumot talab qilinadi."},
+ "minimalizm": {"label": "Minimalizm", "guidance": "Bu universal dizayn uslubi, alohida fan emas. Mazmunni foydalanuvchi mavzusining sohasiga moslang. Har slaydda bitta asosiy fikrni yozing. Qisqa sarlavha, tushunarli izoh va kerakli misoldan foydalaning. Takroriy kirish, shior va ortiqcha terminlarni kamaytiring. Qisqalik uchun muhim shart, birlik yoki manbani tashlab ketmang. Mavzuga aloqasiz bezak ma’nosini fakt sifatida talqin qilmang.", "sections": ["Asosiy tushuncha", "Tuzilish va jarayon", "Misol va taqqoslash", "Amaliy xulosa"], "image_rule": "Faqat mavzuni tushuntirishga yordam beradigan foto. Dekorativ chiziqlar va geometrik naqshlar saqlanadi. Fotosurat maydoni bo‘lmagan variant uchun yangi rasm talab qilinmaydi."},
+ "matematika": {"label": "Matematika", "guidance": "Ta’rif, qo‘llanish sharti va formulani aniq ajrating. Belgilarni tushuntiring, aniqlanish sohasi va kerakli birliklarni ko‘rsating. Bitta yechilgan misolda berilgan, usul, hisoblash va javob ketma-ketligidan foydalaning. Tengliklar hamda yakuniy natijani qayta tekshiring. Isbot va kuzatuvni farqlang. Formula va amallarni matnda Unicode bilan yozing, qo‘llanmaydigan LaTeX yoki markdown bermang. Asldagi dekorativ formulalar mavzu uchun dalil hisoblanmaydi.", "sections": ["Ta’rif va shartlar", "Formula va usul", "Yechilgan misol", "Mashq va tekshirish"], "image_rule": "Mavzuga mos o‘quv anjomi yoki qo‘llanish vaziyati. Formula, aniq geometrik chizma va koordinatali grafik generativ fotosuratdan olinmaydi. Bunday dalil uchun tekshirilgan fayl yoki aniq matn ishlatiladi."},
+ "marketing": {"label": "Marketing", "guidance": "Mahsulot yoki xizmat, auditoriya va marketing maqsadini aniq belgilang. Mijoz muammosi, taklif, kanal va natija mezonini bog‘lang. Kampaniya rejasida budjet, davr va o‘lchov usulini ko‘rsating. CTR, konversiya va boshqa ko‘rsatkichlarda formula hamda birlikni ajrating. Misol uchun berilgan raqamlarni faraz deb belgilang. O‘ylab topilgan mijoz izohi, natija, bozor ulushi yoki platforma statistikasi bermang. Natijani kafolatlamang.", "sections": ["Auditoriya va ehtiyoj", "Taklif va pozitsiyalash", "Kanallar va kampaniya", "Budjet va natija mezonlari"], "image_rule": "Mavzudagi mahsulot, auditoriya yoki marketing jarayoniga mos foto. Mahsulot fotosi foydalanuvchi bergan bo‘lsa uni saqlang. Generativ tasvirdagi brend, mahsulot yoki raqamni haqiqiy dalil deb ko‘rsatmang."},
+ "bolalar": {"label": "Bolalar va ta’lim", "guidance": "Mavzuning auditoriyasini ajrating: bolalar uchun dars yoki kattalar uchun bolalar rivojlanishi haqidagi taqdimot. Yosh va sinf ko‘rsatilgan bo‘lsa ularga mos til va topshiriq bering. Bolalar uchun qisqa gap, bitta aniq harakat va kuzatiladigan o‘quv natijasidan foydalaning. O‘yin va sayohat rejasida kattalar nazorati hamda oddiy xavfsizlik qoidalarini ko‘rsating. Bola rivojlanishini qat’iy yagona me’yor yoki tashxisga aylantirmang. Bola va oila haqidagi shaxsiy ma’lumotlarni to‘qimang.", "sections": ["Mavzu va o‘quv maqsadi", "Tushuncha va namuna", "O‘yin yoki mashq", "Mustahkamlash va fikr almashish"], "image_rule": "Yoshga mos, hurmatli va xavfsiz o‘quv vaziyati. Dekorativ bolalar illustratsiyalari saqlanadi. Haqiqiy bola fotosini tibbiy yoki psixologik tashxis dalili deb talqin qilmang."},
+ "kimyo": {"label": "Kimyo", "guidance": "Modda, tarkib, xossa va kimyoviy jarayonni mavzuga mos ajrating. Formulada indeks, zaryad va koeffitsiyentlarni to‘g‘ri yozing. Reaksiya tenglamasida atomlar va zarur bo‘lsa zaryadlar muvozanatini tekshiring. Shart, birlik va kuzatiladigan belgini ko‘rsating. Miqdoriy o‘quv misolida hisoblash bosqichlari va javob bo‘lsin. Tajriba umumiy o‘quv izohi doirasida qoladi, xavfli amaliy ko‘rsatma bermang. Natija, xavf darajasi va manbani to‘qimang. Unicode indekslardan foydalaning, qo‘llanmaydigan LaTeX bermang.", "sections": ["Modda va tuzilish", "Xossa va qonuniyat", "Reaksiya yoki hisoblash", "Kuzatuv va qo‘llanish"], "image_rule": "Mavzuga mos laboratoriya jihozi yoki xavfsiz o‘quv vaziyati. Molekula tuzilishi, formulalar, reaksiya belgisi va ilmiy sxema generativ fotosuratdan olinmaydi. Dekorativ asboblar dalil sifatida talqin qilinmaydi."},
 }
+
+# Variant numbering is stable within each subject's sorted source filenames.
+SOURCE_ORDERS = dict(zip(
+    [("cyber",1),("cyber",2),("english",1),("english",2),("english",3),
+     ("fizika",1),("fizika",2),("geografiya",1),("geografiya",2),("huquq",1),("huquq",2)],
+    ORDERS,
+))
+SOURCE_ORDERS.update({
+ ("tibbiyot",1): [1,3,2,4,5,6,2,4,5,6,8,10,4,5,6,10,8,9,2,11],
+ ("tibbiyot",2): [1,4,3,4,5,6,7,10,11,3,4,5,6,7,10,5,11,7,4,12],
+ ("tarix",1): [1,3,2,3,4,5,6,8,9,2,3,4,5,6,8,9,8,4,3,10],
+ ("tarix",2): [1,3,2,3,4,5,6,7,9,10,2,3,4,5,6,10,9,7,3,11],
+ ("sport",1): [1,2,3,4,5,6,7,8,9,2,3,4,5,6,7,8,9,4,2,11],
+ ("sport",2): [1,3,2,3,4,5,6,7,8,9,2,3,4,5,6,8,10,7,3,1],
+ ("moliya",1): [1,3,2,3,4,8,9,2,3,4,8,9,2,3,4,8,9,4,3,10],
+ ("moliya",2): [1,3,2,3,4,5,6,7,8,2,3,4,5,6,7,8,3,7,3,10],
+ ("minimalizm",1): [1,2,2,3,4,7,8,9,3,4,7,8,9,3,4,7,9,4,2,10],
+ ("minimalizm",2): [1,3,2,3,4,5,6,7,8,9,2,3,4,5,6,7,10,9,3,11],
+ ("matematika",1): [1,3,3,4,5,6,7,9,10,4,5,6,7,9,10,10,11,4,3,12],
+ ("matematika",2): [1,2,2,4,5,6,7,9,10,4,5,6,7,9,10,6,10,9,2,11],
+ ("marketing",1): [1,2,5,6,7,8,9,10,11,12,13,14,5,6,7,8,11,12,2,15],
+ ("marketing",2): [1,17,2,3,4,5,6,7,8,9,10,11,12,13,14,15,18,19,17,20],
+ ("bolalar",1): [1,2,2,3,4,5,6,7,8,9,2,3,4,5,6,7,10,8,2,11],
+ ("bolalar",2): [1,3,4,5,6,7,8,9,10,11,12,13,5,5,6,7,15,9,4,16],
+ ("bolalar",3): [1,2,3,4,5,6,7,8,9,3,4,5,6,7,8,9,5,3,5,10],
+ ("kimyo",1): [1,10,2,3,4,5,6,7,8,9,3,4,5,6,7,9,10,8,2,11],
+ ("kimyo",2): [1,2,2,3,4,5,6,7,9,3,4,5,6,7,9,5,7,6,2,10],
+ ("kimyo",3): [1,2,2,3,4,6,7,8,9,3,4,6,7,8,9,6,10,4,2,11],
+})
 
 
 def xml(root):
@@ -60,7 +98,9 @@ def text(shape):
 
 
 def size(shape):
-    sizes = shape.xpath(".//a:rPr/@sz|.//a:defRPr/@sz", namespaces=NS)
+    # An explicit run size overrides its paragraph default. Using both here
+    # would retain the old large source size after a title was capped.
+    sizes = shape.xpath(".//a:rPr/@sz", namespaces=NS) or shape.xpath(".//a:defRPr/@sz", namespaces=NS)
     return max([int(n) / 100 for n in sizes] or [24])
 
 
@@ -97,6 +137,64 @@ def set_text(shape, value, cap=None):
             if ET.QName(node).localname in ("noAutofit", "normAutofit", "spAutoFit"):
                 props.remove(node)
         ET.SubElement(props, "{" + NS["a"] + "}normAutofit")
+
+
+def text_color(shape, color):
+    for props in shape.xpath(".//a:rPr|.//a:defRPr", namespaces=NS):
+        for fill in list(props):
+            if ET.QName(fill).localname in ("solidFill", "gradFill", "noFill"):
+                props.remove(fill)
+        fill = ET.Element("{" + NS["a"] + "}solidFill")
+        ET.SubElement(fill, "{" + NS["a"] + "}srgbClr", val=color)
+        props.insert(0, fill)
+
+
+def merge_heading_boxes(heading, active, slide_width, cover=False):
+    """Reuse adjacent source title fragments as one box, keeping its style."""
+    xf = heading.find("p:spPr/a:xfrm", NS)
+    if xf is None:
+        return
+    def bounds(shape):
+        transform = shape.find("p:spPr/a:xfrm", NS)
+        if transform is None:
+            return None
+        offset, extent = transform.find("a:off", NS), transform.find("a:ext", NS)
+        if offset is None or extent is None:
+            return None
+        return tuple(int(offset.get(key)) for key in ("x","y")) + tuple(int(extent.get(key)) for key in ("cx","cy"))
+    box = bounds(heading)
+    if box is None:
+        return
+    x,y,w,h = box
+    primary_size = size(heading)
+    if not cover and primary_size < 60:
+        return
+    for shape in list(active):
+        if shape is heading or shape.getparent() is not heading.getparent():
+            continue
+        other = bounds(shape)
+        if other is None or size(shape) < primary_size*(.5 if cover else .7) or len(text(shape)) > 70:
+            continue
+        ox,oy,ow,oh = other
+        horizontal_overlap = min(x+w,ox+ow)-max(x,ox)
+        vertical_gap = max(0,max(y,oy)-min(y+h,oy+oh))
+        horizontal_gap = max(0,max(x,ox)-min(x+w,ox+ow))
+        vertical_overlap = min(y+h,oy+oh)-max(y,oy)
+        stacked = horizontal_overlap >= min(w,ow)*.45 and vertical_gap <= max(h,oh)*.7
+        adjacent = vertical_overlap >= min(h,oh)*.65 and horizontal_gap <= slide_width*.04
+        if not (stacked or adjacent):
+            continue
+        nx,ny = min(x,ox),min(y,oy)
+        nw,nh = max(x+w,ox+ow)-nx,max(y+h,oy+oh)-ny
+        if nw > slide_width*.85:
+            continue
+        x,y,w,h = nx,ny,nw,nh
+        set_text(shape, "")
+        active.remove(shape)
+    xf.find("a:off", NS).set("x",str(x))
+    xf.find("a:off", NS).set("y",str(y))
+    xf.find("a:ext", NS).set("cx",str(w))
+    xf.find("a:ext", NS).set("cy",str(h))
 
 
 def budget(shape, kind):
@@ -146,10 +244,14 @@ def role(number):
     return {16: "application", 17: "conclusion", 18: "questions", 19: "references", 20: "closing"}[number]
 
 
-def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: list[int]):
+def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: list[int], output_root: Path = ROOT):
     with ZipFile(io.BytesIO(raw)) as package:
         parts = {n: package.read(n) for n in package.namelist()}
     p = ET.fromstring(parts["ppt/presentation.xml"])
+    slide_size = p.find("p:sldSz", NS)
+    slide_width, slide_height = int(slide_size.get("cx")), int(slide_size.get("cy"))
+    if len(order) != 20 or any(f"ppt/slides/slide{i}.xml" not in parts for i in order):
+        raise ValueError(f"Invalid 20-slide selection for {source_name}")
     prel = ET.fromstring(parts["ppt/_rels/presentation.xml.rels"])
     ct = ET.fromstring(parts["[Content_Types].xml"])
     # Keep layouts, masters, theme and fonts. Rewrite only the slide sequence.
@@ -191,8 +293,11 @@ def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: lis
             old = text(sh)
             if not old: continue
             # Source website/menu labels are not teaching content.
-            if old in {"Home", "About Us", "Content", "Contact Us", "Studio Shodwe", "Liceria Firm", "Borcelle", "UNION CONSULTING"} or re.search(r"reallygreatsite|Wardiere|\+123", old, re.I):
-                if old in {"Studio Shodwe", "Liceria Firm", "Borcelle", "UNION CONSULTING"} or 'Wardiere' in old:
+            brands = {"home", "about us", "contact us", "studio shodwe", "liceria firm", "liceria & co.", "borcelle", "union consulting", "thynk unlimited", "next slide", "presented by", "presented by:"}
+            navigation = old.lower().strip() == "content" and size(sh) < 32
+            finance_brand = subject == "moliya" and variant == 1 and old.lower().strip() in {"finance", "department", "finance department"}
+            if old.lower().strip() in brands or finance_brand or navigation or re.search(r"reallygreatsite|Wardiere|\+123|^Page\s+\d+$|^\d{2}\.\d{2}\.\d{2}$|^10 SEPTEMBER 2027$", old, re.I):
+                if old.lower().strip() in brands or finance_brand or 'Wardiere' in old:
                     cleared_authors.append(sh)
                 set_text(sh, "")
                 continue
@@ -203,6 +308,13 @@ def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: lis
         if not active:
             raise ValueError(f"No editable text: {source_name}, slide {src_number}")
         heading = max(active, key=size)
+        if subject not in ("fizika","english","cyber","huquq","geografiya"):
+            merge_heading_boxes(heading, active, slide_width, cover=number in (1,20))
+        if subject == "bolalar" and variant == 2 and number == 1:
+            # Keep a generated cover title clear of the upper-right squiggle.
+            xf = heading.find("p:spPr/a:xfrm", NS)
+            xf.find("a:off", NS).set("x", str(round(slide_width*.22)))
+            xf.find("a:ext", NS).set("cx", str(round(slide_width*.43)))
         if subject == "cyber" and variant == 1 and number == 1:
             # The source padlock extends over the left edge of the title box.
             # Keep generated one-line titles completely to its right.
@@ -210,6 +322,11 @@ def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: lis
             xf.find("a:off", NS).set("x", "8000000")
             xf.find("a:ext", NS).set("cx", "8510596")
         set_text(heading, "{{topic}}" if number == 1 else "{{yakun}}" if number == 20 else "{{reja}}" if number == 2 else "{{adabiyotlar}}" if number == 19 else f"{{{{s{number:02}_title}}}}", cap=100 if number in (1,20) else 72)
+        if subject == "bolalar" and variant == 2 and number == 1:
+            set_text(heading, "{{topic}}", cap=80)
+            for spacing in heading.findall(".//a:lnSpc", NS):
+                for child in list(spacing): spacing.remove(child)
+                ET.SubElement(spacing, "{"+NS["a"]+"}spcPct", val="100000")
         if subject == "english" and variant == 3 and number in (1, 20):
             # The source's white headings vanish on its pale paper/yellow.
             for rp in heading.findall(".//a:rPr", NS):
@@ -219,6 +336,10 @@ def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: lis
                 fill = ET.Element("{" + NS["a"] + "}solidFill")
                 ET.SubElement(fill, "{" + NS["a"] + "}srgbClr", val="141414")
                 rp.insert(0, fill)
+        if subject == "tibbiyot" and variant == 1 and number not in (1,18,20):
+            text_color(heading, "FFFFFF")
+        if subject == "kimyo" and variant == 3 and number in (1,20):
+            text_color(heading, "087B92")
         if number == 1 or number == 20:
             key = "topic" if number == 1 else "yakun"
             fields[key]["max_chars"] = min(fields[key]["max_chars"], budget(heading, "title"))
@@ -231,14 +352,56 @@ def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: lis
             if not others:
                 # Reuse the original author/brand box cleared above.
                 others = cleared_authors
+            if not others and number == 1:
+                # Some supplied covers have only a title. Reuse its editable
+                # text style for a small author line in the clear lower centre.
+                author_shape = copy.deepcopy(heading)
+                nv = author_shape.find(".//p:cNvPr", NS)
+                nv.set("id", str(max(int(x) for x in root.xpath('//p:cNvPr/@id', namespaces=NS))+1))
+                nv.set("name", "Author")
+                xf = author_shape.find("p:spPr/a:xfrm", NS)
+                xf.find("a:off", NS).set("x", str(round(slide_width*.25)))
+                xf.find("a:off", NS).set("y", str(round(slide_height*.74)))
+                xf.find("a:ext", NS).set("cx", str(round(slide_width*.50)))
+                xf.find("a:ext", NS).set("cy", str(round(slide_height*.07)))
+                heading.getparent().append(author_shape)
+                others = [author_shape]
             if others:
-                set_text(others[-1], "{{muallif}}", cap=36)
+                named_author = next((sh for sh in others if re.search(r"presented|^by\b|^muallif", text(sh), re.I)), others[-1])
+                set_text(named_author, "{{muallif}}", cap=36)
+                if subject == "bolalar" and variant == 2 and number == 1:
+                    # The source author line sits on the rainbow's dark outline.
+                    xf = named_author.find("p:spPr/a:xfrm", NS)
+                    xf.find("a:off", NS).set("y", str(round(slide_height*.70)))
+                    xf.find("a:ext", NS).set("cy", str(round(slide_height*.055)))
+                    set_text(named_author, "{{muallif}}", cap=28)
+                    for props in named_author.findall(".//a:rPr", NS):
+                        props.set("spc", "0")
+                    for spacing in named_author.findall(".//a:lnSpc", NS):
+                        for child in list(spacing): spacing.remove(child)
+                        ET.SubElement(spacing, "{"+NS["a"]+"}spcPct", val="100000")
+                if subject == "kimyo" and variant == 2:
+                    text_color(named_author, "FFFFFF")
                 rec["text_keys"].append("muallif")
-                for sh in others[:-1]: set_text(sh, "")
+                for sh in others:
+                    if sh is not named_author: set_text(sh, "")
         elif number == 2:
             if not others: raise ValueError("Agenda needs a text box")
+            if subject == "bolalar" and variant == 2:
+                # Source XML is in arbitrary order and has six agenda entries.
+                # Read the first two rows left-to-right and remove spare bullets.
+                def agenda_position(shape):
+                    offset = shape.find("p:spPr/a:xfrm/a:off", NS)
+                    return (round(int(offset.get("y"))/(slide_height*.08)), int(offset.get("x")))
+                others.sort(key=agenda_position)
+                for shape in root.xpath("//p:sp[not(p:txBody)]", namespaces=NS):
+                    xf = shape.find("p:spPr/a:xfrm", NS)
+                    if xf is None: continue
+                    off, ext = xf.find("a:off", NS), xf.find("a:ext", NS)
+                    if off is not None and ext is not None and int(off.get("y")) > slide_height*.70 and int(ext.get("cx")) < slide_width*.07:
+                        shape.getparent().remove(shape)
             body = max(others, key=lambda sh: len(text(sh)))
-            separate = len(others) == 4
+            separate = len(others) >= 4
             if not separate:
                 # The four agenda entries occupy separate paragraphs in one box.
                 set_text(body, "{{reja_1}}\n{{reja_2}}\n{{reja_3}}\n{{reja_4}}", cap=36)
@@ -249,7 +412,9 @@ def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: lis
                     set_text(others[i-1], "{{"+name+"}}", cap=36)
                 fields[name] = {"kind": "label", "max_chars": min(36,budget(others[i-1],"text")) if separate else min(36, max(14, total // 4)), "section": i, "description": "Mavzuga mos reja bandi."}
                 rec["text_keys"].append(name)
-            if not separate:
+            if separate:
+                for sh in others[4:]: set_text(sh, "")
+            else:
                 for sh in others:
                     if sh is not body: set_text(sh, "")
         elif number == 19:
@@ -266,6 +431,11 @@ def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: lis
             for sh in others:
                 old = text(sh)
                 kind = "label" if len(old) < 90 and (size(sh) >= 40 or not old.endswith(('.', '!', '?'))) else "text"
+                if subject == "matematika" and variant == 2 and src_number == 9:
+                    # The right-side illustration intersects a wide source box.
+                    extent = sh.find("p:spPr/a:xfrm/a:ext", NS)
+                    if extent is not None:
+                        extent.set("cx", str(min(int(extent.get("cx")), round(slide_width*.567))))
                 if kind == "label": label_count += 1; serial = label_count
                 else: body_count += 1; serial = body_count
                 key = f"s{number:02}_{'label' if kind == 'label' else 'text'}_{serial}"
@@ -286,7 +456,7 @@ def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: lis
             data = parts.get(target)
             if not data: continue
             display_w,display_h = display_dimensions(sh)
-            area = display_w * display_h / (18288000 * 10287000)
+            area = display_w * display_h / (slide_width * slide_height)
             if not .012 < area < .72: continue
             try:
                 with Image.open(io.BytesIO(data)) as im:
@@ -327,7 +497,7 @@ def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: lis
     parts = prune_parts(parts)
     subset_embedded_fonts(parts)
     compact_images(parts)
-    dest = ROOT / subject / f"id_{variant}.pptx"
+    dest = output_root / subject / f"id_{variant}.pptx"
     write_package(parts, dest)
     optimize_pptx(dest)
     manifest = {"version": 1, "subject": subject, "variant": variant, "label": SUBJECTS[subject]["label"], "source_name": source_name, "source_bytes": len(raw), "template": dest.name, "slide_count": 20, "plan_count": 4, "size_bytes": dest.stat().st_size, "fields": fields, "slides": slides, "image_slots": list(image_slots.values())}
@@ -338,24 +508,33 @@ def prepare(raw: bytes, source_name: str, subject: str, variant: int, order: lis
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("uploads", type=Path)
+    ap.add_argument("--subjects", nargs="+", choices=sorted(SUBJECTS), help="Prepare only these packs. By default, use all supported archives present.")
+    ap.add_argument("--output-root", type=Path, default=ROOT, help="Write to a staging folder before copying validated files into the repository.")
     args = ap.parse_args()
     inputs = []
     for arc in args.uploads.glob("*.zip"):
         subject = arc.stem.lower()
-        if subject not in SUBJECTS: continue
+        if subject not in SUBJECTS or (args.subjects and subject not in args.subjects): continue
         with ZipFile(arc) as z:
             for name in sorted(z.namelist()):
                 if name.lower().endswith(".pptx"):
                     inputs.append((subject, name, z.read(name)))
     inputs.sort(key=lambda row: (row[0], row[1]))
-    if len(inputs) != 11:
-        raise ValueError("Expected the 11 designs in fizika, english, cyber, huquq and Geografiya ZIPs")
+    selected = set(args.subjects or [row[0] for row in inputs])
+    if not selected:
+        raise ValueError("No supported source archives were found")
+    for subject in selected:
+        expected = sum(s == subject for s, _ in SOURCE_ORDERS)
+        actual = sum(s == subject for s, _, _ in inputs)
+        if actual != expected:
+            raise ValueError(f"{subject}: expected {expected} supplied designs, found {actual}")
     counts = {}
-    for idx, (subject, name, raw) in enumerate(inputs):
+    for subject, name, raw in inputs:
         counts[subject] = counts.get(subject, 0) + 1
-        prepare(raw, name, subject, counts[subject], ORDERS[idx])
+        prepare(raw, name, subject, counts[subject], SOURCE_ORDERS[(subject, counts[subject])], args.output_root)
     for subject, info in SUBJECTS.items():
-        folder = ROOT / subject
+        if subject not in selected: continue
+        folder = args.output_root / subject
         (folder/"performance.json").write_text(json.dumps(info,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
         (folder/"PERFORMANCE.md").write_text(f"# {info['label']} taqdimot yo‘riqnomasi\n\n{info['guidance']}\n\n## 20 slayd tartibi\n\n1. Mavzu va muallif\n2. To‘rtta reja bandi\n3. Kirish\n4–15. Har reja uchun tushuncha, izoh va misol\n16. Amaliy topshiriq\n17. Xulosa\n18. Savollar va javoblar\n19. Manbalar\n20. Minnatdorchilik\n\n## Mavzuga mos reja yo‘nalishlari\n\n"+"\n".join(f"- {s}" for s in info['sections'])+f"\n\n## Rasmlar\n\n{info['image_rule']}\n\nHar variantning `id_N.json` fayli aniq matn kalitlari, belgilar chegarasi va ixtiyoriy rasm joylarini beradi. Kalit formatini `{{{{kalit}}}}` holatida saqlang. Matn bir nechta PowerPoint runlariga bo‘linsa ham bot uni almashtiradi. Fon, naqsh, dekorativ ikonka, ranglar va o‘lchamlar saqlanadi.\n\nRasmlar shape `name` hamda `descr` bo‘yicha `{{{{image_N}}}}` bilan belgilanadi. `ppt/media/imageN.*` fayl nomini rasm kaliti deb ishlatmang. Rasmlar berilmasa original surat qoladi.\n",encoding="utf-8")
 

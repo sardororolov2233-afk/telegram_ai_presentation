@@ -1,0 +1,11 @@
+{
+  "label": "Tibbiyot",
+  "guidance": "O‘quv mazmunida anatomiya, fiziologik jarayon va kasallik belgilarini mavzuga mos ajrating. Terminlarni sodda izohlang. Klinik misol bo‘lsa uni uydirma o‘quv vaziyati deb belgilang. Individual tashxis, dori dozasi yoki shaxsiy davolash tavsiyasini bermang. Kasallik statistikasi, qo‘llanma sanasi va davolash dalillarini faqat tekshirilgan manbaga tayangan holda keltiring. Tekshirilmagan klinik tavsiyani amaldagi qoida sifatida yozmang.",
+  "sections": [
+    "Tushuncha va tuzilish",
+    "Jarayon va mexanizm",
+    "O‘quv vaziyati va tahlil",
+    "Profilaktika va xulosa"
+  ],
+  "image_rule": "Mavzuga mos tibbiy jihoz yoki o‘quv vaziyati. Aniq anatomiya, diagnostik tasvir yoki ilmiy sxema kerak bo‘lsa ishonchli manba yoki foydalanuvchi faylidan foydalaning. Generativ tasvirni klinik dalil deb ko‘rsatmang."
+}

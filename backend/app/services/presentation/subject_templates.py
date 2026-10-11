@@ -1,4 +1,4 @@
-"""The five prepared subject packs: exact schemas, constraints and prompts."""
+"""Prepared subject packs: exact schemas, constraints and prompts."""
 from __future__ import annotations
 
 import json
@@ -6,8 +6,19 @@ from functools import lru_cache
 from pathlib import Path
 
 ROOT = Path(__file__).parent / "pro_templates"
-SUBJECTS = ("fizika", "english", "cyber", "huquq", "geografiya")
-ALIASES = {"physics": "fizika", "ingliz_tili": "english", "ingliz": "english", "kiberxavfsizlik": "cyber", "cybersecurity": "cyber", "law": "huquq", "geography": "geografiya"}
+SUBJECTS = (
+    "fizika", "english", "cyber", "huquq", "geografiya", "tibbiyot", "tarix",
+    "sport", "moliya", "minimalizm", "matematika", "marketing", "bolalar", "kimyo",
+)
+ALIASES = {
+    "physics": "fizika", "ingliz_tili": "english", "ingliz": "english",
+    "kiberxavfsizlik": "cyber", "cybersecurity": "cyber", "law": "huquq",
+    "geography": "geografiya", "medicine": "tibbiyot", "medical": "tibbiyot",
+    "history": "tarix", "sports": "sport", "finance": "moliya",
+    "minimalism": "minimalizm", "minimalist": "minimalizm", "math": "matematika",
+    "mathematics": "matematika", "children": "bolalar", "kids": "bolalar",
+    "chemistry": "kimyo",
+}
 
 
 def canonical_subject(subject: str | None) -> str | None:
@@ -20,7 +31,7 @@ def is_subject_pack(subject: str | None) -> bool:
     return canonical_subject(subject) in SUBJECTS
 
 
-@lru_cache(maxsize=32)
+@lru_cache(maxsize=64)
 def load_manifest(subject: str, variant: int = 1) -> dict:
     subject = canonical_subject(subject)
     if subject not in SUBJECTS:
@@ -31,7 +42,7 @@ def load_manifest(subject: str, variant: int = 1) -> dict:
     return json.loads(manifest.read_text(encoding="utf-8"))
 
 
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=32)
 def load_performance(subject: str) -> dict:
     return json.loads((ROOT / canonical_subject(subject) / "performance.json").read_text(encoding="utf-8"))
 

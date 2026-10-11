@@ -1,0 +1,11 @@
+{
+  "label": "Tarix",
+  "guidance": "Davr, hudud va asosiy voqealarni aniq belgilang. Voqealar ketma-ketligi, sabab va oqibatni farqlang. Birlamchi manba, tarixchi talqini va bahsli taxminni ajrating. Sana, shaxs nomi, iqtibos yoki arxeologik topilmani to‘qimang. Manbalarda farq bo‘lsa uni qisqa ko‘rsating. Tarixiy xarita, davr kiyimi va yodgorlikni tegishli kontekst bilan izohlang.",
+  "sections": [
+    "Davr va tarixiy sharoit",
+    "Asosiy voqealar",
+    "Manba va talqin",
+    "Oqibat va tarixiy ahamiyat"
+  ],
+  "image_rule": "Davrga mos yodgorlik, muzey buyumi yoki ishonchli manbali tarixiy surat. Zamonaviy foto va rekonstruksiyani asl voqea tasviri bilan aralashtirmang. Aniq xarita yoki hujjat uchun tekshirilgan fayl kerak."
+}

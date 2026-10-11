@@ -1,0 +1,11 @@
+{
+  "label": "Sport",
+  "guidance": "Sport turi, asosiy qoida va harakat texnikasini mavzuga mos tushuntiring. Mashq misolini tayyorgarlik darajasi va maqsad bilan bog‘lang. Yuklama, dam olish va jarohatning oldini olishni umumiy o‘quv doirasida izohlang. Shaxsiy tibbiy reja, ekstremal yuklama yoki kafolatlangan natija bermang. Rekord, musobaqa sanasi va qoida tahririni tekshirilgan manbasiz yozmang.",
+  "sections": [
+    "Sport turi va qoidalar",
+    "Texnika va ko‘nikmalar",
+    "Mashg‘ulot va tahlil",
+    "Xavfsizlik va amaliy vazifa"
+  ],
+  "image_rule": "Mavzudagi sport turi, anjom yoki mashg‘ulotga mos tasvir. Murabbiy portreti yoki mukofot fotosini haqiqiy mutaxassis va yutuq dalili deb ko‘rsatmang. Harakat texnikasi tasviri mazmun bilan mos bo‘lsin."
+}

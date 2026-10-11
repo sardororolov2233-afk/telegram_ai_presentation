@@ -1,0 +1,11 @@
+{
+  "label": "Bolalar va ta’lim",
+  "guidance": "Mavzuning auditoriyasini ajrating: bolalar uchun dars yoki kattalar uchun bolalar rivojlanishi haqidagi taqdimot. Yosh va sinf ko‘rsatilgan bo‘lsa ularga mos til va topshiriq bering. Bolalar uchun qisqa gap, bitta aniq harakat va kuzatiladigan o‘quv natijasidan foydalaning. O‘yin va sayohat rejasida kattalar nazorati hamda oddiy xavfsizlik qoidalarini ko‘rsating. Bola rivojlanishini qat’iy yagona me’yor yoki tashxisga aylantirmang. Bola va oila haqidagi shaxsiy ma’lumotlarni to‘qimang.",
+  "sections": [
+    "Mavzu va o‘quv maqsadi",
+    "Tushuncha va namuna",
+    "O‘yin yoki mashq",
+    "Mustahkamlash va fikr almashish"
+  ],
+  "image_rule": "Yoshga mos, hurmatli va xavfsiz o‘quv vaziyati. Dekorativ bolalar illustratsiyalari saqlanadi. Haqiqiy bola fotosini tibbiy yoki psixologik tashxis dalili deb talqin qilmang."
+}

@@ -1,0 +1,11 @@
+{
+  "label": "Matematika",
+  "guidance": "Ta’rif, qo‘llanish sharti va formulani aniq ajrating. Belgilarni tushuntiring, aniqlanish sohasi va kerakli birliklarni ko‘rsating. Bitta yechilgan misolda berilgan, usul, hisoblash va javob ketma-ketligidan foydalaning. Tengliklar hamda yakuniy natijani qayta tekshiring. Isbot va kuzatuvni farqlang. Formula va amallarni matnda Unicode bilan yozing, qo‘llanmaydigan LaTeX yoki markdown bermang. Asldagi dekorativ formulalar mavzu uchun dalil hisoblanmaydi.",
+  "sections": [
+    "Ta’rif va shartlar",
+    "Formula va usul",
+    "Yechilgan misol",
+    "Mashq va tekshirish"
+  ],
+  "image_rule": "Mavzuga mos o‘quv anjomi yoki qo‘llanish vaziyati. Formula, aniq geometrik chizma va koordinatali grafik generativ fotosuratdan olinmaydi. Bunday dalil uchun tekshirilgan fayl yoki aniq matn ishlatiladi."
+}

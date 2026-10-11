@@ -107,6 +107,57 @@ def write_package(parts: dict[str, bytes], path: Path) -> None:
         temp_path.unlink(missing_ok=True)
 
 
+def _use_existing_svg_fallback(parts: dict[str, bytes], target_svg: str) -> bool:
+    """Use a supplied PNG/JPEG alternate for one oversized decorative SVG.
+
+    The raster already belongs to the source picture. Keep its crop, transform
+    and alpha, and leave editable text and remaining vector artwork intact.
+    Direct SVG images without a valid raster alternate are never removed.
+    """
+    drawing = "http://schemas.openxmlformats.org/drawingml/2006/main"
+    relationship = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+    changed = False
+    for owner, data in list(parts.items()):
+        if not owner.endswith(".xml") or b"svgBlip" not in data:
+            continue
+        rel_path = posixpath.dirname(owner) + "/_rels/" + posixpath.basename(owner) + ".rels"
+        if rel_path not in parts:
+            continue
+        root = ET.fromstring(data)
+        rels = ET.fromstring(parts[rel_path])
+        lookup = {item.get("Id"): item for item in rels}
+        removed_ids = set()
+        for blip in root.iter("{" + drawing + "}blip"):
+            base = lookup.get(blip.get("{" + relationship + "}embed"))
+            if base is None or base.get("TargetMode") == "External":
+                continue
+            raster = posixpath.normpath(posixpath.join(posixpath.dirname(owner), base.get("Target", ""))).lstrip("/")
+            if raster not in parts or Path(raster).suffix.lower() not in (".png", ".jpg", ".jpeg"):
+                continue
+            for svg in list(blip.xpath(".//*[local-name()='svgBlip']")):
+                rid = svg.get("{" + relationship + "}embed")
+                rel = lookup.get(rid)
+                if rel is None:
+                    continue
+                target = posixpath.normpath(posixpath.join(posixpath.dirname(owner), rel.get("Target", ""))).lstrip("/")
+                if target != target_svg:
+                    continue
+                parent = svg.getparent()
+                parent.remove(svg)
+                if len(parent) == 0:
+                    parent.getparent().remove(parent)
+                removed_ids.add(rid)
+        if removed_ids:
+            used = {value for element in root.iter() for key, value in element.attrib.items() if key.startswith("{" + relationship + "}")}
+            for item in list(rels):
+                if item.get("Id") in removed_ids - used:
+                    rels.remove(item)
+            parts[owner] = ET.tostring(root, encoding="UTF-8", xml_declaration=True, standalone=True)
+            parts[rel_path] = ET.tostring(rels, encoding="UTF-8", xml_declaration=True, standalone=True)
+            changed = True
+    return changed
+
+
 def optimize_pptx(path: str | Path, max_bytes: int = 5_000_000) -> Path:
     """Compact a generated deck and enforce the user's decimal 5 MB ceiling."""
     path = Path(path)
@@ -117,4 +168,19 @@ def optimize_pptx(path: str | Path, max_bytes: int = 5_000_000) -> Path:
         write_package(parts, path)
         if path.stat().st_size < max_bytes:
             return path
+        if dimension == 1600:
+            with ZipFile(path) as package:
+                vectors = sorted((i for i in package.infolist() if i.filename.startswith("ppt/media/") and i.filename.endswith(".svg")), key=lambda i: i.compress_size, reverse=True)
+            # Some Canva paint textures contain thousands of vector paths.
+            # If these dominate the file, prefer their original raster
+            # alternates over degrading all photos to meet the size ceiling.
+            if sum(i.compress_size for i in vectors) > max_bytes * .6:
+                for vector in vectors:
+                    if vector.compress_size < 100_000:
+                        break
+                    if _use_existing_svg_fallback(parts, vector.filename):
+                        parts = prune_parts(parts)
+                        write_package(parts, path)
+                        if path.stat().st_size < max_bytes:
+                            return path
     raise ValueError(f"PPTX hajmi {max_bytes:,} baytdan kichik bo‘lmadi: {path.name}")

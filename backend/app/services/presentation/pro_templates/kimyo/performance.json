@@ -1,0 +1,11 @@
+{
+  "label": "Kimyo",
+  "guidance": "Modda, tarkib, xossa va kimyoviy jarayonni mavzuga mos ajrating. Formulada indeks, zaryad va koeffitsiyentlarni to‘g‘ri yozing. Reaksiya tenglamasida atomlar va zarur bo‘lsa zaryadlar muvozanatini tekshiring. Shart, birlik va kuzatiladigan belgini ko‘rsating. Miqdoriy o‘quv misolida hisoblash bosqichlari va javob bo‘lsin. Tajriba umumiy o‘quv izohi doirasida qoladi, xavfli amaliy ko‘rsatma bermang. Natija, xavf darajasi va manbani to‘qimang. Unicode indekslardan foydalaning, qo‘llanmaydigan LaTeX bermang.",
+  "sections": [
+    "Modda va tuzilish",
+    "Xossa va qonuniyat",
+    "Reaksiya yoki hisoblash",
+    "Kuzatuv va qo‘llanish"
+  ],
+  "image_rule": "Mavzuga mos laboratoriya jihozi yoki xavfsiz o‘quv vaziyati. Molekula tuzilishi, formulalar, reaksiya belgisi va ilmiy sxema generativ fotosuratdan olinmaydi. Dekorativ asboblar dalil sifatida talqin qilinmaydi."
+}
