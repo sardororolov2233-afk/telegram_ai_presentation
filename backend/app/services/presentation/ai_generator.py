@@ -436,6 +436,7 @@ class AIContentGenerator:
         pro_bibliography_type: str,
         pro_bibliography_text: Optional[str],
         pro_design: Optional[str] = None,
+        pro_design_variant: int = 1,
     ) -> tuple[dict, list[str]]:
         
         lang_map = {
@@ -445,7 +446,12 @@ class AIContentGenerator:
         }
         lang_name = lang_map.get(language, "Uzbek")
         
-        if pro_design == "biologiya":
+        from .subject_templates import is_subject_pack, build_subject_schema, subject_instructions, validate_payload, load_manifest
+        prepared_subject = is_subject_pack(pro_design)
+        if prepared_subject:
+            author = author or "Muallif ko‘rsatilmagan"
+            schema_dict = build_subject_schema(pro_design, pro_design_variant, topic, author)
+        elif pro_design == "biologiya":
             from .schema_20_slayd import build_schema
             schema_dict = build_schema(topic, author, pro_plan_count)
         else:
@@ -515,6 +521,10 @@ class AIContentGenerator:
         biblio_instruction = ""
         if pro_bibliography_type == "ai":
             biblio_instruction = "Generate a reliable and academic list of references."
+        elif prepared_subject and pro_bibliography_type == "none":
+            biblio_instruction = "For references write an honest short label: no references were supplied. Do not invent citations."
+        elif prepared_subject:
+            biblio_instruction = f"Use only these supplied references, compacting each entry to fit the declared limit while retaining its identity: {json.dumps(pro_bibliography_text or '')}. If none were supplied, say so briefly."
         else:
             biblio_instruction = f"For references, use EXACTLY this text and nothing else: {json.dumps(pro_bibliography_text or '')}"
 
@@ -530,6 +540,8 @@ You MUST provide high-quality, academic content for EVERY SINGLE KEY in this sch
 Return ONLY the JSON object. Do not wrap in markdown or explanation.
 {json_schema_str}
 """
+        if prepared_subject:
+            prompt += "\n" + subject_instructions(pro_design, pro_design_variant)
 
         payload = {
             "model": self.MODEL,
@@ -574,6 +586,37 @@ Return ONLY the JSON object. Do not wrap in markdown or explanation.
                 result = json.loads(json_match.group(0))
             else:
                 raise ValueError("AI did not return valid JSON for PRO mode.")
+
+        if prepared_subject:
+            result["muallif"] = author
+            try:
+                validate_payload(result, pro_design, pro_design_variant)
+            except ValueError as validation_error:
+                # One focused repair request for missing keys or oversized text.
+                repair_payload = dict(payload)
+                repair_payload["temperature"] = 0.2
+                repair_payload["messages"] = [
+                    {"role": "user", "content": prompt},
+                    {"role": "assistant", "content": json.dumps(result, ensure_ascii=False)},
+                    {"role": "user", "content": f"Correct these exact field errors and return the complete JSON object: {validation_error}"},
+                ]
+                async with httpx.AsyncClient(timeout=180.0) as client:
+                    repair = await client.post(self.OPENROUTER_API_URL, json=repair_payload, headers=headers)
+                    repair.raise_for_status()
+                repaired_text = repair.json()["choices"][0]["message"]["content"].strip()
+                repaired_text = re.sub(r"<think>.*?</think>", "", repaired_text, flags=re.DOTALL).strip()
+                if repaired_text.startswith("```"):
+                    repaired_text = "\n".join(repaired_text.splitlines()[1:-1]).strip()
+                result = json.loads(repaired_text)
+                result["muallif"] = author
+                validate_payload(result, pro_design, pro_design_variant)
+            keywords = result.pop("image_keywords", [])
+            slots = load_manifest(pro_design, pro_design_variant)["image_slots"]
+            # Missing visual keywords have a subject-specific fallback. A deck
+            # without photo frames never triggers an unnecessary image request.
+            keywords = keywords if isinstance(keywords, list) else []
+            image_keywords = [str(keywords[i]) if i < len(keywords) and keywords[i] else f"{topic} {pro_design} {s['role']} educational visual" for i,s in enumerate(slots)]
+            return result, image_keywords
 
         # Fill any missing Reja capitalizations for edge cases
         result["Reja_4_matni"] = result.get("reja_4_matni", "")

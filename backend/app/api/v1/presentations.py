@@ -11,8 +11,14 @@ from app.core.database import get_db
 from app.routes.deps import get_current_user
 from app.services.presentation.pipeline import PresentationPipeline
 from app.services.presentation.telegram_sender import send_status_message
+from app.services.presentation.subject_templates import canonical_subject, is_subject_pack, load_manifest, list_subject_templates
 
 router = APIRouter(prefix="/presentations", tags=["Presentations"])
+
+@router.get("/pro-templates")
+async def pro_templates():
+    """Subject and variant metadata for the Telegram Mini App template selector."""
+    return {"subjects": list_subject_templates()}
 
 async def run_pipeline_background(
     pipeline: PresentationPipeline,
@@ -89,6 +95,16 @@ async def generate_presentation(
     if slide_count < 3 or slide_count > 20:
         raise HTTPException(status_code=400, detail="Slaydlar soni 3-20 oralig'ida bo'lishi kerak")
 
+    if is_pro:
+        pro_design = canonical_subject(pro_design)
+        if is_subject_pack(pro_design):
+            try:
+                manifest = load_manifest(pro_design, pro_design_variant)
+            except ValueError as error:
+                raise HTTPException(status_code=400, detail=str(error)) from error
+            slide_count = manifest["slide_count"]
+            pro_plan_count = manifest["plan_count"]
+
     price = slide_count * (500 if (is_pro or is_2slides) else 300)
     if user.get("balance", 0.0) < price:
         raise HTTPException(status_code=402, detail="Balansingiz yetarli emas.")
@@ -149,6 +165,7 @@ async def generate_presentation(
         pro_bibliography_text,
         pro_design,
         pro_design_variant,
+        document_format,
     )
 
     return PresentationResponse(

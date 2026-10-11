@@ -361,6 +361,11 @@ PRO_TEMPLATES_DIR = Path(__file__).parent / "pro_templates"
 
 def _get_pro_template_path(pro_design: Optional[str] = None, pro_design_variant: int = 1) -> str:
     """pro_design bo'limi va variant raqami bo'yicha PPTX faylini qaytaradi."""
+    from .subject_templates import canonical_subject, is_subject_pack, load_manifest
+    pro_design = canonical_subject(pro_design)
+    if is_subject_pack(pro_design):
+        manifest = load_manifest(pro_design, pro_design_variant)
+        return str(PRO_TEMPLATES_DIR / pro_design / manifest["template"])
     if pro_design:
         folder = PRO_TEMPLATES_DIR / pro_design
         if folder.exists():
@@ -402,6 +407,22 @@ async def generate_pro_pptx(
         raise FileNotFoundError(f"PRO Shablon topilmadi: {TEMPLATE_PATH}")
         
     print(f"[PptxGen] PRO Shablon ochilmoqda: {TEMPLATE_PATH}")
+
+    from .subject_templates import canonical_subject, is_subject_pack, load_manifest, validate_payload
+    pro_design = canonical_subject(pro_design)
+    if is_subject_pack(pro_design):
+        from .fill_template import fill_template
+        from .pptx_assets import optimize_pptx
+        manifest = load_manifest(pro_design, pro_design_variant)
+        validate_payload(slides_data, pro_design, pro_design_variant)
+        images_dict = {
+            slot["key"]: image_path
+            for slot, image_path in zip(manifest["image_slots"], user_images or [])
+            if image_path and os.path.isfile(image_path)
+        }
+        await asyncio.to_thread(fill_template, TEMPLATE_PATH, slides_data, output_path, images_dict, True)
+        await asyncio.to_thread(optimize_pptx, output_path)
+        return output_path, manifest["slide_count"]
 
     if pro_design == "biologiya":
         from .fill_template import fill_template

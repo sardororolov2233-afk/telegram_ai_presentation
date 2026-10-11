@@ -1,0 +1,11 @@
+{
+  "label": "Fizika",
+  "guidance": "Har bir qonunni qo‘llanish sharti bilan tushuntiring. Formulada belgilarni va SI birliklarini oching. Berilgan, formula, hisoblash va javob ketma-ketligida bitta yechilgan misol keltiring. Tajriba natijasini kuzatuv va talqin bilan ajrating. O‘lchov xatoligini tushuntiring. Sonlarni to‘qimang.",
+  "sections": [
+    "Tushuncha va kattaliklar",
+    "Qonun va formulalar",
+    "Tajriba va kuzatuv",
+    "Amaliy qo‘llanish"
+  ],
+  "image_rule": "Mavzuga mos fizik qurilma yoki tajriba fotosi. Aniq formula, grafik va o‘lchov belgilari matnda qoladi."
+}

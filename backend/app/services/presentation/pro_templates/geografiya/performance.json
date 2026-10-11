@@ -1,0 +1,11 @@
+{
+  "label": "Geografiya",
+  "guidance": "Hududning o‘rni va miqyosini ko‘rsating. Tabiiy hamda ijtimoiy jarayonlarni sabab va oqibat bilan tushuntiring. Sonli ko‘rsatkichga birlik, hudud, yil va manba kerak. Xarita uchun koordinata, yo‘nalish va legendani faqat tekshirilgan ma’lumot asosida yozing. Uydirma koordinata yoki xarita bermang. Hududlar solishtirishida bir xil davr va birlikdan foydalaning.",
+  "sections": [
+    "Geografik o‘rin",
+    "Tabiiy sharoit",
+    "Hududiy jarayonlar",
+    "Taqqoslash va muammolar"
+  ],
+  "image_rule": "Hudud yoki tabiiy jarayonning haqiqiy fotosi. Ilmiy xaritani generativ foto bilan almashtirmang; xarita uchun foydalanuvchi tasdiqlagan fayl kerak."
+}

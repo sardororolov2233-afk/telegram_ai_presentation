@@ -1,4 +1,4 @@
-"""Biologiya PPTX shablonini matn va ixtiyoriy rasmlar bilan to'ldirish.
+"""PPTX shablonini matn va ixtiyoriy rasmlar bilan to'ldirish.
 Usage: python fill_template.py template.pptx data.json result.pptx [--images images.json]
 Images JSON: {"image_3": "photos/cell.jpg"}. Faqat lokal yo'llar.
 """
@@ -21,7 +21,7 @@ def fill_template(template_path, data, output_path, images=None, strict=True):
     """
     src,dest=Path(template_path),Path(output_path)
     if src.resolve()==dest.resolve():raise ValueError('Natija uchun boshqa fayl nomini tanlang.')
-    data=dict(data);images=images or {}
+    data=dict(data);images=dict(images or {})
     if 'muallif' not in data:
         data['muallif']=data.get('ism_sharif',data.get('ism_familya',''))
     with ZipFile(src) as z:parts={n:z.read(n) for n in z.namelist()}
@@ -56,9 +56,12 @@ def fill_template(template_path, data, output_path, images=None, strict=True):
             if first.find('a:t',NS) is None:ET.SubElement(first,'{'+NS['a']+'}t')
             for child in list(par):
                 if child.tag!='{'+NS['a']+'}pPr':par.remove(child)
+            parent=par.getparent();index=parent.index(par)
+            parent.remove(par)
             for j,line in enumerate(replacement.split('\n')):
-                if j:ET.SubElement(par,'{'+NS['a']+'}br')
-                run=copy.deepcopy(first);run.find('a:t',NS).text=line;par.append(run)
+                new_par=copy.deepcopy(par)
+                run=copy.deepcopy(first);run.find('a:t',NS).text=line;new_par.append(run)
+                parent.insert(index+j,new_par)
     serial=0
     for key,image_path in images.items():
         ip=Path(image_path)
@@ -77,6 +80,9 @@ def fill_template(template_path, data, output_path, images=None, strict=True):
             ET.SubElement(relroot,'{'+REL+'}Relationship',Id=rid,Type=NS['r']+'/image',Target='../media/'+posixpath.basename(part))
             parts[relpath]=xml(relroot)
             blip=sh.find('.//a:blip',NS);blip.set('{'+NS['r']+'}embed',rid)
+            # A source SVG fallback must not override the newly supplied photo.
+            for extension in list(blip):
+                if extension.tag=='{'+NS['a']+'}extLst':blip.remove(extension)
             fill=blip.getparent()
             for child in list(fill):
                 if child.tag in ['{'+NS['a']+'}srcRect','{'+NS['a']+'}tile','{'+NS['a']+'}stretch']:fill.remove(child)
@@ -85,6 +91,16 @@ def fill_template(template_path, data, output_path, images=None, strict=True):
     if images and not any(v.get('Extension')=='png' for v in ct):ET.SubElement(ct,'{'+ctns+'}Default',Extension='png',ContentType='image/png')
     parts['[Content_Types].xml']=xml(ct)
     for path,root in roots.items():parts[path]=xml(root)
+    if images:
+        for path,root in roots.items():
+            relpath=posixpath.dirname(path)+'/_rels/'+posixpath.basename(path)+'.rels'
+            if relpath not in parts:continue
+            relroot=ET.fromstring(parts[relpath])
+            used=set(root.xpath('//@r:embed|//@r:link',namespaces=NS))
+            for relation in list(relroot):
+                if relation.get('Type','').endswith('/image') and relation.get('Id') not in used:
+                    relroot.remove(relation)
+            parts[relpath]=xml(relroot)
     dest.parent.mkdir(parents=True,exist_ok=True)
     with ZipFile(dest,'w',ZIP_DEFLATED) as z:
         for path,content in parts.items():z.writestr(path,content)

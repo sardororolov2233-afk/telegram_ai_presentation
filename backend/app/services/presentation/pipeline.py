@@ -8,6 +8,7 @@ from app.services.presentation.pptx_generator import generate_pptx
 from app.services.presentation.telegram_sender import send_presentation_to_telegram, send_url_document_to_telegram
 from app.services.presentation.twoslides_api import generate_presentation_from_2slides
 from app.services.presentation.image_fetcher import fetch_images_for_slides, cleanup_images
+from app.services.presentation.subject_templates import canonical_subject, is_subject_pack, load_manifest
 
 PRESENTATIONS_DIR = "/tmp/presentations"
 
@@ -42,7 +43,8 @@ class PresentationPipeline:
         pptx_path = f"{PRESENTATIONS_DIR}/{presentation_id}.pptx"
         final_doc_path = ""
         if is_pro:
-            if pro_design == "biologiya":
+            pro_design = canonical_subject(pro_design)
+            if pro_design == "biologiya" or is_subject_pack(pro_design):
                 pro_plan_count = 4
             print(f"[Pipeline] AI mazmun generatsiya (PRO): '{topic}' | Shablon: {pro_design} #{pro_design_variant}")
             slides_dict, pro_keywords = await self.ai.generate_pro_slides(
@@ -53,6 +55,7 @@ class PresentationPipeline:
                 pro_bibliography_type=pro_bibliography_type,
                 pro_bibliography_text=pro_bibliography_text,
                 pro_design=pro_design,
+                pro_design_variant=pro_design_variant,
             )
             slides = slides_dict # For compatibility with other parts if needed
             print(f"[Pipeline] PRO rejimda ma'lumotlar generatsiya qilindi | Bo'lim: {pro_design}, Variant: #{pro_design_variant}")
@@ -68,19 +71,23 @@ class PresentationPipeline:
             print(f"[Pipeline] {len(slides)} ta slayd generatsiya qilindi")
 
         if user_images:
-            final_images = []
-            while len(final_images) < len(slides):
-                final_images.extend(user_images)
-            final_images = final_images[:len(slides)]
+            if is_pro and is_subject_pack(pro_design):
+                # Only populate actual photo slots; keep the rest of the artwork.
+                final_images = user_images[:len(load_manifest(pro_design, pro_design_variant)["image_slots"])]
+            else:
+                final_images = []
+                while len(final_images) < len(slides):
+                    final_images.extend(user_images)
+                final_images = final_images[:len(slides)]
 
         elif is_pro:
             # Pro image generation logic
             try:
                 from app.services.presentation.pro_image_fetcher import fetch_pro_images_with_flux
                 kw_to_fetch = pro_keywords if 'pro_keywords' in locals() else [f"{topic} professional presentation"] * 13
-                fetch_limit = 11 if pro_design == "biologiya" else 5
+                fetch_limit = len(load_manifest(pro_design, pro_design_variant)["image_slots"]) if is_subject_pack(pro_design) else 11 if pro_design == "biologiya" else 5
                 
-                final_images = await fetch_pro_images_with_flux(kw_to_fetch[:fetch_limit])
+                final_images = await fetch_pro_images_with_flux(kw_to_fetch[:fetch_limit]) if fetch_limit else []
             except Exception as e:
                 print(f"[Pipeline] PRO Rasm yuklash xatosi: {e}")
                 final_images = []
@@ -168,5 +175,5 @@ class PresentationPipeline:
         return {
             "id": presentation_id,
             "telegram_sent": telegram_sent,
-            "slide_count": len(slides),
+            "slide_count": total_slides if pptx_ok else (20 if is_pro and is_subject_pack(pro_design) else len(slides)),
         }

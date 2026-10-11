@@ -1,0 +1,11 @@
+{
+  "label": "Kiberxavfsizlik",
+  "guidance": "Aktiv, tahdid, zaiflik va himoya choralarini aniq farqlang. Tahdidni real hayotga yaqin, uydirma deb belgilangan vaziyat orqali tushuntiring. Aniqlash, oldini olish va tiklanish ketma-ketligini ko‘rsating. Hujum ko‘rsatmalaridan ko‘ra himoya va ruxsatli laboratoriya ta’limiga e’tibor bering. Statistika va standart raqamini to‘qimang.",
+  "sections": [
+    "Aktivlar va xavfsizlik",
+    "Tahdid va zaifliklar",
+    "Himoya usullari",
+    "Hodisa va tiklanish"
+  ],
+  "image_rule": "Mavzuga mos qurilma yoki himoya vaziyati. Shaxsiy ma’lumotlar, haqiqiy parollar va soxta interfeys yozuvlari ko‘rsatilmasin."
+}
