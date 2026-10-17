@@ -1,33 +1,13 @@
-version: "3.9"
-
 services:
   app:
     build: .
     ports:
       - "8000:8000"
-    env_file: .env
-    depends_on:
-      - db
-      - redis
-    volumes:
-      - .:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-  db:
-    image: postgres:16-alpine
+    env_file: backend/.env
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: telegram_app
-    ports:
-      - "5432:5432"
+      JOB_STORAGE_DIR: /data/orzu-jobs
     volumes:
-      - pgdata:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
+      - generation_data:/data/orzu-jobs
+    restart: unless-stopped
 volumes:
-  pgdata:
+  generation_data:

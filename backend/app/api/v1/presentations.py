@@ -1,175 +1,94 @@
-from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile, BackgroundTasks
-from supabase import Client
-import asyncio
-from pydantic import BaseModel
-from typing import Optional, List
-import os
+import hashlib
 import uuid
-import aiofiles
-
+from pathlib import Path
+from typing import Optional, List, Literal
+from fastapi import APIRouter, Depends, Form, File, UploadFile, Header, HTTPException
+from pydantic import BaseModel
+from supabase import Client
+from app.core.config import settings
 from app.core.database import get_db
 from app.routes.deps import get_current_user
-from app.services.presentation.pipeline import PresentationPipeline
-from app.services.presentation.telegram_sender import send_status_message
-from app.services.presentation.subject_templates import canonical_subject, is_subject_pack, load_manifest, list_subject_templates
+from app.services.commerce import rpc
+from app.services.presentation.subject_templates import canonical_subject, load_manifest, list_subject_templates
 
-router = APIRouter(prefix="/presentations", tags=["Presentations"])
+router = APIRouter(prefix='/presentations', tags=['Presentations'])
 
-@router.get("/pro-templates")
-async def pro_templates():
-    """Subject and variant metadata for the Telegram Mini App template selector."""
-    return {"subjects": list_subject_templates()}
 
-async def run_pipeline_background(
-    pipeline: PresentationPipeline,
-    topic: str,
-    language: str,
-    slide_count: int,
-    style: str,
-    extra_context: Optional[str],
-    design_template: int,
-    telegram_id: Optional[int],
-    user_image_paths: list,
-    is_pro: bool = False,
-    is_2slides: bool = False,
-    author: Optional[str] = None,
-    pro_plan_count: int = 5,
-    pro_bibliography_type: str = "none",
-    pro_bibliography_text: Optional[str] = None,
-    pro_design: Optional[str] = None,
-    pro_design_variant: int = 1,
-    document_format: str = "ppt",
-):
-    try:
-        await pipeline.run(
-            topic=topic,
-            language=language,
-            slide_count=slide_count,
-            style=style,
-            extra_context=extra_context,
-            design_template=design_template,
-            telegram_id=telegram_id,
-            user_images=user_image_paths,
-            is_pro=is_pro,
-            is_2slides=is_2slides,
-            author=author,
-            pro_plan_count=pro_plan_count,
-            pro_bibliography_type=pro_bibliography_type,
-            pro_bibliography_text=pro_bibliography_text,
-            pro_design=pro_design,
-            pro_design_variant=pro_design_variant,
-            document_format=document_format,
-        )
-    except Exception as e:
-        print(f"[Pipeline_bg] Background task failed: {e}")
+@router.get('/templates')
+@router.get('/pro-templates', include_in_schema=False)  # Read-only URL retained for an older Mini App.
+async def templates():
+    return {'subjects': list_subject_templates()}
 
 
 class PresentationResponse(BaseModel):
     id: str
-    telegram_sent: bool
+    status: str = 'queued'
+    telegram_sent: bool = False
     slide_count: int
 
-@router.post("/generate", response_model=PresentationResponse)
+
+@router.post('/generate', response_model=PresentationResponse, status_code=202)
 async def generate_presentation(
-    background_tasks: BackgroundTasks,
-    topic: str = Form(...),
-    language: str = Form("uz"),
-    slide_count: int = Form(8),
-    style: str = Form("professional"),
-    extra_context: Optional[str] = Form(None),
-    design_template: int = Form(1),
+    topic: str = Form(..., min_length=3, max_length=500),
+    author: str = Form('', max_length=150),
+    language: Literal['uz', 'ru', 'en'] = Form('uz'),
+    subject: str = Form('minimalizm'),
+    variant: int = Form(1, ge=1),
+    document_format: Literal['ppt', 'pdf'] = Form('ppt'),
+    bibliography_text: Optional[str] = Form(None, max_length=10000),
     send_to_telegram: bool = Form(True),
-    is_pro: bool = Form(False),
-    is_2slides: bool = Form(False),
-    document_format: str = Form("ppt"),
-    author: Optional[str] = Form(None),
-    pro_plan_count: int = Form(5),
-    pro_bibliography_type: str = Form("none"),
-    pro_bibliography_text: Optional[str] = Form(None),
-    pro_design: Optional[str] = Form(None),
-    pro_design_variant: int = Form(1),
     images: List[UploadFile] = File(default=[]),
-    db: Client = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    idempotency_key: uuid.UUID = Header(...),
+    db: Client = Depends(get_db), user: dict = Depends(get_current_user),
 ):
-    if slide_count < 3 or slide_count > 20:
-        raise HTTPException(status_code=400, detail="Slaydlar soni 3-20 oralig'ida bo'lishi kerak")
-
-    if is_pro:
-        pro_design = canonical_subject(pro_design)
-        if is_subject_pack(pro_design):
-            try:
-                manifest = load_manifest(pro_design, pro_design_variant)
-            except ValueError as error:
-                raise HTTPException(status_code=400, detail=str(error)) from error
-            slide_count = manifest["slide_count"]
-            pro_plan_count = manifest["plan_count"]
-
-    price = slide_count * (500 if (is_pro or is_2slides) else 300)
-    if user.get("balance", 0.0) < price:
-        raise HTTPException(status_code=402, detail="Balansingiz yetarli emas.")
-        raise HTTPException(status_code=402, detail="Balansingiz yetarli emas.")
-
-    user_image_paths = []
-    if images:
-        out_dir = "/tmp/user_images"
-        os.makedirs(out_dir, exist_ok=True)
-        for img in images:
-            if img.filename:
-                ext = img.filename.split(".")[-1] if "." in img.filename else "jpg"
-                tmp_path = os.path.join(out_dir, f"usr_img_{uuid.uuid4().hex}.{ext}")
-                try:
-                    async with aiofiles.open(tmp_path, 'wb') as out_file:
-                        content = await img.read()
-                        await out_file.write(content)
-                    user_image_paths.append(tmp_path)
-                except Exception as e:
-                    print(f"[API] Rasm saqlash xatosi: {e}")
-
-    pipeline = PresentationPipeline()
-
-    new_balance = user.get("balance", 0.0) - price
+    if len(topic.strip()) < 3:
+        raise HTTPException(400, 'Mavzuni kamida 3 ta belgi bilan kiriting')
+    subject = canonical_subject(subject)
     try:
-        await asyncio.to_thread(
-            db.table("users").update({"balance": new_balance}).eq("telegram_id", user["telegram_id"]).execute
-        )
-    except Exception as e:
-        print(f"[API] Balansni yechishda xato: {e}")
-        raise HTTPException(status_code=500, detail="Balansni yangilashda xato yuz berdi.")
-
-    if send_to_telegram and user.get("telegram_id"):
-        design_info = f"{pro_design} (variant #{pro_design_variant})" if is_pro and pro_design else ""
-        design_line = f"\n📐 Shablon: {design_info}" if design_info else ""
-        await send_status_message(
-            user["telegram_id"],
-            f"⏳ Fayl yaratilmoqda, tayyor bo'lgach sizga taqdim etiladi{design_line}"
-        )
-
-    # Queue the long-running task
-    background_tasks.add_task(
-        run_pipeline_background,
-        pipeline,
-        topic,
-        language,
-        slide_count,
-        style,
-        extra_context,
-        design_template,
-        user.get("telegram_id") if send_to_telegram else None,
-        user_image_paths,
-        is_pro,
-        is_2slides,
-        author,
-        pro_plan_count,
-        pro_bibliography_type,
-        pro_bibliography_text,
-        pro_design,
-        pro_design_variant,
-        document_format,
-    )
-
-    return PresentationResponse(
-        id=str(uuid.uuid4())[:12],
-        telegram_sent=True,
-        slide_count=slide_count
-    )
+        manifest = load_manifest(subject, variant)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    if len(images) > 10:
+        raise HTTPException(400, 'Ko‘pi bilan 10 ta rasm yuklang')
+    uploads = Path(settings.JOB_STORAGE_DIR) / 'uploads'
+    uploads.mkdir(parents=True, exist_ok=True)
+    paths = []
+    hashes = []
+    try:
+        for image in images:
+            if not image.filename:
+                continue
+            if image.content_type not in {'image/jpeg', 'image/png', 'image/webp'}:
+                raise HTTPException(400, 'JPEG, PNG yoki WEBP rasmini yuklang')
+            data = await image.read(5 * 1024 * 1024 + 1)
+            if len(data) > 5 * 1024 * 1024:
+                raise HTTPException(400, 'Har bir rasm 5 MB dan kichik bo‘lsin')
+            # Validate the actual bytes, not just an attacker-supplied file extension.
+            import io
+            from PIL import Image
+            try:
+                with Image.open(io.BytesIO(data)) as picture:
+                    if picture.width * picture.height > 20_000_000:
+                        raise ValueError('Rasm o‘lchami juda katta')
+                    picture.verify()
+            except Exception as exc:
+                raise HTTPException(400, 'Rasm fayli noto‘g‘ri') from exc
+            hashes.append(hashlib.sha256(data).hexdigest())
+            path = uploads / f'{uuid.uuid4()}.img'
+            path.write_bytes(data)
+            paths.append(str(path))
+        payload = {'topic': topic.strip(), 'author': author, 'language': language, 'subject': subject,
+            'variant': variant, 'document_format': document_format,
+            'bibliography_text': bibliography_text, 'bibliography_type': 'user' if bibliography_text else 'none',
+            'send_to_telegram': send_to_telegram, 'user_images': paths, 'image_hashes': hashes}
+        charge = await rpc(db, 'commerce_enqueue', p_user_id=user['telegram_id'], p_service='presentation',
+            p_request_id=str(idempotency_key), p_payload=payload)
+    except BaseException:
+        for path in paths:
+            Path(path).unlink(missing_ok=True)
+        raise
+    if not charge['created']:
+        for path in paths:
+            Path(path).unlink(missing_ok=True)
+    return PresentationResponse(id=str(idempotency_key), slide_count=manifest['slide_count'],
+        status='queued' if charge['status'] == 'reserved' else charge['status'])

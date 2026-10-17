@@ -1,0 +1,1 @@
+{"name":"orzu-sql-tests","private":true,"type":"module","scripts":{"test:sql":"node tests/commerce_sql.test.mjs"},"devDependencies":{"@electric-sql/pglite":"0.5.10"}}

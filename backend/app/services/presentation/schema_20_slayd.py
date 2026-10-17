@@ -87,8 +87,8 @@ TEXT_LIMITS = {'kirish_matni': {'max_words': 65, 'max_chars': 450},
  'fraza': {'max_chars': 150},
  'yakun': {'max_chars': 35}}
 
-def build_schema(topic: str, author: str, pro_plan_count: int = 4) -> dict:
-    if pro_plan_count != 4:
+def build_schema(topic: str, author: str, plan_count: int = 4) -> dict:
+    if plan_count != 4:
         raise ValueError("20 slaydli shablon aynan 4 ta reja bandini talab qiladi")
     s = dict(FIELD_DESCRIPTIONS)
     s["topic"] = f"Mavzu: {topic}. Maksimum 64 belgi."

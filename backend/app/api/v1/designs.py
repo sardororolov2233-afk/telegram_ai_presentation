@@ -20,6 +20,7 @@ from app.core.database import get_db
 from app.routes.deps import get_current_user
 from app.core.config import settings
 from app.services.design.pipeline import run_design_pipeline
+from app.services.billing import billed_route
 from app.services.design.image_generator import STATIC_DIR
 
 router = APIRouter(prefix="/designs", tags=["Designs"])
@@ -42,6 +43,7 @@ class DesignResponse(BaseModel):
 
 
 @router.post("/generate", response_model=DesignResponse)
+@billed_route("design")
 async def generate_design(
     request: Request,
     body: DesignRequest,
@@ -61,24 +63,6 @@ async def generate_design(
     if body.lang not in ("uz", "kaa", "ru", "en"):
         raise HTTPException(status_code=400, detail="Noto'g'ri til. Mavjud: uz, kaa, ru, en")
 
-    # ── 2. Balans tekshirish ────────────────────────────────
-    balance = user.get("balance", 0.0)
-    if balance < DESIGN_PRICE:
-        raise HTTPException(status_code=402, detail="Balansingiz yetarli emas.")
-
-    # ── 3. Balansdan yechish ────────────────────────────────
-    new_balance = balance - DESIGN_PRICE
-    try:
-        await asyncio.to_thread(
-            db.table("users")
-            .update({"balance": new_balance})
-            .eq("telegram_id", user["telegram_id"])
-            .execute
-        )
-    except Exception as e:
-        print(f"[Designs API] Balansni yechishda xato: {e}")
-        raise HTTPException(status_code=500, detail="Balansni yangilashda xato yuz berdi.")
-
     # ── 4. Pipeline ishga tushirish ─────────────────────────
     try:
         filenames = await run_design_pipeline(
@@ -90,31 +74,9 @@ async def generate_design(
         )
     except Exception as e:
         print(f"[Designs API] Pipeline xatosi: {e}")
-        # Balansni qaytarib berish
-        try:
-            await asyncio.to_thread(
-                db.table("users")
-                .update({"balance": balance})
-                .eq("telegram_id", user["telegram_id"])
-                .execute
-            )
-            print("[Designs API] ⚠️ Balans qaytarildi (pipeline xatosi tufayli)")
-        except Exception:
-            pass
         raise HTTPException(status_code=500, detail="Dizayn yaratishda xatolik yuz berdi. Balans qaytarildi.")
 
     if not filenames:
-        # Hech qanday rasm yaratilmadi — balansni qaytarish
-        try:
-            await asyncio.to_thread(
-                db.table("users")
-                .update({"balance": balance})
-                .eq("telegram_id", user["telegram_id"])
-                .execute
-            )
-            print("[Designs API] ⚠️ Balans qaytarildi (0 ta rasm)")
-        except Exception:
-            pass
         raise HTTPException(status_code=500, detail="Rasm yaratib bo'lmadi. Balans qaytarildi.")
 
     # ── 5. Telegram'ga yuborish ─────────────────────────────

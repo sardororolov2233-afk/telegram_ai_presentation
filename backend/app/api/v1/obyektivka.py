@@ -7,6 +7,7 @@ import json
 import os
 
 from app.core.database import get_db
+from app.services.billing import billed_route
 from app.routes.deps import get_current_user
 from app.services.obyektivka.service import ObyektivkaService
 from app.services.obyektivka.telegram_sender import send_obyektivka_to_telegram
@@ -43,6 +44,7 @@ async def _send_telegram_background(
         print(f"[ObyektivkaAPI] Telegram background task failed: {e}")
 
 @router.post("/generate", response_model=ObyektivkaApiResponse)
+@billed_route("obyektivka")
 async def generate_obyektivka(
     background_tasks: BackgroundTasks,
     full_name: str = Form(""),
@@ -71,26 +73,7 @@ async def generate_obyektivka(
     db: Client = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
-    # ── 1. Balans tekshirish ──────────────────────────────────────
-    balance = float(user.get("balance", 0.0) or 0.0)
-    if balance < OBYEKTIVKA_PRICE:
-        raise HTTPException(
-            status_code=402,
-            detail="Balansingiz yetarli emas. Obyektivka tayyorlash narxi 10,000 so'm."
-        )
-
-    # ── 2. Balansdan 10,000 so'm yechish ─────────────────────────
-    new_balance = balance - OBYEKTIVKA_PRICE
-    try:
-        await asyncio.to_thread(
-            db.table("users")
-            .update({"balance": new_balance})
-            .eq("telegram_id", user["telegram_id"])
-            .execute
-        )
-    except Exception as e:
-        print(f"[ObyektivkaAPI] Balansni yechishda xato: {e}")
-        raise HTTPException(status_code=500, detail="Balansni yangilashda xato yuz berdi.")
+    new_balance = None
 
     # Parse bundle fallback if available
     bundle = {}
@@ -102,10 +85,6 @@ async def generate_obyektivka(
 
     fn = full_name or bundle.get("fullName", "")
     if not fn.strip():
-        # Balansni qaytarib berish
-        await asyncio.to_thread(
-            db.table("users").update({"balance": balance}).eq("telegram_id", user["telegram_id"]).execute
-        )
         raise HTTPException(status_code=400, detail="F.I.SH. kiritilishi shart")
 
     cp = current_position or bundle.get("currentPosition", "")
@@ -199,13 +178,6 @@ async def generate_obyektivka(
         )
     except Exception as e:
         print(f"[ObyektivkaAPI] Generation error: {e}")
-        # Balansni qaytarish (Rollback)
-        try:
-            await asyncio.to_thread(
-                db.table("users").update({"balance": balance}).eq("telegram_id", user["telegram_id"]).execute
-            )
-        except Exception as rb_err:
-            print(f"[ObyektivkaAPI] Rollback error: {rb_err}")
         raise HTTPException(status_code=500, detail=f"Obyektivka yaratishda xatolik yuz berdi: {str(e)}")
 
     # ── 4. Telegram bot orqali jo'natish ─────────────────────────

@@ -23,3 +23,6 @@ Thumbs.db
 # Database
 *.sqlite3
 *.db
+
+node_modules/
+.pytest_cache/

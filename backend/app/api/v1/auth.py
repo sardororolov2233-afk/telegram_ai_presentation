@@ -1,121 +1,34 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from supabase import Client
 import asyncio
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-
+from supabase import Client
 from app.core.database import get_db
 from app.utils.telegram_auth import validate_telegram_init_data, create_access_token
+from app.services.commerce import register, parse_referrer
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(prefix='/auth', tags=['Auth'])
+
 
 class TelegramAuthRequest(BaseModel):
     init_data: str
 
+
 class AuthResponse(BaseModel):
     access_token: str
-    token_type: str = "bearer"
+    token_type: str = 'bearer'
     user: dict
 
-@router.post("/telegram", response_model=AuthResponse)
+
+@router.post('/telegram', response_model=AuthResponse)
 async def telegram_auth(body: TelegramAuthRequest, db: Client = Depends(get_db)):
     user_data = validate_telegram_init_data(body.init_data)
-
     if not user_data:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Noto'g'ri yoki eskirgan Telegram ma'lumotlari",
-        )
-
-    telegram_id = user_data["id"]
-
-    resp = await asyncio.to_thread(
-        db.table("users").select("*").eq("telegram_id", telegram_id).execute
-    )
-
-    if not resp.data:
-        new_user = {
-            "telegram_id": telegram_id,
-            "first_name": user_data.get("first_name", ""),
-            "last_name": user_data.get("last_name"),
-            "username": user_data.get("username"),
-            "language_code": user_data.get("language_code", "uz"),
-            "is_premium": user_data.get("is_premium", False),
-            "balance": 0.0,
-            "role": "user",
-            "is_active": True,
-        }
-        res_ins = await asyncio.to_thread(db.table("users").insert(new_user).execute)
-        db_user = res_ins.data[0]
-    else:
-        db_user = resp.data[0]
-        update_data = {
-            "first_name": user_data.get("first_name", db_user.get("first_name", "")),
-            "last_name": user_data.get("last_name", db_user.get("last_name")),
-            "username": user_data.get("username", db_user.get("username")),
-            "is_premium": user_data.get("is_premium", False),
-        }
-        res_upd = await asyncio.to_thread(
-            db.table("users").update(update_data).eq("telegram_id", telegram_id).execute
-        )
-        db_user = res_upd.data[0]
-
-    token = create_access_token(telegram_id)
-
-    return AuthResponse(
-        access_token=token,
-        user={
-            "id": db_user["telegram_id"],
-            "first_name": db_user.get("first_name", ""),
-            "last_name": db_user.get("last_name"),
-            "username": db_user.get("username"),
-            "balance": float(db_user.get("balance", 0.0)),
-            "role": db_user.get("role", "user"),
-            "is_premium": db_user.get("is_premium", False),
-        },
-    )
-
-@router.post("/dev-login", response_model=AuthResponse)
-async def dev_login(db: Client = Depends(get_db)):
-    from app.core.config import settings
-    if not settings.DEBUG:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Bu endpoint faqat DEBUG rejimda ishlaydi",
-        )
-
-    DEV_TELEGRAM_ID = 123456789
-    resp = await asyncio.to_thread(
-        db.table("users").select("*").eq("telegram_id", DEV_TELEGRAM_ID).execute
-    )
-
-    if not resp.data:
-        new_user = {
-            "telegram_id": DEV_TELEGRAM_ID,
-            "first_name": "Test",
-            "last_name": "User",
-            "username": "devuser",
-            "language_code": "uz",
-            "is_premium": False,
-            "balance": 100000.0,
-            "role": "admin",
-            "is_active": True,
-        }
-        res_ins = await asyncio.to_thread(db.table("users").insert(new_user).execute)
-        db_user = res_ins.data[0]
-    else:
-        db_user = resp.data[0]
-
-    token = create_access_token(db_user["telegram_id"])
-
-    return AuthResponse(
-        access_token=token,
-        user={
-            "id": db_user["telegram_id"],
-            "first_name": db_user.get("first_name", ""),
-            "last_name": db_user.get("last_name"),
-            "username": db_user.get("username"),
-            "balance": float(db_user.get("balance", 0.0)),
-            "role": db_user.get("role", "user"),
-            "is_premium": db_user.get("is_premium", False),
-        },
-    )
+        raise HTTPException(401, 'Noto‘g‘ri yoki eskirgan Telegram ma’lumotlari')
+    await register(db, user_data, parse_referrer(user_data.get('_start_param')))
+    response = await asyncio.to_thread(db.table('users').select('*').eq('telegram_id', user_data['id']).execute)
+    user = response.data[0]
+    if not user.get('is_active', True):
+        raise HTTPException(403, 'Hisob faol emas')
+    return AuthResponse(access_token=create_access_token(user_data['id']), user={
+        'id': user['telegram_id'], 'first_name': user.get('first_name', ''), 'username': user.get('username'),
+        'balance': float(user.get('balance') or 0), 'role': user.get('role', 'user')})
