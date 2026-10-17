@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import json
 import time
-from urllib.parse import unquote, parse_qsl
+from urllib.parse import parse_qsl
 from typing import Optional
 
 from app.core.config import settings
@@ -14,7 +14,8 @@ def validate_telegram_init_data(init_data: str) -> Optional[dict]:
     Haqiqiy bo'lsa user ma'lumotlarini qaytaradi, aks holda None.
     """
     try:
-        parsed = dict(parse_qsl(unquote(init_data), strict_parsing=True))
+        # Decode once: double decoding breaks names containing literal '+', '%' or '&'.
+        parsed = dict(parse_qsl(init_data, strict_parsing=True))
     except Exception:
         return None
 
@@ -23,8 +24,11 @@ def validate_telegram_init_data(init_data: str) -> Optional[dict]:
         return None
 
     # Auth sanasini tekshirish (1 soat)
-    auth_date = int(parsed.get("auth_date", 0))
-    if time.time() - auth_date > 3600:
+    try:
+        auth_date = int(parsed.get("auth_date", 0))
+    except (TypeError, ValueError):
+        return None
+    if not 0 <= time.time() - auth_date <= 3600:
         return None
 
     # Data-check-string yasash
@@ -53,11 +57,15 @@ def validate_telegram_init_data(init_data: str) -> Optional[dict]:
     user_data = parsed.get("user")
     if user_data:
         try:
-            return json.loads(user_data)
+            user = json.loads(user_data)
+            if not isinstance(user, dict) or not isinstance(user.get("id"), int) or user.get("is_bot"):
+                return None
+            user["_start_param"] = parsed.get("start_param")
+            return user
         except json.JSONDecodeError:
             return None
 
-    return parsed
+    return None
 
 
 def create_access_token(telegram_id: int) -> str:

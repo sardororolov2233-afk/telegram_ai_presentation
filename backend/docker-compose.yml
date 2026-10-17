@@ -1,12 +1,14 @@
-version: '3.9'
-
+# Run from the repository root: docker compose up --build -d
 services:
   app:
-    build: .
+    build: ..
     ports:
-      - '8000:8000'
+      - "8000:8000"
     env_file: .env
+    environment:
+      JOB_STORAGE_DIR: /data/orzu-jobs
     volumes:
-      - .:/app
-      - /tmp/presentations:/tmp/presentations
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - generation_data:/data/orzu-jobs
+    restart: unless-stopped
+volumes:
+  generation_data:

@@ -11,7 +11,7 @@ from PIL import Image,ImageOps
 
 NS={'a':'http://schemas.openxmlformats.org/drawingml/2006/main','p':'http://schemas.openxmlformats.org/presentationml/2006/main','r':'http://schemas.openxmlformats.org/officeDocument/2006/relationships'}
 REL='http://schemas.openxmlformats.org/package/2006/relationships'
-TOKEN=re.compile(r'{{([a-zA-Z0-9_]+)}}')
+TOKEN=re.compile(r'{{([^{}\r\n]+)}}')
 def xml(e):return ET.tostring(e,encoding='UTF-8',xml_declaration=True,standalone=True)
 
 def fill_template(template_path, data, output_path, images=None, strict=True):

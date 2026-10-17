@@ -1,6 +1,8 @@
 import os
 import sys
 import subprocess
+import tempfile
+from pathlib import Path
 
 def convert_pptx_to_pdf(pptx_path: str) -> str:
     """
@@ -34,21 +36,12 @@ def convert_pptx_to_pdf(pptx_path: str) -> str:
             raise RuntimeError(f"PDF ga aylantirish xatosi (MS Office o'rnatilgan yoki yo'qligini tekshiring): {e}")
     else:
         # Linux / MacOS - LibreOffice required
-        out_dir = os.path.dirname(pptx_path)
-        try:
-            cmd = [
-                'libreoffice',
-                '--headless',
-                '--convert-to',
-                'pdf',
-                pptx_path,
-                '--outdir',
-                out_dir
-            ]
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if result.returncode != 0:
-                raise Exception(result.stderr.decode('utf-8'))
-            return pdf_path
-        except Exception as e:
-            print(f"LibreOffice orqali PDF ga aylantirishda xatolik: {e}")
-            raise RuntimeError(f"PDF ga aylantirish xatosi (Linux): LibreOffice o'rnatilmagan bo'lishi mumkin. {e}")
+        out_dir = str(Path(pptx_path).resolve().parent)
+        # One profile per conversion avoids LibreOffice process/profile collisions.
+        with tempfile.TemporaryDirectory(prefix="orzu-lo-") as profile:
+            result = subprocess.run(['libreoffice', f'-env:UserInstallation={Path(profile).as_uri()}',
+                '--headless', '--convert-to', 'pdf', str(Path(pptx_path).resolve()), '--outdir', out_dir],
+                capture_output=True, timeout=120, check=False)
+            if result.returncode or not Path(pdf_path).is_file():
+                raise RuntimeError('PDF konvertatsiyasi yakunlanmadi')
+        return pdf_path

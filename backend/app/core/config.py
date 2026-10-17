@@ -59,7 +59,8 @@ class Settings:
     DEBUG: bool = _get_bool("DEBUG", False)
     FRONTEND_URL: str = _get_str("FRONTEND_URL", "https://orzu-two.vercel.app")
 
-    TELEGRAM_BOT_TOKEN: str = _get_str("TELEGRAM_BOT_TOKEN")
+    TELEGRAM_BOT_TOKEN: str = _get_str("TELEGRAM_BOT_TOKEN", _get_str("BOT_TOKEN"))
+    TELEGRAM_BOT_USERNAME: str = _get_str("TELEGRAM_BOT_USERNAME").lstrip("@")
     TELEGRAM_WEBHOOK_URL: Optional[str] = _get("TELEGRAM_WEBHOOK_URL")
 
     SECRET_KEY: str = _get_str("SECRET_KEY", "change-this-secret-key-in-production")
@@ -70,9 +71,11 @@ class Settings:
     UNSPLASH_ACCESS_KEY: Optional[str] = _get("UNSPLASH_ACCESS_KEY")
 
     SUPABASE_URL: str = _get_str("SUPABASE_URL")
-    SUPABASE_KEY: str = _get_str("SUPABASE_KEY")
+    SUPABASE_KEY: str = _get_str("SUPABASE_SERVICE_ROLE_KEY", _get_str("SUPABASE_KEY"))
 
-    TWOSLIDES_API_KEY: Optional[str] = _get("TWOSLIDES_API_KEY")
+    ACADEMIC_MODEL: str = "deepseek/deepseek-r1-0528"
+    JOB_STORAGE_DIR: str = _get_str("JOB_STORAGE_DIR", "/tmp/orzu-jobs")
+    JOB_WORKERS: int = _get_int("JOB_WORKERS", 2)
 
 
 settings = Settings()
