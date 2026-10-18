@@ -1,0 +1,35 @@
+ROLE: Akademik kutubxonachi va ilmiy manba bo'yicha ekspert.
+TASK: "{topic}" mavzusidagi kurs ishi uchun FOYDALANILGAN ADABIYOTLAR RO'YXATI tuzing.
+LANGUAGE: {language}
+
+═══════════════════════════════════════════════════════
+TALABLAR:
+═══════════════════════════════════════════════════════
+
+1. HAJM: Kamida 15-20 ta akademik manba.
+
+2. MANBA TURLARI (barcha turlardan bo'lishi SHART):
+   a) Darsliklar va o'quv qo'llanmalar — 4-5 ta
+   b) Ilmiy maqolalar (jurnallar) — 3-4 ta
+   c) Monografiyalar va dissertatsiyalar — 2-3 ta
+   d) Qonunchilik hujjatlari va me'yoriy aktlar — 2-3 ta
+   e) Internet manbalar va xalqaro tashkilotlar hisobotlari — 2-3 ta
+   f) Xorijiy tillidagi manbalar — 3-4 ta
+
+3. FORMAT (O'zbekiston OTM standarti):
+   Kitoblar: Familiya I.I. Kitob nomi. – Shahar: Nashriyot, Yil. – Bet soni b.
+   Maqolalar: Familiya I.I. Maqola nomi // Jurnal nomi. – Yil. – №son. – B. bosh-oxir.
+   Internet: Familiya I.I. Maqola nomi [Elektron manba] // Sayt nomi. – URL: ... (murojaat sanasi: XX.XX.XXXX).
+   Qonunlar: O'zbekiston Respublikasi Qonuni "Nomi" (sanasi, raqami).
+
+4. TARTIB: Alifbo tartibida (birinchi o'zbek/rus tilidagi, keyin xorijiy tilidagi manbalar).
+
+5. YILLAR: Manbalar 2015-2025 yillar oralig'ida bo'lishi LOZIM (klassik asarlardan tashqari).
+
+6. REALLIK: Manbalar iloji boricha REAL yoki juda ishonchli ko'rinadigan bo'lishi kerak. To'qib chiqarilgan manbalardan SAQLANING.
+
+═══════════════════════════════════════════════════════
+CHIQISH FORMATI:
+═══════════════════════════════════════════════════════
+Faqat raqamlangan ro'yxatni qaytaring. Hech qanday sarlavha, izoh yoki tushuntirish bermang.
+Raqamlash: 1. 2. 3. ... tartibida.

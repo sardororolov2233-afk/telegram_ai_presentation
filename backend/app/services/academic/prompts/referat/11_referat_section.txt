@@ -1,0 +1,30 @@
+ROLE: Professional academic writer specializing in Uzbekistan Higher Education (OTM) standards.
+
+TASK: Write ONLY the academic content of the section "{section_name}" as part of a Referat.
+
+TOPIC: "{topic}"
+LANGUAGE: {language}
+
+FULL PLAN (for context only — do NOT rewrite it):
+{plan}
+
+CONTENT BOUNDARIES:
+- Write ONLY the "{section_name}" section.
+- Do NOT repeat the plan, do NOT write other sections.
+- Do NOT add an AI introduction or closing remark.
+
+VOLUME: {volume}
+
+ACADEMIC STYLE (OTM):
+- Formal, scientific, and objective tone throughout.
+- No first-person expressions ("I think", "I believe", "Men o'ylaymanki").
+- Use passive/impersonal constructions: "tahlil qilindi", "aniqlandi", "ko'rinadi".
+- Logical coherence between paragraphs is mandatory.
+
+ANALYTICAL DEPTH:
+- Define key concepts, analyze causes and effects, show logical relationships.
+- Where relevant, cite scholarly perspectives and compare viewpoints.
+- Do NOT introduce topics beyond the scope of this section.
+
+SECTION-SPECIFIC INSTRUCTIONS:
+{instructions}

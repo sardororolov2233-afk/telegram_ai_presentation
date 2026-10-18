@@ -1,0 +1,8 @@
+CONTEXT CONTROL RULES (STRICT):
+
+1. PLAN IS LOCKED: Treat the provided plan (MUNDARIJA) as immutable. Do not add, remove, or rename sections.
+2. PREVIOUS CONTENT IS READ-ONLY: If previous sections' summaries are provided, use them for context continuity but do NOT repeat their content.
+3. SECTION TITLES MUST MATCH: Your content must correspond exactly to the section title from the plan.
+4. LANGUAGE CONSISTENCY: The language MUST remain the same throughout the entire document. If the plan is in Uzbek, write in Uzbek. No switching.
+5. NO CROSS-SECTION BLEEDING: Stay within the scope of YOUR assigned section. Do not write content that belongs to other sections.
+6. CONTINUITY: If previous context is provided, ensure smooth logical transitions from the previous section. Reference ideas from earlier sections where relevant, but introduce NEW analysis.

@@ -66,3 +66,7 @@ PYTHONPATH=. pytest -q
 `npm` faqat PostgreSQL/PGlite sinovlari uchun kerak; ishchi backend Node.js ishlatmaydi. SQL sinovlari taklif chegaralari, qayta bosish, eski chek, muddat, xarid, navbat, qaytarish va ommaviy huquqlarni tekshiradi. API testlari haqiqiy PostgreSQL dvigateli orqali ishlaydi. Yonma-yon `Orzu` checkout’i bo‘lsa, bot → birgalikdagi hisob → API → haqiqiy 20 slaydli PPTX va DOCX integratsiya testi ham bajariladi. AI va Telegram transporti testda almashtirilgan: bu testlar haqiqiy pulli AI yoki bank to‘lovini yubormaydi.
 
 Ishlab turgan Supabase, bot va AI kalitlari bilan oxirgi sinov hamda migratsiyani qo‘llash alohida bajariladi; kod sinovlari ularning amaldagi sozlamalarini tasdiqlamaydi.
+
+## Telegram Serverless bilan ulash
+
+Orzu reposining `codex/telegram-serverless` tarmog‘i shu botni Telegram Serverless’da ishlatadi. Backenddagi yangi academic worker eski Orzu kurs ishi va referat generatorlarini ham navbatda bajaradi. Bitta Supabase loyihasida `backend/supabase/migrations/20261018_serverless.sql` ni oldingi commerce migratsiyasidan keyin bir marta bajaring, keyin shu backendni yangilab qayta ishga tushiring. `/health` da `serverless-academic-queue-v1` ko‘rinishi kerak. Bot deploy’i undan keyin bajariladi. Balanslar va limitlar o‘sha commerce RPC’larida qoladi; eski polling yoki boshqa webhook yangilanish iste’molchisi bilan bir vaqtda ishlamang. Telegram Serverless backend generatsiya worker’ini almashtirmaydi.

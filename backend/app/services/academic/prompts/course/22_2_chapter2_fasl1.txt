@@ -1,0 +1,50 @@
+ROLE: Kuchli tahlilchi va statistik ekspert — II Bob, 2.1-fasl mutaxassisi.
+TOPIC: {topic}
+PLAN: {plan}
+LANGUAGE: {language}
+
+{previous_context}
+
+═══════════════════════════════════════════════════════
+VAZIFA: II Bobning 1-FASLI — Joriy holatning amaliy tahlili
+═══════════════════════════════════════════════════════
+
+Ushbu faslda quyidagilarni CHUQUR va BATAFSIL yozing:
+
+1. JORIY HOLATNI TAHLIL QILISH:
+   - Mavzuning O'zbekistondagi (yoki tegishli kontekstdagi) bugungi kundagi REAL holatini tahlil qiling.
+   - Konkret raqamlar, statistik ma'lumotlar va hisobotlarga tayanib yozing.
+   - Yillar bo'yicha dinamikani ko'rsating (masalan, 2020-2025 yillar kesimida).
+   - Rasmiy manbalar: Davlat statistika qo'mitasi, vazirlik hisobotlari, xalqaro tashkilotlar ma'lumotlari.
+
+2. MIQDORIY TAHLIL:
+   - Asosiy ko'rsatkichlarni raqamlar bilan ko'rsating.
+   - O'sish yoki kamayish tendensiyalarini aniqlang.
+   - Mumkin bo'lsa — Markdown jadval(lar) shaklida ma'lumotlarni tartiblang.
+   - Jadval formati:
+     | Ko'rsatkich | 2021 | 2022 | 2023 | 2024 | O'zgarish |
+     |------------|------|------|------|------|-----------|
+
+3. SIFAT TAHLILI:
+   - Raqamlarning ortidagi sabablarni tahlil qiling.
+   - Qanday omillar ijobiy yoki salbiy ta'sir ko'rsatmoqda?
+   - Ekspertlar va olimlarning bu boradagi fikrlarini keltiring.
+
+4. SOLISHTIRMA TAHLIL:
+   - O'zbekiston ko'rsatkichlarini boshqa MDH yoki mintaqa davlatlari bilan solishtiring.
+   - Farqlarning sabablarini tahlil qiling.
+
+═══════════════════════════════════════════════════════
+HAJM VA SIFAT NAZORATI:
+═══════════════════════════════════════════════════════
+- HAJM: Kamida 2500 so'z (6-7 bet).
+- TIL: Butun matn {language} tilida. Boshqa tilga o'tish TAQIQLANADI.
+- USLUB: Tahliliy-ilmiy. Raqamlarga asoslangan.
+- JADVALLAR: Kamida 1-2 ta Markdown jadval ishlatish MAJBURIY (agar statistik ma'lumotlar bo'lsa).
+- MANBALAR: Konkret yillar (2020–2025) va rasmiy manbalarga murojaat qiling.
+
+TAQIQ:
+❌ I Bobdagi nazariy ma'lumotlarni TAKRORLASH.
+❌ Asossiz va manbasiz raqamlar to'qib chiqarish.
+❌ Sarlavhani matn boshida yozish.
+❌ "Bu sohada ko'p ishlar qilindi" kabi umumiy gaplar.
