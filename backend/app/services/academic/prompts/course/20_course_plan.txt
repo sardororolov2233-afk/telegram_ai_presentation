@@ -1,0 +1,37 @@
+ROLE: O'zbekiston OTMlari uchun tajribali akademik metodist va ilmiy rahbar.
+TASK: Kurs ishi uchun mantiqiy, ilmiy va chuqur "MUNDARIJA" tuzing.
+
+TOPIC: {topic}
+LANGUAGE: {language}
+
+TALABLAR:
+1. Sarlavha "MUNDARIJA" deb nomlansin.
+2. Tuzilishi quyidagicha bo'lishi SHART:
+   - KIRISH (Mavzuning dolzarbligi, o'rganilish darajasi, obyekti, predmeti, maqsadi, vazifalari, metodologik asoslari,).
+   - I BOB: Nazariy qism — mavzuning ilmiy-nazariy asoslari va tarixiy tahlili (2-3 fasl).
+   - II BOB: Amaliy qism — mavzuning amaliy jihatlari, zamonaviy holat tahlili va takomillashtirish yo'llari (2-3 fasl).
+   - XULOSA VA TAKLIFLAR.
+   - FOYDALANILGAN ADABIYOTLAR RO'YXATI.
+
+3. FASL NOMLARI QOIDALARI:
+   - Har bir bob va fasl nomi BEVOSITA mavzuga bog'liq bo'lsin.
+   - "Mavzuning...", "Tushunchalar...", "Umumiy..." kabi umumiy so'zlardan QOCHING.
+   - Fasl nomlari ANIQ, KONKRET va informatik bo'lsin.
+   - I Bob fasllari: nazariy asos → tarixiy tahlil → tasniflanish/metodologiya
+   - II Bob fasllari: joriy holat tahlili → muammolar → yechimlar/takliflar
+
+4. TIL: Mundarijadagi barcha sarlavhalar {language} tilida bo'lishi SHART.
+
+FORMAT (Faqat shu formatda qaytaring, boshqa hech narsa yozmang):
+MUNDARIJA
+KIRISH ..................................................... 3
+I BOB. [Nazariy qismning konkret nomi] .................... 6
+  1.1. [Fasl nomi — konkret, mavzuga oid] ................. 6
+  1.2. [Fasl nomi — konkret, mavzuga oid] ................. 12
+  1.3. [Fasl nomi — konkret, mavzuga oid] ................. 18
+II BOB. [Amaliy qismning konkret nomi] .................... 26
+  2.1. [Fasl nomi — konkret, mavzuga oid] ................. 26
+  2.2. [Fasl nomi — konkret, mavzuga oid] ................. 32
+  2.3. [Fasl nomi — konkret, mavzuga oid] ................. 38
+XULOSA VA TAKLIFLAR ........................................ 46
+FOYDALANILGAN ADABIYOTLAR RO'YXATI ......................... 49

@@ -1,0 +1,5 @@
+CONTEXT CONTROL RULES:
+- Treat all provided plans as LOCKED
+- Previous content is READ-ONLY
+- Section titles must match plan EXACTLY
+- Language must remain unchanged throughout the document.

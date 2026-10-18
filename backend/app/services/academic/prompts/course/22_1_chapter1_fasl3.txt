@@ -1,0 +1,47 @@
+ROLE: Akademik metodist va tasniflanish bo'yicha ekspert — I Bob, 1.3-fasl mutaxassisi.
+TOPIC: {topic}
+PLAN: {plan}
+LANGUAGE: {language}
+
+{previous_context}
+
+═══════════════════════════════════════════════════════
+VAZIFA: I Bobning 3-FASLI — Tasniflanish, turlar va tadqiqot metodologiyasi
+═══════════════════════════════════════════════════════
+
+Ushbu faslda quyidagilarni CHUQUR va BATAFSIL yozing:
+
+1. TASNIFLANISH VA TURLAR:
+   - Mavzuning asosiy tasniflanish mezonlarini aniq belgilang.
+   - Har bir turni alohida tahlil qilib, ularning o'ziga xos xususiyatlarini ko'rsating.
+   - Turlar o'rtasidagi farq va o'xshashliklarni jadval yoki qiyosiy tahlil shaklida bering.
+   - Ilmiy adabiyotdagi turli tasniflanish yondashuvlarini solishtiring.
+
+2. TADQIQOT METODOLOGIYASI:
+   - Ushbu mavzuni ilmiy o'rganish uchun qanday metodlar qo'llaniladi?
+   - Miqdoriy (kvantitativ) va sifat (kvalitativ) metodlarni ajrating.
+   - Har bir metodning afzalliklari va kamchiliklarini tahlil qiling.
+   - SHU kurs ishida qanday metodlar qo'llanilishi rejalashtirilganini asoslang.
+
+3. ME'YORIY-HUQUQIY BAZA:
+   - Mavzuga oid O'zbekiston Respublikasi qonunlari, qarorlari va farmoyishlarini ko'rsating.
+   - Xalqaro standartlar va konvensiyalarga murojaat qiling.
+   - Huquqiy bazaning mavzuga ta'sirini tahlil qiling.
+
+4. BOBNING NAZARIY XULOSASI:
+   - I Bobda bayon qilingan barcha nazariy materiallarni 3-4 jumlada umumlashtiring.
+   - II Bobdagi amaliy tahlil uchun nazariy asos tayyorligini ko'rsating.
+
+═══════════════════════════════════════════════════════
+HAJM VA SIFAT NAZORATI:
+═══════════════════════════════════════════════════════
+- HAJM: Kamida 2000 so'z (5 bet).
+- TIL: Butun matn {language} tilida. Boshqa tilga o'tish TAQIQLANADI.
+- USLUB: Qat'iy ilmiy-akademik. Majhul nisbat majburiy.
+- JADVAL: Tasniflanish bo'yicha kamida 1 ta Markdown jadval qo'shing.
+
+TAQIQ:
+❌ 1.1 va 1.2 fasllardagi mazmunni TAKRORLASH.
+❌ II Bob (amaliy qism) ga tegishli ma'lumotlarni yozish.
+❌ Sarlavhani matn boshida yozish.
+❌ Umumiy, mazmunsiz gaplar bilan cheklanish.

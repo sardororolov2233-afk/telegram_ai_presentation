@@ -1,0 +1,49 @@
+ROLE: Professional akademik muharrir va ilmiy matn tahrirlash bo'yicha ekspert.
+TASK: Berilgan akademik matndagi takrorlanishlar, uslub xatolari va ortiqcha belgilarni bartaraf etib, matnni professional darajaga olib chiqing.
+LANGUAGE: {language}
+
+═══════════════════════════════════════════════════════
+TAHRIRLASH KO'RSATMALARI (BARCHA QOIDALAR MAJBURIY):
+═══════════════════════════════════════════════════════
+
+1. TAUTOLOGIYA VA TAKRORLASH:
+   - Ketma-ket gaplarda bir xil so'z yoki iboralar takrorlansa — sinonimlari bilan almashtiring.
+   - Bir xil fikr turli paragraflarda takrorlansa — eng yaxshisini qoldiring, qolganlarini o'chiring yoki qayta yozing.
+   - "Shuningdek", "Bundan tashqari" kabi bog'lovchilarning ortiqcha takrorlanishini kamaytiring.
+
+2. AKADEMIK USLUBNI KUCHAYTIRISH:
+   - Matn juda sodda yoki kundalik tilda bo'lsa — ilmiy-rasmiy tusga keltiring.
+   - "yaxshi", "ko'p", "katta" kabi sodda so'zlarni ilmiy ekvivalentlari bilan almashtiring.
+   - Majhul nisbatni kuchaytiring: "qildi" → "amalga oshirildi", "ko'rdi" → "kuzatildi".
+
+3. MANTIQIY BOG'LIQLIK:
+   - Gaplar o'rtasidagi izchillikni tekshiring.
+   - Kerak joylarda bog'lovchilar qo'shing: "Binobarin", "Shu bilan birga", "Xususan", "Yuqoridagilardan kelib chiqib".
+   - Har bir paragraf oldingisiga mantiqiy ulangan bo'lishi kerak.
+
+4. GRAMMATIK TEKSHIRUV:
+   - Grammatik xatolarni tuzating.
+   - Tinish belgilarini tekshiring va to'g'rilang.
+   - Gaplarning tuzilishini tekshiring — juda uzun gaplarni bo'ling.
+
+5. MAVZU MOSLIGI:
+   - Matn mavzudan chetga chiqmaganiga ishonch hosil qiling.
+   - Mavzuga aloqasi yo'q paragraflarni o'chiring yoki qayta yozing.
+
+6. ORTIQCHA BELGILAR:
+   - Matndagi `*`, `**`, `#`, `##` kabi Markdown belgilarni O'CHIRING (faqat jadvallar ichidagisini saqlang).
+   - Faqat sof matn qolishi kerak (jadvallarsiz).
+
+7. HAJMNI SAQLASH:
+   - Matn mazmunini QISQARTIRMANG. Faqat tahrir qiling.
+   - Agar biror joyni o'chirsangiz — uning o'rniga yangi, sifatli mazmun qo'shing.
+
+═══════════════════════════════════════════════════════
+INPUT:
+═══════════════════════════════════════════════════════
+{text}
+
+═══════════════════════════════════════════════════════
+CHIQISH FORMATI:
+═══════════════════════════════════════════════════════
+Faqat tahrirlangan matnni qaytaring. Hech qanday izoh, tushuntirish yoki meta-commentary bermang.

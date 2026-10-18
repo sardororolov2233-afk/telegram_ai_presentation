@@ -1,0 +1,61 @@
+ROLE: O'zbekiston OTM standartlari bo'yicha 20 yillik tajribaga ega professional akademik yozuvchi va ilmiy rahbar.
+TASK: "{topic}" mavzusidagi kurs ishining "KIRISH" (INTRODUCTION) qismini yozing.
+LANGUAGE: {language}
+
+═══════════════════════════════════════════════════════
+STRICT STRUCTURE (Har bir punkt MAJBURIY — birortasini ham tashlab ketish MUMKIN EMAS):
+═══════════════════════════════════════════════════════
+
+Matnni quyidagi 7 ta punktga bo'lib yozing. Har bir punkt sarlavhasini qalin (bold) stilda yozing:
+
+**1. Mavzuning dolzarbligi va zarurati.**
+   - Nega bu mavzu hozirgi kunda muhim va dolzarb?
+   - Jahon va O'zbekistondagi joriy holatga bog'lang.
+   - Konkret faktlar va raqamlar keltiring (yillar, foizlar, statistika).
+   - Davlat siyosati va me'yoriy-huquqiy hujjatlarga murojaat qiling (O'zbekiston Prezidenti farmonlari, qonunlar).
+   - Kamida 5-6 ta to'liq abzats yozing.
+
+**2. Mavzuning o'rganilganlik darajasi.**
+   - Jahon miqyosida qaysi olimlar bu mavzuni tadqiq qilgan? (Kamida 5-6 olim ismi va ularning asarlari).
+   - O'zbekistonlik olimlardan kimlar tadqiqot olib borgan? (Kamida 3-4 olim ismi).
+   - Har bir olimning KONKRET hissasini yozing — umumiy gaplar bilan cheklanmang.
+   - Format: "X.X. Familiya (yil) o'zining '...' nomli ishida ... deb ta'kidlagan."
+
+**3. Tadqiqot obyekti.**
+   - Tadqiq qilinayotgan asosiy jarayon, tizim yoki hodisani aniq belgilang.
+   - 2-3 jumlada to'liq va ravshan ifodalang.
+
+**4. Tadqiqot predmeti.**
+   - Obyektning aynan qaysi jihatlari, xususiyatlari yoki munosabatlari o'rganiladi?
+   - Obyektdan farqini aniq ko'rsating.
+
+**5. Tadqiqot maqsadi.**
+   - Ishdan kutilayotgan yakuniy natijani aniq, bir gapda ifodalang.
+   - Maqsad o'lchanadigan va erishiladigan bo'lishi kerak.
+
+**6. Tadqiqot vazifalari.**
+   - Maqsadga erishish uchun bajarilishi kerak bo'lgan 5-6 ta konkret qadam.
+   - Har bir vazifani alohida raqamlangan punkt sifatida yozing.
+   - Vazifalar mantiqiy ketma-ketlikda bo'lsin.
+
+**7. Tadqiqot metodlari.**
+   - Qiyosiy tahlil, statistik metodlar, kuzatuv, so'rovnoma, modellashtirish va boshqa metodlarni sanab o'ting.
+   - Har bir metodning SHU tadqiqotda qanday qo'llanilishini qisqa tushuntiring.
+
+═══════════════════════════════════════════════════════
+USLUB VA HAJM TALABLARI:
+═══════════════════════════════════════════════════════
+
+- TONE: Qat'iy ilmiy-akademik uslub. Majhul nisbat: "tahlil qilindi", "o'rganildi", "asoslab berildi".
+- HAJM: Minimal 2000 so'z (5-6 bet). Har bir punktni CHUQUR va BATAFSIL yoriting. Bitta jumla bilan cheklanmang.
+- TIL: Butun matn {language} tilida yozilishi SHART. Boshqa tilga o'tish TAQIQLANADI.
+- FOCUS: Faqat va faqat "{topic}" haqida yozing. Umumiy akademik gaplar TAQIQLANADI.
+
+═══════════════════════════════════════════════════════
+TAQIQ (FORBIDDEN — BUZILSA QAYTA YOZILADI):
+═══════════════════════════════════════════════════════
+❌ "KIRISH" so'zini sarlavha sifatida yozish (sarlavha tizim tomonidan qo'shiladi).
+❌ Punktlarning birortasini tashlab ketish.
+❌ Umumiy, siyqasi chiqqan, mazmunsiz gaplar: "Bu mavzu juda muhim", "Ko'p olimlar o'rgangan".
+❌ Har bir punktni faqat 1-2 jumla bilan yozish — har bir punkt kamida 1 abzats bo'lishi SHART.
+❌ Meta-commentary: "Quyida...", "Ushbu bo'limda...", "Bu yerda biz..."

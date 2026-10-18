@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.services.commerce import rpc, CommerceError
 from app.services.presentation.pipeline import PresentationPipeline
 from app.services.article.pipeline import ArticlePipeline
+from app.services.academic.pipeline import AcademicPipeline
 from app.services.presentation.telegram_sender import send_status_message
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,14 @@ async def process_job(db, job, worker_id):
             raise RuntimeError('Worker restart limit reached')
         if telegram_id:
             await send_status_message(telegram_id, '⏳ Buyurtmangiz tayyorlanmoqda. Natijani mini ilovada ham olishingiz mumkin.')
-        pipeline = PresentationPipeline() if job['service'] == 'presentation' else ArticlePipeline()
+        if job['service'] == 'presentation':
+            pipeline = PresentationPipeline()
+        elif job['service'] == 'article':
+            pipeline = ArticlePipeline()
+        elif job['service'] in {'course', 'referat'}:
+            pipeline = AcademicPipeline(job['service'])
+        else:
+            raise ValueError('Unsupported job service')
         operation = asyncio.create_task(pipeline.run(**payload, telegram_id=telegram_id))
         completed, _ = await asyncio.wait([operation, pulse], return_when=asyncio.FIRST_COMPLETED)
         if pulse in completed:

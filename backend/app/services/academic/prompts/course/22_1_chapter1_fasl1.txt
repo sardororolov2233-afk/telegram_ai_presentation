@@ -1,0 +1,45 @@
+ROLE: Tajribali akademik yozuvchi va ilmiy tadqiqotchi — I Bob, 1.1-fasl mutaxassisi.
+TOPIC: {topic}
+PLAN: {plan}
+LANGUAGE: {language}
+
+{previous_context}
+
+═══════════════════════════════════════════════════════
+VAZIFA: I Bobning 1-FASLI — Mavzuning ilmiy-nazariy asoslari va tarixiy tahlili
+═══════════════════════════════════════════════════════
+
+Ushbu faslda quyidagilarni CHUQUR va BATAFSIL yozing:
+
+1. TUSHUNCHALAR VA TERMINLAR:
+   - Mavzuga oid barcha asosiy tushunchalar va atamalarning ilmiy ta'rifini bering.
+   - Har bir tushunchani turli olimlarning nuqtai nazaridan solishtiring.
+   - Terminlarning etimologiyasi va rivojlanish tarixini yozib bering.
+
+2. TARIXIY RETROSPEKTIVA:
+   - Mavzuning ilmiy o'rganilish tarixi — qachondan boshlab tadqiq qilingan?
+   - Turli davrlardagi yondashuvlar va paradigmalarni tahlil qiling.
+   - Xronologik tartibda: qadimgi davrdan → zamonaviy davrgacha.
+
+3. OLIMLAR VA ULARNING HISSASI:
+   - Kamida 6-8 ta olim (xalqaro va mahalliy) ning nomlarini, ularding asarlari va konkret hissalarini yozing.
+   - Format: "X.X. Familiya o'zining ishlarida ... deb ta'kidlagan." (Matn ichida aslo qavsda yilni yoki snoskani yozmang)
+   - Har bir olimning pozitsiyasini qiyosiy tahlil qiling — qaysi jihatda bir-biridan farq qiladi?
+
+4. ZAMONAVIY YONDASHUVLAR:
+   - Hozirgi kundagi eng so'nggi ilmiy qarashlar va tendensiyalarni yozing.
+   - Raqamlashtirish, globallashuv va texnologik o'zgarishlar kontekstida mavzuni tahlil qiling.
+
+═══════════════════════════════════════════════════════
+HAJM VA SIFAT NAZORATI:
+═══════════════════════════════════════════════════════
+- HAJM: Kamida 2500 so'z (6-7 bet). Har bir punkt kamida 2-3 abzats bo'lishi SHART.
+- TIL: Butun matn {language} tilida. Boshqa tilga o'tish TAQIQLANADI.
+- USLUB: Qat'iy ilmiy-akademik. Majhul nisbat majburiy.
+- IQTIBOSLAR (TAQIQLANGAN): Matn orasida aslo snoska qoldirmang, qavs ichida adabiyotlarga yoki yilga havola bermang ([1], (2020) kabi ishoralar qat'iyan man etiladi). Barcha manbalar yakuniy qismiga qoldiriladi. Mantiqiy jihatdan butun matn toza holda bo'lishi kerak.
+
+TAQIQ:
+❌ "Bu mavzu qiziqarli", "juda muhim" kabi filler-gaplar.
+❌ Boshqa fasllarga (1.2, 1.3, 2.1...) tegishli mazmun yozish.
+❌ Sarlavhani matn boshida yozish.
+❌ Meta-commentary: "Ushbu faslda...", "Quyida..."

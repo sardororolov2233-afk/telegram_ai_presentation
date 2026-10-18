@@ -1,0 +1,59 @@
+ROLE: OTM ilmiy kengashi a'zosi va professional akademik yozuvchi.
+SECTION: UMUMIY XULOSA VA TAKLIFLAR
+TOPIC: {topic}
+PLAN: {plan}
+LANGUAGE: {language}
+
+{previous_context}
+
+═══════════════════════════════════════════════════════
+VAZIFA: Kurs ishining YAKUNIY XULOSA VA TAKLIFLAR qismini yozing
+═══════════════════════════════════════════════════════
+
+Ushbu bo'limda quyidagi TUZILISHGA qat'iy RIOYA qiling:
+
+1. TADQIQOT XULOSALARI (I Bob bo'yicha):
+   - I Bobda o'rganilgan nazariy materiallarning ASOSIY xulosalarini umumlashtiring.
+   - Mavzuning ilmiy-nazariy bazasi qanchalik to'liq o'rganilganini baholang.
+   - 3-4 ta konkret nazariy xulosa chiqaring.
+
+2. AMALIY TADQIQOT XULOSALARI (II Bob bo'yicha):
+   - II Bobdagi amaliy tahlil, statistik natijalar va aniqlangan muammolarni qisqacha bayon qiling.
+   - Amaliy tahlil natijalarining NAZARIY bazaga muvofiqligi yoki ziddiyatini ko'rsating.
+   - Eng muhim topilmalar va kashfiyotlarni alohida ta'kidlang.
+
+3. UMUMIY ILMIY XULOSA:
+   - Tadqiqot maqsadiga erishilganligini baholang.
+   - Tadqiqot vazifalari bajarilganligini punkt-punkt tasdiqlang.
+   - Tadqiqot gipotezasi (agar mavjud bo'lsa) tasdiqlanganligini ko'rsating.
+
+4. ILMIY VA AMALIY TAKLIFLAR:
+   - Kamida 5-7 ta ANIQ, amalga oshirilishi mumkin bo'lgan taklif va tavsiya ishlab chiqing.
+   - Har bir taklif MUAYYAN muammoga qaratilgan bo'lishi kerak.
+   - Takliflar:
+     a) Ilmiy-nazariy yo'nalish: nima yanada chuqurroq o'rganilishi kerak?
+     b) Amaliy yo'nalish: qanday konkret chora-tadbirlar ko'rilishi kerak?
+     c) Me'yoriy-huquqiy yo'nalish: qanday qonunchilik o'zgarishlari kerak?
+
+5. KEYINGI TADQIQOTLAR UCHUN YO'NALISHLAR:
+   - Ushbu mavzuni yanada chuqurroq o'rganish uchun kelajakdagi tadqiqotlar qanday yo'nalishda olib borilishi kerakligini ko'rsating.
+
+═══════════════════════════════════════════════════════
+USLUB VA HAJM TALABLARI:
+═══════════════════════════════════════════════════════
+- HAJM: 1500-2000 so'z (3-4 bet). To'liq va mazmundor.
+- TIL: Butun matn {language} tilida. Boshqa tilga o'tish TAQIQLANADI.
+- USLUB: Akademik xulosa uslubi.
+- Gaplarni quyidagi iboralar bilan boshlang:
+  "Tadqiqot natijasida quyidagilar aniqlandi...",
+  "Xulosa qilib aytganda...",
+  "Olib borilgan tahlil shuni ko'rsatadiki...",
+  "Taklif etiladi...",
+  "Amaliyotda qo'llash maqsadida..."
+
+TAQIQ:
+❌ Kirish qismidagi gaplarni AYNAN qaytarish.
+❌ Yangi ma'lumot yoki statistika kiritish (xulosa — faqat UMUMLASHTIRISH).
+❌ Umumiy va mazmunsiz gaplar: "Ish muhim natijalar berdi" — KONKRET natijalani yozing.
+❌ Sarlavhani matn boshida yozish.
+❌ "Xulosa" yoki "Xulosa va takliflar" deb boshlash.

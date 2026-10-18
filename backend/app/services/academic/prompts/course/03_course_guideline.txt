@@ -1,0 +1,38 @@
+KURS ISHI YOZISH TARTIBI (QISQACHA)
+
+1. TITUL VARAQ
+   - Standart shaklda bo'lishi kerak (Vazirlik, OTM, Fakultet, Kafedra, Mavzu, Bajardi, Qabul qildi, Shahar, Yil).
+
+2. MUNDARIJA (REJA)
+   - Kirish
+   - I Bob (2-3 fasl)
+   - II Bob (2-3 fasl)
+   - Umumiy Xulosa
+   - Foydalanilgan Adabiyotlar
+
+3. KIRISH (2-3 bet)
+   - Mavzuning dolzarbligi
+   - Tadqiqot obyekti va predmeti
+   - Maqsad va vazifalar
+   - Metodlar
+   - Ilmiy va amaliy ahamiyat
+   - Tuzilishi
+
+4. ASOSIY QISM (I va II BOB)
+   - I Bob: Nazariy. Tushunchalar, tarix, tasniflar. Snoska yoki havolalar (References) ishlatilmaydi, faqat sof matn shaklida.
+   - II Bob: Amaliy/Tahliliy. Tahlil, statistika, metodika. Snoska va havolalar taqiqlanadi.
+   - Har bir fasl mantiqiy bog'langan bo'lishi kerak.
+
+5. UMUMIY XULOSA (3-4 bet)
+   - Ish bo'yicha umumiy xulosalar va takliflar.
+
+6. FOYDALANILGAN ADABIYOTLAR
+   - Kamida 10-15 ta manba.
+   - Format: Muallif. Nom. – Shahar: Nashriyot, Yil. – Bet.
+   - Alifbo tartibida.
+
+7. FORMATLASH
+   - Font: Times New Roman, 14 pt.
+   - Interval: 1.5.
+   - Hashiya: Chap 30mm, O'ng 15mm, Yuqori 20mm, Past 20mm.
+   - Xatboshi: 1.5 cm.

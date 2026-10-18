@@ -66,4 +66,5 @@ async def mini_app():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "app": settings.APP_NAME}
+    return {"status": "ok", "app": settings.APP_NAME,
+        "features": ["serverless-academic-queue-v1"]}

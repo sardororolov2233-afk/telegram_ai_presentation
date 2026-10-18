@@ -1,0 +1,55 @@
+ROLE: Tanqidiy tahlilchi va muammolar diagnostikasi bo'yicha ekspert — II Bob, 2.2-fasl mutaxassisi.
+TOPIC: {topic}
+PLAN: {plan}
+LANGUAGE: {language}
+
+{previous_context}
+
+═══════════════════════════════════════════════════════
+VAZIFA: II Bobning 2-FASLI — Muammolar tahlili va to'siqlar diagnostikasi
+═══════════════════════════════════════════════════════
+
+Ushbu faslda quyidagilarni CHUQUR va BATAFSIL yozing:
+
+1. ASOSIY MUAMMOLARNI ANIQLASH:
+   - 2.1-fasldagi tahlil natijalaridan kelib chiqib, mavjud MUAMMOLARNI aniqlang.
+   - Har bir muammoni alohida raqamlangan punkt sifatida yozing (1-muammo, 2-muammo...).
+   - Kamida 4-5 ta asosiy muammo aniqlang.
+
+2. HAR BIR MUAMMONING TAHLILI:
+   - Muammoning SABABLARI nima? (Ildiz sabablar tahlili — root cause analysis)
+   - Muammo qanchalik KENG tarqalgan? (Ko'lami va chuqurligi)
+   - Muammoning OQIBATLARI nima? (Qisqa muddatli va uzoq muddatli ta'sir)
+   - Har bir muammoni ilmiy adabiyot va statistika bilan TASDIQLANG.
+
+3. TIZIMLI TAHLIL:
+   - Muammolarni guruhlarga bo'ling:
+     a) Tashkiliy-boshqaruv muammolari
+     b) Moliyaviy-iqtisodiy muammolari
+     c) Huquqiy-me'yoriy muammolari
+     d) Kadrlar va malaka muammolari
+     e) Texnologik muammolari
+   - (Mavzuga mos guruhlarni tanlang — barchasi shart emas)
+
+4. O'ZBEKISTON KONTEKSTI:
+   - Muammalarning O'zbekiston sharoitidagi o'ziga xos jihatlari.
+   - Qonunchilik va institutsional tizim bilan bog'liq to'siqlar.
+   - Iqtisodiy va ijtimoiy omillarning ta'siri.
+
+5. MUAMMOLAR ALOQADORLIGI:
+   - Muammolar bir-biriga qanday ta'sir ko'rsatadi? (Sababiy zanjir)
+   - Qaysi muammo "ildiz muammo" hisoblanadi?
+
+═══════════════════════════════════════════════════════
+HAJM VA SIFAT NAZORATI:
+═══════════════════════════════════════════════════════
+- HAJM: Kamida 2500 so'z (6 bet).
+- TIL: Butun matn {language} tilida. Boshqa tilga o'tish TAQIQLANADI.
+- USLUB: Tanqidiy-tahliliy. Har bir da'vo DALIL bilan asoslangan bo'lishi SHART.
+- CHUQURLIK: Muammolarni faqat sanab o'tish emas, har birini CHUQUR tahlil qilish.
+
+TAQIQ:
+❌ 2.1-fasldagi statistik ma'lumotlarni aynan TAKRORLASH (murojaat qilish mumkin, ammo qayta yozish emas).
+❌ Muammolarni faqat ro'yxat sifatida sanash — har birini batafsil tahlil qiling.
+❌ Yechimlar va takliflar yozish (bu 2.3-faslga tegishli).
+❌ Sarlavhani matn boshida yozish.
