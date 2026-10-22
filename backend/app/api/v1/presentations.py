@@ -2,7 +2,7 @@ import hashlib
 import uuid
 from pathlib import Path
 from typing import Optional, List, Literal
-from fastapi import APIRouter, Depends, Form, File, UploadFile, Header, HTTPException
+from fastapi import APIRouter, Depends, Form, File, UploadFile, Header, HTTPException, Request
 from pydantic import BaseModel
 from supabase import Client
 from app.core.config import settings
@@ -29,6 +29,7 @@ class PresentationResponse(BaseModel):
 
 @router.post('/generate', response_model=PresentationResponse, status_code=202)
 async def generate_presentation(
+    request: Request,
     topic: str = Form(..., min_length=3, max_length=500),
     author: str = Form('', max_length=150),
     language: Literal['uz', 'ru', 'en'] = Form('uz'),
@@ -43,13 +44,16 @@ async def generate_presentation(
 ):
     if len(topic.strip()) < 3:
         raise HTTPException(400, 'Mavzuni kamida 3 ta belgi bilan kiriting')
+    # Some FastAPI versions treat a missing bool form field as an unchecked checkbox.
+    if 'send_to_telegram' not in await request.form():
+        send_to_telegram = True
     subject = canonical_subject(subject)
     try:
         manifest = load_manifest(subject, variant)
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
-    if len(images) > 10:
-        raise HTTPException(400, 'Ko‘pi bilan 10 ta rasm yuklang')
+    if len(images) > settings.PRESENTATION_MAX_IMAGES:
+        raise HTTPException(400, 'Ko‘pi bilan 3 ta rasm yuklang; qo‘shimcha rasm joylarida ular qayta ishlatiladi')
     uploads = Path(settings.JOB_STORAGE_DIR) / 'uploads'
     uploads.mkdir(parents=True, exist_ok=True)
     paths = []

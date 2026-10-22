@@ -53,7 +53,7 @@ def client(sql_server, tmp_path, monkeypatch):
         content['muallif'] = kwargs['author'] or 'Test Author'
         return content, []
 
-    async def no_images(keywords):
+    async def no_images(keywords, **kwargs):
         return []
 
     async def delivered(*args, **kwargs):

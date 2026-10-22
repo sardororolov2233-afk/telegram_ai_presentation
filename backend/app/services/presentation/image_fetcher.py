@@ -1,98 +1,49 @@
-"""
-Image Fetcher — Pollinations.ai orqali rasmlar olish (Bepul, kalit talab qilinmaydi)
-"""
-import httpx
-import os
-import uuid
-import urllib.parse
-from typing import Optional
+"""At most three Seedream requests per deck, including worker restarts."""
+import logging
+from pathlib import Path
+from uuid import uuid4
+from app.core.config import settings
+from app.services.image_generation import generate_image
 
-PRESENTATIONS_DIR = "/tmp/presentations"
-IMAGES_DIR = f"{PRESENTATIONS_DIR}/images"
+logger = logging.getLogger(__name__)
 
 
 def cleanup_images(image_paths: list) -> None:
-    """PPTX ga qo'shilgandan keyin vaqtinchalik rasmlarni o'chiradi."""
-    for path in image_paths:
-        try:
-            if path and os.path.exists(path):
-                os.remove(path)
-        except Exception as e:
-            print(f"[ImageFetcher] O'chirishda xato: {e}")
+    for path in set(filter(None, image_paths)):
+        Path(path).unlink(missing_ok=True)
 
 
-async def fetch_image_for_topic(query: str, index: int = 0) -> Optional[str]:
-    """Pollinations.ai dan rasm yuklab olish, 429 bo'lsa qayta urinadi."""
-    if not query:
-        return None
-        
-    os.makedirs(IMAGES_DIR, exist_ok=True)
-
-    safe_query = urllib.parse.quote(query)
-    url = f"https://image.pollinations.ai/prompt/{safe_query}?width=800&height=600&nologo=true&seed={index}"
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "*/*"
-    }
-
-    import asyncio
-
-    try:
-        async with httpx.AsyncClient(timeout=45) as client:
-            resp = None
-            # Pollinations dan olishga 2 marta urinish
-            for attempt in range(2):
-                resp = await client.get(url, follow_redirects=True, headers=headers)
-                if resp.status_code == 200:
-                    break
-                print(f"[ImageFetcher] Pollinations xatosi {resp.status_code}, {'qayta urinish...' if attempt == 0 else 'zaxira rasm olinadi'}")
-                if attempt == 0:
-                    await asyncio.sleep(3)  # 429 uchun kuting
-
-            # Pollinations ishlamasa — picsum fallback
-            if resp is None or resp.status_code != 200:
-                picsum_url = f"https://picsum.photos/seed/{uuid.uuid4().hex}/800/600"
-                resp = await client.get(picsum_url, follow_redirects=True, headers=headers)
-                if resp.status_code != 200:
-                    print(f"[ImageFetcher] Picsum ham ishlamadi, rasm o'tkazib yuborildi")
-                    return None
-
-            img_path = os.path.join(IMAGES_DIR, f"{uuid.uuid4().hex}.jpg")
-            with open(img_path, "wb") as f:
-                f.write(resp.content)
-
-            return img_path
-
-    except Exception as e:
-        print(f"[ImageFetcher] Xato: {e}")
-        return None
-
-
-async def fetch_images_for_slides(keywords: list) -> list:
-    """
-    Har bir slayd uchun maxsus keyword asosida rasm oladi.
-    """
-    import asyncio
-
-    # Bir vaqtning o'zida pollinations ni juda ko'p yuklamaslik uchun semafor (ko'pi bilan 2 ta)
-    sem = asyncio.Semaphore(2)
-
-    async def _fetch_with_sem(q, idx):
-        async with sem:
-            # Har bir so'rov orasida 1.5 soniya kutish (rate-limit chetlab o'tish)
-            await asyncio.sleep(idx * 1.5)
-            return await fetch_image_for_topic(q, idx)
-
-    tasks = [_fetch_with_sem(q, idx) for idx, q in enumerate(keywords)]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
+async def fetch_images_for_slides(keywords: list, cache_dir: Path | None = None) -> list[str]:
+    directory = Path(cache_dir) if cache_dir else Path(settings.JOB_STORAGE_DIR) / 'images' / uuid4().hex
+    directory.mkdir(parents=True, exist_ok=True)
+    prompts = list(dict.fromkeys(str(q).strip() for q in keywords if q and str(q).strip()))[:settings.PRESENTATION_MAX_IMAGES]
     images = []
-    for r in results:
-        if isinstance(r, str) and r:
-            images.append(r)
-        else:
-            images.append(None)
-
-    print(f"[ImageFetcher] {sum(1 for i in images if i)} ta rasm olindi. Qidiruvlar: {len(keywords)}")
+    for index, prompt in enumerate(prompts):
+        output = directory / f'image_{index}.png'
+        if output.is_file():
+            images.append(str(output))
+            continue
+        # Reserve an attempt before calling the provider. A crash with an unknown API result must
+        # not trigger a fourth paid request when another worker claims the durable job.
+        try:
+            with (directory / f'image_{index}.requested').open('x') as marker:
+                marker.write(settings.IMAGE_MODEL)
+        except FileExistsError:
+            continue
+        try:
+            await generate_image(prompt, output)
+            images.append(str(output))
+        except Exception:
+            logger.warning('Seedream image %s failed; reuse successful deck images', index + 1)
+    if prompts and not images:
+        raise RuntimeError('Taqdimot rasmlarini yaratib bo‘lmadi')
     return images
+
+
+def reuse_images(images: list, slot_count: int) -> list[str]:
+    """Keep related neighboring template slots on the same visual; crop to each slot."""
+    available = list(dict.fromkeys(filter(None, images)))[:settings.PRESENTATION_MAX_IMAGES]
+    if not available or not slot_count:
+        return []
+    return [available[min(len(available) - 1, index * len(available) // slot_count)]
+        for index in range(slot_count)]

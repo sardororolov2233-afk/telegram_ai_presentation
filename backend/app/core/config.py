@@ -73,7 +73,9 @@ class Settings:
     SUPABASE_URL: str = _get_str("SUPABASE_URL")
     SUPABASE_KEY: str = _get_str("SUPABASE_SERVICE_ROLE_KEY", _get_str("SUPABASE_KEY"))
 
-    ACADEMIC_MODEL: str = "deepseek/deepseek-r1-0528"
+    ACADEMIC_MODEL: str = "anthropic/claude-haiku-5.5"
+    IMAGE_MODEL: str = "bytedance-seed/seedream-5-0-flash"
+    PRESENTATION_MAX_IMAGES: int = 3
     JOB_STORAGE_DIR: str = _get_str("JOB_STORAGE_DIR", "/tmp/orzu-jobs")
     JOB_WORKERS: int = _get_int("JOB_WORKERS", 2)
 
