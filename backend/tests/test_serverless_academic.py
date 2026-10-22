@@ -68,3 +68,43 @@ async def test_generation_failure_cannot_leave_a_partial_file(tmp_path, monkeypa
         await AcademicPipeline('referat').run(telegram_id=123, tema='History topic',
             plan='REJA\nKIRISH\nI BOB\nXULOSA', muallif='Test Author')
     assert not list(tmp_path.rglob('*.docx'))
+
+
+@pytest.mark.parametrize('service, units', [('course', 2), ('referat', 0)])
+def test_referral_only_queue_worker_renders_and_charges_once(client, monkeypatch, service, units):
+    import io
+    from uuid import uuid4
+    from test_integration import login, completed_job
+
+    async def text(*args, **kwargs):
+        return 'Academic analysis with concrete findings. ' * 40
+
+    async def delivered(*args, **kwargs):
+        return True
+
+    monkeypatch.setattr('app.services.academic.pipeline.ask_ai', text)
+    monkeypatch.setattr('app.services.academic.course.ai_request', text)
+    monkeypatch.setattr('app.services.academic.pipeline.send_document', delivered)
+    uid = 93200 if service == 'course' else 93300
+    headers = login(client, uid)
+    for friend in [uid + 1, uid + 2]:
+        client.db.rpc('commerce_register', {'p_user_id':friend,'p_first_name':'Friend','p_referrer_id':uid}).execute()
+        client.db.rpc('commerce_confirm_referral', {'p_user_id':friend}).execute()
+    payload = {'tema':'History research','muallif':'Test Author','universitet':'University',
+        'plan':'REJA\nKIRISH\nI BOB. History\nII BOB. Analysis\nXULOSA\nADABIYOTLAR',
+        'ish_turi':'KURS ISHI' if service == 'course' else 'REFERAT', 'send_to_telegram':True}
+    request = str(uuid4())
+    args = {'p_user_id':uid,'p_service':service,'p_request_id':request,'p_payload':payload}
+    charge = client.db.rpc('commerce_enqueue',args).execute().data
+    assert charge['credit_units'] == units and charge['amount'] == 0
+    assert not client.db.rpc('commerce_enqueue',args).execute().data['created']
+    job = completed_job(client,headers,request)
+    assert job['status'] == 'completed' and job['telegram_sent']
+    download = client.get(job['download_url'],headers=headers)
+    assert download.status_code == 200
+    doc = Document(io.BytesIO(download.content))
+    assert any('Test Author' in p.text for p in doc.paragraphs)
+    account = client.get('/api/v1/commerce',headers=headers).json()
+    assert account['referral_credits'] == 2 - units
+    health = client.get('/health').json()
+    assert 'serverless-referral-only-v2' in health['features']

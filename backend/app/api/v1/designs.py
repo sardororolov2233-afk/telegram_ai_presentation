@@ -1,17 +1,11 @@
 """
-Design Generation API — Grafik dizayn yaratish endpointi.
-
-Pipeline:
-  1. Balans tekshirish va yechish (5000 so'm)
-  2. Groq (Llama 3) → Prompt optimallashtirish (BEPUL)
-  3. FLUX.2 Klein 4B → 3 ta professional rasm yaratish (~$0.045)
-  4. Telegram → Rasmlarni foydalanuvchiga yuborish
+Design Generation API — one referral credit, Haiku prompt and Seedream variants.
 """
 from fastapi import APIRouter, Depends, HTTPException, Request
 from supabase import Client
 import asyncio
-from pydantic import BaseModel
-from typing import List, Optional
+from pydantic import BaseModel, Field
+from typing import List, Optional, Literal
 import os
 import uuid
 import httpx
@@ -25,14 +19,11 @@ from app.services.design.image_generator import STATIC_DIR
 
 router = APIRouter(prefix="/designs", tags=["Designs"])
 
-DESIGN_PRICE = 5000  # so'm
-
-
 class DesignRequest(BaseModel):
-    description: str
-    format: str       # instagram | telegram | story
-    style: str        # infographic | photorealistic | 3d | minimalism
-    lang: str = "uz"  # uz | kaa | ru | en
+    description: str = Field(min_length=3, max_length=2000)
+    format: Literal['instagram', 'telegram', 'story']
+    style: Literal['infographic', 'photorealistic', '3d', 'minimalism']
+    lang: Literal['uz', 'kaa', 'ru', 'en'] = 'uz'
     send_to_telegram: bool = True
 
 
@@ -74,10 +65,10 @@ async def generate_design(
         )
     except Exception as e:
         print(f"[Designs API] Pipeline xatosi: {e}")
-        raise HTTPException(status_code=500, detail="Dizayn yaratishda xatolik yuz berdi. Balans qaytarildi.")
+        raise HTTPException(status_code=500, detail="Dizayn yaratishda xatolik yuz berdi. Kvota qaytariladi.")
 
     if not filenames:
-        raise HTTPException(status_code=500, detail="Rasm yaratib bo'lmadi. Balans qaytarildi.")
+        raise HTTPException(status_code=500, detail="Rasm yaratib bo‘lmadi. Kvota qaytariladi.")
 
     # ── 5. Telegram'ga yuborish ─────────────────────────────
     telegram_sent = False
@@ -179,6 +170,8 @@ async def generate_design(
                 except Exception:
                     pass
 
+    if not image_data_urls:
+        raise HTTPException(500, 'Tayyor rasmni o‘qib bo‘lmadi. Kvota qaytariladi.')
     return DesignResponse(
         id=str(uuid.uuid4())[:12],
         telegram_sent=telegram_sent,

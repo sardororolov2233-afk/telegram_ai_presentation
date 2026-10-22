@@ -1,4 +1,4 @@
-"""DeepSeek R1 writes structured text. Trusted Python code renders the DOCX."""
+"""Claude Haiku writes structured text. Trusted Python code renders the DOCX."""
 import asyncio
 import json
 import re

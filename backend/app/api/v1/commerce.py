@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from supabase import Client
 from app.core.database import get_db
 from app.core.config import settings
@@ -14,10 +14,10 @@ async def account(user: dict = Depends(get_current_user), db: Client = Depends(g
     result['bot_username'] = settings.TELEGRAM_BOT_USERNAME
     result['referral_link'] = f"https://t.me/{settings.TELEGRAM_BOT_USERNAME}?start=ref_{user['telegram_id']}"
     result['policy'] = POLICY_TEXT
-    result['quotes'] = {service: quote(result, service) for service in ('presentation', 'course', 'referat', 'article')}
+    result['quotes'] = {service: quote(result, service) for service in ('presentation', 'course', 'referat', 'article', 'design', 'obyektivka')}
     return result
 
 
 @router.post('/subscribe')
 async def subscribe(user: dict = Depends(get_current_user), db: Client = Depends(get_db)):
-    return await rpc(db, 'commerce_subscribe', p_user_id=user['telegram_id'])
+    raise HTTPException(410, 'Obuna bekor qilingan. Kvota faqat yangi do‘st taklif qilish orqali olinadi.')

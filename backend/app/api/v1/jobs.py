@@ -24,7 +24,7 @@ async def job_status(request_id: UUID, db: Client = Depends(get_db), user: dict 
     result = job.get('result') or {}
     return {'id': job['id'], 'status': job['status'], 'service': job['service'],
         'telegram_sent': result.get('telegram_sent', False), 'slide_count': result.get('slide_count'),
-        'message': 'Ish yakunlanmadi. Band qilingan pul yoki limit qaytarildi.' if job['status'] == 'failed' else None,
+        'message': 'Ish yakunlanmadi. Band qilingan kvota qaytarildi.' if job['status'] == 'failed' else None,
         'download_url': f"/api/v1/jobs/{job['id']}/download" if job['status'] == 'completed' else None}
 
 

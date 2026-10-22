@@ -58,7 +58,9 @@ def test_telegram_signature_and_no_dev_backdoor(client):
 
 def test_bot_to_api_shared_referrals_and_real_files(client, monkeypatch):
     # Both repositories use the same PostgREST/Supabase client against the test PostgreSQL engine.
-    bot_root = Path(__file__).resolve().parents[2].parent / 'Orzu'
+    bot_root = Path(os.environ.get('ORZU_BOT_PATH', str(Path(__file__).resolve().parents[2].parent / 'orzu-bot')))
+    if not bot_root.is_dir():
+        bot_root = Path(__file__).resolve().parents[2].parent / 'Orzu'
     if not bot_root.is_dir():
         pytest.skip('Check out Orzu next to this repository to run the cross-repository test')
     monkeypatch.setenv('BOT_TOKEN', settings.TELEGRAM_BOT_TOKEN)
@@ -107,8 +109,10 @@ def test_bot_to_api_shared_referrals_and_real_files(client, monkeypatch):
     account = client.get('/api/v1/commerce', headers=headers).json()
     assert account['confirmed_referrals'] == 5
     assert account['referral_presentations'] == 5
-    assert account['course_credits'] == 1
-    assert account['payment_card'] == '9860020144204623'
+    assert account['course_credits'] == 2
+    assert account['referral_credits'] == 5
+    assert account['access_mode'] == 'referral_only'
+    assert 'payment_card' not in account
     assert account['referral_link'].endswith('?start=ref_89000')
     assert not any(key.startswith('is_pro') for key in account)
     request_id = str(uuid4())
@@ -133,10 +137,6 @@ def test_bot_to_api_shared_referrals_and_real_files(client, monkeypatch):
     changed = client.post('/api/v1/presentations/generate', headers=headers, data={**form, 'topic': 'Different topic'})
     assert changed.status_code == 409
 
-    async def approve():
-        result = client.db.table('payments').insert({'user_id': 89000, 'amount': 30000, 'purpose': 'topup', 'receipt_file_id': 'test'}).execute()
-        await bot_database.approve_pending_payment(result.data[0]['id'])
-    asyncio.run(approve())
     headers['Idempotency-Key'] = str(uuid4())
     response = client.post('/api/v1/articles/generate', headers=headers,
         data={'topic': 'History of teaching', 'author': 'Test Author', 'language': 'en'})
@@ -147,8 +147,8 @@ def test_bot_to_api_shared_referrals_and_real_files(client, monkeypatch):
     assert word.status_code == 200
     document = Document(io.BytesIO(word.content))
     assert 'Methodology' in '\n'.join(paragraph.text for paragraph in document.paragraphs)
-    assert client.get('/api/v1/commerce', headers=headers).json()['balance'] == 20000
-    assert asyncio.run(bot_database.get_user_balance(89000)) == 20000
+    assert client.get('/api/v1/commerce', headers=headers).json()['referral_credits'] == 4
+    assert asyncio.run(bot_database.get_user_balance(89000)) == 0
 
 
 def test_initial_access_subscription_and_invalid_inputs(client):
@@ -158,25 +158,27 @@ def test_initial_access_subscription_and_invalid_inputs(client):
     form = {'topic': 'History of education', 'author': 'Student', 'subject': 'minimalizm'}
     response = client.post('/api/v1/presentations/generate', headers=headers, data=form)
     assert response.status_code == 402
-    assert response.json()['code'] == 'presentation_access_required'
-    assert client.post('/api/v1/commerce/subscribe', headers=headers).status_code == 402
+    assert response.json()['code'] == 'insufficient_referral_credits'
+    assert client.post('/api/v1/commerce/subscribe', headers=headers).status_code == 410
     client.db.table('users').update({'balance': 35000}).eq('telegram_id', 90000).execute()
-    assert client.post('/api/v1/commerce/subscribe', headers=headers).status_code == 200
-    assert client.post('/api/v1/commerce/subscribe', headers=headers).status_code == 409
+    assert client.post('/api/v1/commerce/subscribe', headers=headers).status_code == 410
+    assert client.post('/api/v1/commerce/subscribe', headers=headers).status_code == 410
     account = client.get('/api/v1/commerce', headers=headers).json()
-    assert account['balance'] == 10000
-    assert account['subscription_remaining'] == 10
+    assert account['balance'] == 35000
+    assert account['referral_credits'] == 0
+    assert account['subscription_remaining'] == 0
     assert client.post('/api/v1/presentations/generate', headers=headers, data={**form, 'subject': '../tarix'}).status_code == 400
     assert client.post('/api/v1/presentations/generate', headers=headers, data={**form, 'language': 'xx'}).status_code == 422
     assert client.post('/api/v1/presentations/generate', headers=headers, data=form,
         files={'images': ('file.png', b'not an image', 'image/png')}).status_code == 400
-    assert client.get('/api/v1/commerce', headers=headers).json()['subscription_remaining'] == 10
+    assert client.get('/api/v1/commerce', headers=headers).json()['referral_credits'] == 0
 
 
 def test_generation_failure_refunds_allowance(client, monkeypatch):
     headers = login(client, 91000)
-    client.db.table('users').update({'balance': 25000}).eq('telegram_id', 91000).execute()
-    assert client.post('/api/v1/commerce/subscribe', headers=headers).status_code == 200
+    friend = 91001
+    client.db.rpc('commerce_register', {'p_user_id': friend, 'p_referrer_id': 91000}).execute()
+    client.db.rpc('commerce_confirm_referral', {'p_user_id': friend}).execute()
     from app.services.presentation.ai_generator import AIContentGenerator
     async def failed(self, **kwargs): raise RuntimeError('Provider unavailable')
     monkeypatch.setattr(AIContentGenerator, 'generate_template_slides', failed)
@@ -186,5 +188,5 @@ def test_generation_failure_refunds_allowance(client, monkeypatch):
     assert response.status_code == 202, response.text
     job = completed_job(client, headers, response.json()['id'])
     assert job['status'] == 'failed'
-    assert client.get('/api/v1/commerce', headers=headers).json()['subscription_remaining'] == 10
+    assert client.get('/api/v1/commerce', headers=headers).json()['referral_credits'] == 1
     assert client.get('/api/v1/jobs/' + response.json()['id'] + '/download', headers=headers).status_code == 409

@@ -1,4 +1,4 @@
-"""Original Orzu prompt loading; DeepSeek R1 only, without aiogram dependencies."""
+"""Original Orzu prompt loading; Claude Haiku 5.5 only, without aiogram dependencies."""
 import asyncio
 import logging
 import re
@@ -7,7 +7,7 @@ import httpx
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-ACADEMIC_MODEL = "deepseek/deepseek-r1-0528"
+ACADEMIC_MODEL = "anthropic/claude-haiku-5.5"
 
 def load_prompt(filename, **kwargs):
     """
@@ -135,5 +135,5 @@ async def ask_ai(prompt_text, retries=3, temperature=0.3, max_tokens=16384):
             raise ValueError('AI javobi bo‘sh yoki tugallanmagan')
         except Exception:
             if attempt + 1 == retries:
-                raise RuntimeError('DeepSeek R1 javob bermadi') from None
+                raise RuntimeError('Claude Haiku 5.5 javob bermadi') from None
             await asyncio.sleep(2 ** attempt)
