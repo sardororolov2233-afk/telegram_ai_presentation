@@ -1,10 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncio
 import contextlib
-from pathlib import Path
-from fastapi.responses import JSONResponse, FileResponse
+from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.core.config import settings
 from app.api.v1.router import api_router
@@ -65,8 +65,12 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 @app.get('/miniapp', include_in_schema=False)
-async def mini_app():
-    return FileResponse(Path(static_dir) / 'miniapp.html')
+async def mini_app(request: Request):
+    target = urlsplit(settings.FRONTEND_URL.rstrip('/'))
+    query = dict(parse_qsl(target.query))
+    query.update(request.query_params)
+    query['tab'] = 'standard'
+    return RedirectResponse(urlunsplit((target.scheme, target.netloc, target.path, urlencode(query), target.fragment)), status_code=307)
 
 @app.get("/health")
 async def health_check():

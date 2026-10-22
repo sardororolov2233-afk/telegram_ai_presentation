@@ -3,7 +3,7 @@ import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
-QUOTA_COSTS = {"presentation": 1, "course": 2, "design": 1, "referat": 0, "article": 0, "obyektivka": 0}
+QUOTA_COSTS = {"presentation": 1, "course": 2, "design": 1, "referat": 1, "article": 1, "obyektivka": 1}
 ERROR_MESSAGES = {
     "insufficient_referral_credits": "Taklif kvotasi yetarli emas. Har bir yangi do‘st — 1 kvota. Taqdimot va dizayn uchun 1, kurs ishi uchun 2 kvota kerak.",
     "subscriptions_disabled": "Obuna bekor qilingan. Kvota faqat yangi do‘st taklif qilish orqali olinadi.",
@@ -53,6 +53,8 @@ def parse_referrer(value):
 def quote(account, service):
     """UI preview only. The reserve RPC rechecks this under a row lock."""
     required = QUOTA_COSTS[service]
+    if service in {"referat", "article", "obyektivka"} and int(account.get("standard_free_remaining") or 0) > 0:
+        required = 0
     available = int(account.get("referral_credits") or 0)
     return {"allowed": available >= required, "amount": 0,
         "source": "referral" if required else "free", "required_credits": required,
@@ -64,7 +66,7 @@ POLICY_TEXT = (
     "🎁 Har bir yangi, kanal a’zoligi tasdiqlangan do‘st — 1 ta muddatsiz kvota.\n"
     "📊 Taqdimot — 1 kvota. 🎨 Dizayn — 1 kvota. 📚 Kurs ishi — 2 kvota.\n"
     "Kvotalar umumiy: bir xizmatga sarflangan kvota boshqa xizmatga qayta sarflanmaydi.\n\n"
-    "📄 Referat, mustaqil ish, maqola, obyektivka va boshqa xizmatlar bepul; kvota talab qilinmaydi.\n"
+    "📄 Referat/mustaqil ish, maqola va obyektivka uchun jami dastlabki 3 ta foydalanish bepul. Keyingi har biri — 1 kvota.\n"
     "Obuna va pulli xaridlar bekor qilingan. Kvota faqat do‘st taklif qilish orqali olinadi.\n"
     "Bitta taqdimot uchun ko‘pi bilan 3 ta AI rasm yaratiladi; qo‘shimcha rasm joylarida ular qayta ishlatiladi."
 )

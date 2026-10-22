@@ -111,9 +111,10 @@ def test_free_article_and_miniapp_available_without_referrals(client):
     assert account['quotes']['referat']['required_credits'] == 0
     assert account['quotes']['obyektivka']['allowed'] is True
     assert account['quotes']['design']['allowed'] is False
-    assert client.get('/miniapp').status_code == 200
-    assert client.get('/static/miniapp.js').status_code == 200
-    assert 'Obuna sotib olish' not in client.get('/miniapp').text
+    redirect = client.get('/miniapp', follow_redirects=False)
+    assert redirect.status_code == 307
+    assert redirect.headers['location'] == settings.FRONTEND_URL.rstrip('/') + '?tab=standard'
+    assert client.get('/static/miniapp.js').status_code == 404
     headers['Idempotency-Key'] = str(uuid4())
     response = client.post('/api/v1/articles/generate', headers=headers,
         data={'topic': 'History of education', 'author': 'Student', 'language': 'uz'})
@@ -148,3 +149,31 @@ def test_design_consumes_one_credit_and_failure_returns_it(client, tmp_path, mon
     headers['Idempotency-Key'] = str(uuid4())
     assert client.post('/api/v1/designs/generate', headers=headers, json=body).status_code == 500
     assert client.get('/api/v1/commerce', headers=headers).json()['referral_credits'] == 1
+
+
+def test_article_trial_is_shared_then_one_credit_and_no_unlimited_free_requests(client):
+    from uuid import uuid4
+    from test_integration import login, completed_job
+    uid=95500
+    headers=login(client,uid)
+    for service in ['referat','obyektivka']:
+        rid=str(uuid4())
+        client.db.rpc('commerce_reserve',{'p_user_id':uid,'p_service':service,'p_request_id':rid}).execute()
+        client.db.rpc('commerce_finish',{'p_user_id':uid,'p_request_id':rid,'p_success':True}).execute()
+    def article():
+        rid=str(uuid4()); h={**headers,'Idempotency-Key':rid}
+        return rid,client.post('/api/v1/articles/generate',headers=h,data={'topic':'History research','author':'Test Author','language':'uz'})
+    rid,response=article()
+    assert response.status_code==202,response.text
+    assert completed_job(client,headers,rid)['status']=='completed'
+    assert client.get('/api/v1/commerce',headers=headers).json()['standard_free_remaining']==0
+    _,response=article()
+    assert response.status_code==402,response.text
+    friend=uid+1
+    client.db.rpc('commerce_register',{'p_user_id':friend,'p_first_name':'Friend','p_referrer_id':uid}).execute()
+    client.db.rpc('commerce_confirm_referral',{'p_user_id':friend}).execute()
+    rid,response=article()
+    assert response.status_code==202,response.text
+    assert completed_job(client,headers,rid)['status']=='completed'
+    account=client.get('/api/v1/commerce',headers=headers).json()
+    assert account['referral_credits']==0 and account['standard_free_remaining']==0

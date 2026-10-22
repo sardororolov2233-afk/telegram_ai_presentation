@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import { PGlite } from '@electric-sql/pglite';
+import { readFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+const db=new PGlite();
+await db.exec('create role anon;create role authenticated;create role service_role bypassrls;');
+for(const n of ['20261017_commerce','20261018_serverless','20261022_referral_only']) await db.exec(await readFile(new URL('../supabase/migrations/'+n+'.sql',import.meta.url),'utf8'));
+const rpc=async(n,...a)=>(await db.query(`select ${n}(${a.map((_,i)=>'$'+(i+1)).join(',')}) r`,a)).rows[0].r;
+const reg=id=>rpc('commerce_register',id,'Trial',null,null,null);
+await reg(80000);
+for(let i=0;i<2;i++){const id=randomUUID();await rpc('commerce_reserve',80000,'article',id);await rpc('commerce_finish',80000,id,true);}
+const migration=await readFile(new URL('../supabase/migrations/20261023_standard_trial.sql',import.meta.url),'utf8');
+await db.exec(migration);
+assert.equal((await rpc('commerce_status',80000)).standard_free_remaining,1);
+await reg(81000);const ids=[];
+for(const s of ['referat','article','obyektivka']){const id=randomUUID();ids.push(id);const c=await rpc('commerce_reserve',81000,s,id);assert.equal(c.standard_trial,true);assert.equal(c.credit_units,0);assert.equal((await rpc('commerce_reserve',81000,s,id)).created,false);}
+assert.equal((await rpc('commerce_status',81000)).standard_free_remaining,0);
+await assert.rejects(rpc('commerce_reserve',81000,'referat',randomUUID()),/insufficient_referral_credits/);
+await rpc('commerce_finish',81000,ids[0],false);await rpc('commerce_finish',81000,ids[0],false);
+assert.equal((await rpc('commerce_status',81000)).standard_free_remaining,1);
+assert.equal((await rpc('commerce_reserve',81000,'article',randomUUID())).standard_trial,true);
+await db.query('update commerce_accounts set referral_credits=2 where user_id=$1',[81000]);
+const paid=randomUUID();const c=await rpc('commerce_reserve',81000,'obyektivka',paid);
+assert.equal(c.credit_units,1);assert.equal(c.standard_trial,false);assert.equal((await rpc('commerce_status',81000)).referral_credits,1);
+await rpc('commerce_finish',81000,paid,false);await rpc('commerce_finish',81000,paid,false);
+assert.equal((await rpc('commerce_status',81000)).referral_credits,2);
+assert.equal((await rpc('commerce_status',81000)).standard_free_remaining,0);
+await db.exec(migration);assert.equal((await rpc('commerce_status',81000)).standard_free_remaining,0);
+await reg(82000);
+const results=await Promise.allSettled(['article','referat','obyektivka','article'].map(s=>rpc('commerce_reserve',82000,s,randomUUID())));
+assert.equal(results.filter(r=>r.status==='fulfilled').length,3);assert.equal(results.filter(r=>r.status==='rejected').length,1);
+await db.exec('set role anon');await assert.rejects(rpc('commerce_status',81000),/permission denied/);
+await db.exec('reset role');await db.close();
+console.log('PASS: shared trial, history, concurrent requests, idempotency, free/credit refunds and permissions');

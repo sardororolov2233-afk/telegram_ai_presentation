@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile, BackgroundTasks
+from fastapi import Request, APIRouter, Depends, HTTPException, Form, File, UploadFile, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from supabase import Client
@@ -14,7 +14,7 @@ from app.services.obyektivka.telegram_sender import send_obyektivka_to_telegram
 
 router = APIRouter(prefix="/obyektivka", tags=["Obyektivka"])
 
-OBYEKTIVKA_PRICE = 10000.0  # 10 ming so'm
+OBYEKTIVKA_PRICE = 0.0  # Trial/credit accounting is handled atomically by billed_route.
 
 class ObyektivkaApiResponse(BaseModel):
     id: str
@@ -47,6 +47,7 @@ async def _send_telegram_background(
 @billed_route("obyektivka")
 async def generate_obyektivka(
     background_tasks: BackgroundTasks,
+    request: Request,
     full_name: str = Form(""),
     current_position: str = Form(""),
     birth_date: str = Form(""),

@@ -12,7 +12,7 @@ bir Telegram bot tokeni va bir xil hisob qoidalaridan foydalanadi.
 | Bitta taqdimot | −1 kvota |
 | Bitta dizayn buyurtmasi, 3 ta variant | −1 kvota |
 | Bitta kurs ishi | −2 kvota |
-| Referat, mustaqil ish, maqola, obyektivka | Bepul, kvota sarflamaydi |
+| Referat/mustaqil ish, maqola, obyektivka | Jami dastlabki 3 ta bepul, keyingi har biri 1 kvota |
 
 Kvota muddatsiz va **umumiy**: bir kvota taqdimotga sarflansa, uni dizaynga qayta ishlatib
 bo‘lmaydi. Obuna, balans to‘ldirish va pulga qo‘shimcha limit sotish o‘chirilgan. Eski balanslar,
@@ -59,7 +59,7 @@ OpenRouter’da bepul token bermaydi.
    `OPENROUTER_API_KEY`, doimiy kuchli `SECRET_KEY`, `FRONTEND_URL`.
 5. Repo ildizida `docker compose up --build -d`; yoki backend katalogidan
    `uvicorn app.main:app --host 0.0.0.0 --port 8100`. `GET /health`, `/miniapp` va
-   `/static/miniapp.js` ishlashini tekshiring. Docker PDF uchun LibreOffice va shriftlarni o‘rnatadi.
+   Standart frontendga redirect ishlashini tekshiring. Docker PDF uchun LibreOffice va shriftlarni o‘rnatadi.
 6. Botga `BACKEND_URL=https://BACKEND_HOST`, shu Supabase va OpenRouter kalitlari, ayni
    `BOT_TOKEN` ni sozlang. Botni rasmiy kanalga admin qiling va ishga tushiring.
 
@@ -88,8 +88,7 @@ qabul qiladi; parallel webhook yoqilmaydi.
   Yangi mini ilova `Idempotency-Key` yuboradi; shu kalitning takrori generatsiya qilmaydi va 409
   qaytaradi. Dizayn natijasi sinxron javobda beriladi; u navbatdagi hujjat emas.
 
-Mini ilova `/miniapp?tab=presentations`, `?tab=articles`, `?tab=designs`, `?tab=account`
-oynalarini qo‘llaydi. Obuna yoki karta orqali to‘lash tugmalari yo‘q.
+Mavjud frontend `FRONTEND_URL` orqali ochiladi. Backend `/miniapp` o‘rnida Standart oynaga redirect qiladi; API va fayl yuklash yo‘llari saqlanadi.
 
 ## Tekshiruvlar
 
@@ -99,7 +98,7 @@ pip install -r requirements-dev.txt
 npm ci
 npm run test:sql
 PYTHONPATH=. pytest -q
-node --check static/miniapp.js
+python -m compileall -q app
 ```
 
 SQL sinovlari haqiqiy PostgreSQL dvigateli (PGlite) orqali eski siyosatdan o‘tish, takroriy
@@ -116,3 +115,9 @@ kaliti ikkala modelga kira olishi alohida ishga tushirish tekshiruvini talab qil
 ## Telegram Serverless
 
 Serverless transport and the academic queue worker remain supported alongside the referral-only policy. See Orzu `docs/serverless.md`. Do not run Python polling alongside the managed webhook. Backend `/health` must include `serverless-academic-queue-v1`. Apply migrations in date order to the shared Supabase database.
+
+## Standart oynasi va umumiy bepul limit
+
+Maqola tugmasi mavjud `FRONTEND_URL?tab=standard` oynasini ochadi. Backend yangi mini ilova bermaydi; eski `/miniapp` havolasi mavjud frontendning Standart oynasiga 307 bilan yo‘naltiriladi. Generatsiya API’lari saqlanadi.
+
+`20261023_standard_trial.sql` migratsiyasini oldingi migratsiyalardan keyin umumiy Supabase bazasida bajaring. Referat/mustaqil ish, maqola va obyektivka uchun bir foydalanuvchiga jami 3 ta bepul foydalanish beriladi, keyin har bir buyurtma 1 kvota. Avval bajarilgan standart buyurtmalar ham shu muddatsiz limitga kiradi. Xato/refund bepul band qilishni yoki kvotani bir marta qaytaradi. Takroriy so‘rov limitni qayta sarflamaydi. Qayta migratsiya bepul limitni yangilamaydi. Hisobda `standard_free_remaining`, `standard_free_used`, `standard_free_limit` va `standard_trial_enabled` maydonlari bor. Frontend `quotes` orqali haqiqiy narxni ko‘rsatishi kerak.
