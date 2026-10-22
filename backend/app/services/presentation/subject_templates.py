@@ -7,6 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 from zipfile import ZipFile
 from lxml import etree
+from app.core.config import settings
 
 ROOT = Path(__file__).parent / "pro_templates"
 SUBJECTS = (
@@ -108,8 +109,8 @@ def build_subject_schema(subject: str, variant: int, topic: str, author: str) ->
         schema["topic"] += f" To‘liq mavzu: {topic}. Qisqa nom mazmunni saqlasin."
     schema["muallif"] = f"Muallif: {author}. Foydalanuvchi bergan ismni o‘zgartirmang."
     schema["image_keywords"] = [
-        f"English search phrase for slide {slot['first_slide']}, {slot['role']}, plan {slot.get('section') or 'general'}, topic {topic}, aspect {slot['aspect_ratio']}."
-        for slot in manifest["image_slots"]
+        f"English image-generation prompt for topic {topic}, {slot['role']}, plan {slot.get('section') or 'general'}. No text or labels."
+        for slot in representative_image_slots(manifest)
     ]
     return schema
 
@@ -124,8 +125,14 @@ def subject_instructions(subject: str, variant: int) -> str:
         + f"\nKeep every title and text within its character limit. No markdown, {{{{tokens}}}}, fake citations, repeated paragraphs or filler. Keep the {manifest['plan_count']} agenda items consistent with their related slides."
         + "\nReferences: list only identifiable real sources or sources supplied by the user. Never invent author names, laws, dates or URLs. With no supplied references, write a short honest label if verified sources are unavailable."
         + "\nVisuals: " + info["image_rule"]
-        + f" Return exactly {len(manifest['image_slots'])} image_keywords in the declared order. An illustrated template with no photo slots must return []."
+        + f" Return exactly {len(representative_image_slots(manifest))} image_keywords in the declared order. These images will be reused across related slots. An illustrated template with no photo slots must return []."
     )
+
+
+def representative_image_slots(manifest: dict) -> list[dict]:
+    slots = manifest['image_slots']
+    count = min(len(slots), settings.PRESENTATION_MAX_IMAGES)
+    return [slots[index * len(slots) // count] for index in range(count)]
 
 
 def validate_payload(data: dict, subject: str, variant: int) -> None:

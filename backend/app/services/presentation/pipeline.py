@@ -1,6 +1,7 @@
 """A single template-based presentation product. One deck consumes one allowance."""
 import asyncio
 import os
+import shutil
 from pathlib import Path
 from typing import Optional
 from uuid import uuid4
@@ -8,7 +9,7 @@ from app.core.config import settings
 from app.services.presentation.ai_generator import AIContentGenerator
 from app.services.presentation.pptx_generator import generate_template_pptx
 from app.services.presentation.telegram_sender import send_presentation_to_telegram
-from app.services.presentation.image_fetcher import fetch_images_for_slides, cleanup_images
+from app.services.presentation.image_fetcher import fetch_images_for_slides, cleanup_images, reuse_images
 from app.services.presentation.subject_templates import canonical_subject, is_subject_pack, load_manifest
 
 
@@ -19,7 +20,8 @@ class PresentationPipeline:
     async def run(self, topic: str, language: str = 'uz', author: str = '',
                   subject: str = 'minimalizm', variant: int = 1, bibliography_type: str = 'none',
                   bibliography_text: Optional[str] = None, document_format: str = 'ppt',
-                  telegram_id: Optional[int] = None, user_images: Optional[list] = None) -> dict:
+                  telegram_id: Optional[int] = None, user_images: Optional[list] = None,
+                  request_id: Optional[str] = None) -> dict:
         subject = canonical_subject(subject)
         if not is_subject_pack(subject):
             raise ValueError('Fan shablonini tanlang')
@@ -27,6 +29,7 @@ class PresentationPipeline:
         directory = Path(settings.JOB_STORAGE_DIR) / 'outputs'
         directory.mkdir(parents=True, exist_ok=True)
         presentation_id = str(uuid4())
+        cache_dir = Path(settings.JOB_STORAGE_DIR) / 'images' / str(request_id or presentation_id)
         output = directory / f'{presentation_id}.pptx'
         fetched = []
         final_path = output
@@ -35,10 +38,10 @@ class PresentationPipeline:
                 language=language, plan_count=manifest['plan_count'], bibliography_type=bibliography_type,
                 bibliography_text=bibliography_text, subject=subject, variant=variant)
             if user_images:
-                images = user_images[:len(manifest['image_slots'])]
+                images = reuse_images(user_images, len(manifest['image_slots']))
             else:
-                fetched = await fetch_images_for_slides(keywords[:len(manifest['image_slots'])]) if keywords else []
-                images = fetched
+                fetched = await fetch_images_for_slides(keywords, cache_dir=cache_dir) if keywords else []
+                images = reuse_images(fetched, len(manifest['image_slots']))
             output_path, slide_count = await generate_template_pptx(content, str(output), user_images=images,
                 subject=subject, variant=variant, plan_count=manifest['plan_count'], bibliography_type=bibliography_type)
             if document_format == 'pdf':
@@ -61,4 +64,8 @@ class PresentationPipeline:
                 final_path.unlink(missing_ok=True)
             raise
         finally:
-            cleanup_images(fetched)
+            # Durable job images survive cancellation and lost leases. The worker removes them
+            # only after the outcome is committed to Postgres.
+            if request_id is None:
+                cleanup_images(fetched)
+                shutil.rmtree(cache_dir, ignore_errors=True)

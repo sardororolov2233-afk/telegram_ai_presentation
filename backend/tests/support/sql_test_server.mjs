@@ -1,10 +1,13 @@
 // Test-only PostgREST subset backed by real PostgreSQL in PGlite. Never deploy this server.
 import { PGlite } from '@electric-sql/pglite';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import http from 'node:http';
 const db=new PGlite();
 await db.exec('create role anon;create role authenticated;create role service_role bypassrls;');
-await db.exec(await readFile(new URL('../../supabase/migrations/20261017_commerce.sql',import.meta.url),'utf8'));
+const migrations = new URL('../../supabase/migrations/', import.meta.url);
+for (const name of (await readdir(migrations)).filter(name => name.endsWith('.sql')).sort()) {
+  await db.exec(await readFile(new URL(name, migrations), 'utf8'));
+}
 const tables=new Set(['users','payments','statistics','commerce_accounts','commerce_grants','commerce_charges','commerce_jobs']);
 const identifier=value=>{if(!/^[a-z_][a-z_0-9]*$/.test(value))throw Error('invalid identifier');return '"'+value+'"'};
 const server=http.createServer(async(req,res)=>{

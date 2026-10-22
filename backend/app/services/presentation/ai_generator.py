@@ -9,7 +9,7 @@ from app.services.presentation.subject_templates import (
 
 class AIContentGenerator:
     OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
-    MODEL = 'tngtech/deepseek-r1t2-chimera'
+    MODEL = settings.ACADEMIC_MODEL
 
     def __init__(self):
         self.api_key = settings.OPENROUTER_API_KEY
@@ -57,7 +57,7 @@ class AIContentGenerator:
                         'content': f'Correct these field errors and return the complete JSON object: {exc}'}]
         keywords = result.pop('image_keywords', [])
         keywords = keywords if isinstance(keywords, list) else []
-        slots = load_manifest(subject, variant)['image_slots']
+        slots = load_manifest(subject, variant)['image_slots'][:settings.PRESENTATION_MAX_IMAGES]
         keywords = [str(keywords[i]) if i < len(keywords) and keywords[i] else f'{topic} {subject} educational visual'
             for i in range(len(slots))]
         return result, keywords

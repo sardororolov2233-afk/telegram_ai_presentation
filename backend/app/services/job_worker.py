@@ -2,9 +2,11 @@
 import asyncio
 import contextlib
 import logging
+import shutil
 from pathlib import Path
 from uuid import uuid4
 from app.core.database import get_db
+from app.core.config import settings
 from app.services.commerce import rpc, CommerceError
 from app.services.presentation.pipeline import PresentationPipeline
 from app.services.article.pipeline import ArticlePipeline
@@ -39,6 +41,8 @@ async def process_job(db, job, worker_id):
         if telegram_id:
             await send_status_message(telegram_id, '⏳ Buyurtmangiz tayyorlanmoqda. Natijani mini ilovada ham olishingiz mumkin.')
         pipeline = PresentationPipeline() if job['service'] == 'presentation' else ArticlePipeline()
+        if job['service'] == 'presentation':
+            payload['request_id'] = job['id']
         operation = asyncio.create_task(pipeline.run(**payload, telegram_id=telegram_id))
         completed, _ = await asyncio.wait([operation, pulse], return_when=asyncio.FIRST_COMPLETED)
         if pulse in completed:
@@ -54,7 +58,7 @@ async def process_job(db, job, worker_id):
         done = await rpc(db, 'commerce_finish_job', p_request_id=job['id'], p_worker_id=worker_id,
             p_success=False, p_result=None, p_error=str(exc))
         if telegram_id and done:
-            await send_status_message(telegram_id, 'Ishni tayyorlash yakunlanmadi. Band qilingan pul yoki limit qaytarildi.')
+            await send_status_message(telegram_id, 'Ishni tayyorlash yakunlanmadi. Band qilingan kvota qaytarildi.')
     finally:
         pulse.cancel()
         if operation and not operation.done():
@@ -67,6 +71,7 @@ async def process_job(db, job, worker_id):
         if done:
             for path in images:
                 Path(path).unlink(missing_ok=True)
+            shutil.rmtree(Path(settings.JOB_STORAGE_DIR) / 'images' / job['id'], ignore_errors=True)
 
 
 async def worker_loop():

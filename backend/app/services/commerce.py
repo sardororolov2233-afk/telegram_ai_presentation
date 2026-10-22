@@ -1,16 +1,14 @@
-"""Shared RPC contract with Orzu/commerce.py; all mutations run inside Postgres."""
+"""Shared referral-only RPC contract; all credit changes run inside Postgres."""
 import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
-PAYMENT_CARD = "9860020144204623"
-SUBSCRIPTION_PRICE = 25000
-PRICES = {"presentation": 10000, "course": 30000, "referat": 8000, "article": 10000, "design": 5000, "obyektivka": 10000}
+QUOTA_COSTS = {"presentation": 1, "course": 2, "design": 1, "referat": 0, "article": 0, "obyektivka": 0}
 ERROR_MESSAGES = {
-    "duplicate_receipt": "Ushbu chek avval tasdiqlangan. Uni qayta ishlatib bo‘lmaydi.",
-    "insufficient_balance": "Balans yetarli emas. Do‘st taklif qiling yoki hisobni to‘ldiring.",
-    "presentation_access_required": "5 ta do‘st taklif qiling yoki 25 000 so‘mga bir oylik obuna oling.",
-    "subscription_active": "Bir oylik obuna allaqachon faol. Qo‘shimcha limit uchun 5 ta do‘st taklif qiling yoki har bir taqdimotga 10 000 so‘m to‘lang.",
+    "insufficient_referral_credits": "Taklif kvotasi yetarli emas. Har bir yangi do‘st — 1 kvota. Taqdimot va dizayn uchun 1, kurs ishi uchun 2 kvota kerak.",
+    "subscriptions_disabled": "Obuna bekor qilingan. Kvota faqat yangi do‘st taklif qilish orqali olinadi.",
+    "payments_disabled": "To‘lovlar yopilgan. Do‘st taklif qilib kvota oling.",
+    "invalid_service": "Noto‘g‘ri xizmat tanlandi.",
     "user_not_registered": "Avval botda /start buyrug‘ini bosing.",
     "request_conflict": "Buyurtma identifikatori boshqa so‘rovga tegishli.",
     "unavailable": "Hisob tizimiga ulanib bo‘lmadi. Birozdan so‘ng qayta urinib ko‘ring.",
@@ -54,29 +52,19 @@ def parse_referrer(value):
 
 def quote(account, service):
     """UI preview only. The reserve RPC rechecks this under a row lock."""
-    if service == "presentation":
-        if account.get("subscription_active") and account.get("subscription_remaining", 0) > 0:
-            return {"allowed": True, "amount": 0, "source": "subscription"}
-        if account.get("referral_presentations", 0) > 0:
-            return {"allowed": True, "amount": 0, "source": "referral"}
-        if not account.get("presentation_period_active"):
-            return {"allowed": False, "amount": None, "reason": "presentation_access_required"}
-    if service == "course" and account.get("course_credits", 0) > 0:
-        return {"allowed": True, "amount": 0, "source": "referral"}
-    amount = PRICES[service]
-    return {"allowed": float(account.get("balance") or 0) >= amount, "amount": amount,
-        "source": "balance", "reason": "insufficient_balance"}
+    required = QUOTA_COSTS[service]
+    available = int(account.get("referral_credits") or 0)
+    return {"allowed": available >= required, "amount": 0,
+        "source": "referral" if required else "free", "required_credits": required,
+        "available_credits": available, "missing_credits": max(0, required - available),
+        "reason": "insufficient_referral_credits" if available < required else None}
 
 
 POLICY_TEXT = (
-    "🎁 Har 5 ta yangi, kanalga a’zoligi tasdiqlangan do‘st uchun: "
-    "bir oy amal qiladigan 5 ta bepul taqdimot va 1 ta bepul kurs ishi.\n"
-    "Yana 5 ta yangi do‘st taklif qilib mukofotni qayta olish mumkin.\n\n"
-    "📊 Bir oylik obuna — 25 000 so‘m, 10 ta taqdimot. "
-    "Limit tugasa, yana 5 ta do‘st taklif qiling yoki har bir qo‘shimcha taqdimot uchun 10 000 so‘m to‘lang.\n"
-    "📚 Kurs ishi — bepul mukofotdan so‘ng yana 5 ta do‘st taklif qiling yoki 30 000 so‘m to‘lang.\n"
-    "📄 Referat / mustaqil ish — 8 000 so‘m. Maqola — 10 000 so‘m. "
-    "Referat, maqola va kurs ishi DeepSeek R1 bilan yaratiladi.\n\n"
-    "Obuna faqat taqdimotlarni qamrab oladi. Taklif mukofoti alohida qo‘shiladi. "
-    "Obuna avtomatik yangilanmaydi; foydalanilmagan oylik taqdimot limiti muddat oxirida tugaydi."
+    "🎁 Har bir yangi, kanal a’zoligi tasdiqlangan do‘st — 1 ta muddatsiz kvota.\n"
+    "📊 Taqdimot — 1 kvota. 🎨 Dizayn — 1 kvota. 📚 Kurs ishi — 2 kvota.\n"
+    "Kvotalar umumiy: bir xizmatga sarflangan kvota boshqa xizmatga qayta sarflanmaydi.\n\n"
+    "📄 Referat, mustaqil ish, maqola, obyektivka va boshqa xizmatlar bepul; kvota talab qilinmaydi.\n"
+    "Obuna va pulli xaridlar bekor qilingan. Kvota faqat do‘st taklif qilish orqali olinadi.\n"
+    "Bitta taqdimot uchun ko‘pi bilan 3 ta AI rasm yaratiladi; qo‘shimcha rasm joylarida ular qayta ishlatiladi."
 )
