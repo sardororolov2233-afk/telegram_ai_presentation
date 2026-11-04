@@ -11,6 +11,7 @@ from app.api.v1.router import api_router
 from app.core.database import get_db
 from app.services.commerce import CommerceError, rpc
 from app.services.job_worker import worker_loop
+from app.services.broadcasts import broadcast_worker_loop, available as broadcast_available
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -23,6 +24,7 @@ async def lifespan(app: FastAPI):
         raise RuntimeError('20261022_referral_only.sql migratsiyasini qo‘llang')
     await rpc(get_db(), 'commerce_recover_expired')
     workers = [asyncio.create_task(worker_loop()) for _ in range(max(1, min(settings.JOB_WORKERS, 4)))]
+    workers.append(asyncio.create_task(broadcast_worker_loop()))
     try:
         yield
     finally:
@@ -75,4 +77,5 @@ async def mini_app(request: Request):
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "app": settings.APP_NAME,
-        "features": ["serverless-academic-queue-v1", "serverless-referral-only-v2"]}
+        "features": ["serverless-academic-queue-v1", "serverless-referral-only-v2"] +
+            (["serverless-broadcast-v1"] if broadcast_available() else [])}

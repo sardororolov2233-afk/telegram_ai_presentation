@@ -78,6 +78,9 @@ class Settings:
     PRESENTATION_MAX_IMAGES: int = 3
     JOB_STORAGE_DIR: str = _get_str("JOB_STORAGE_DIR", "/tmp/orzu-jobs")
     JOB_WORKERS: int = _get_int("JOB_WORKERS", 2)
+    ADMIN_ID: str = _get_str("ADMIN_ID")
+    BROADCAST_RATE_PER_SECOND: int = _get_int("BROADCAST_RATE_PER_SECOND", 25)
+    BROADCAST_STORAGE_DIR: str = _get_str("BROADCAST_STORAGE_DIR")
 
 
 settings = Settings()

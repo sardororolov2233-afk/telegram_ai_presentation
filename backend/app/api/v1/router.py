@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1 import auth, users, presentations, designs, articles, obyektivka, commerce, jobs
+from app.api.v1 import auth, users, presentations, designs, articles, obyektivka, commerce, jobs, broadcasts
 
 api_router = APIRouter()
 
@@ -12,3 +12,4 @@ api_router.include_router(presentations.router)
 api_router.include_router(designs.router)
 api_router.include_router(articles.router)
 api_router.include_router(obyektivka.router)
+api_router.include_router(broadcasts.router)
