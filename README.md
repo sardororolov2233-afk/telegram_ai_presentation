@@ -121,3 +121,17 @@ Serverless transport and the academic queue worker remain supported alongside th
 Maqola tugmasi mavjud `FRONTEND_URL?tab=standard` oynasini ochadi. Backend yangi mini ilova bermaydi; eski `/miniapp` havolasi mavjud frontendning Standart oynasiga 307 bilan yo‘naltiriladi. Generatsiya API’lari saqlanadi.
 
 `20261023_standard_trial.sql` migratsiyasini oldingi migratsiyalardan keyin umumiy Supabase bazasida bajaring. Referat/mustaqil ish, maqola va obyektivka uchun bir foydalanuvchiga jami 3 ta bepul foydalanish beriladi, keyin har bir buyurtma 1 kvota. Avval bajarilgan standart buyurtmalar ham shu muddatsiz limitga kiradi. Xato/refund bepul band qilishni yoki kvotani bir marta qaytaradi. Takroriy so‘rov limitni qayta sarflamaydi. Qayta migratsiya bepul limitni yangilamaydi. Hisobda `standard_free_remaining`, `standard_free_used`, `standard_free_limit` va `standard_trial_enabled` maydonlari bor. Frontend `quotes` orqali haqiqiy narxni ko‘rsatishi kerak.
+
+## Maqoladan keyingi nashr taklifi
+
+Maqolaning Word fayli Telegramga muvaffaqiyatli yuborilgach, bot alohida keyingi xabarda
+Tamaddun nashri va sertifikat xizmatini taklif qiladi: 24 soat, chegirmada 80 ming so‘m,
+aloqa `@tammaddunuz`. Matn `backend/app/services/article/telegram_sender.py` da saqlanadi;
+sertifikat haqidagi ajratilgan qism Telegram HTML formatida qalin chiqadi.
+
+Telegramga yuborish tanlanmagan yoki fayl yetkazilmagan bo‘lsa, taklif yuborilmaydi.
+Taklifni yuborish xatosi tayyor DOCX faylini o‘chirmaydi va maqola buyurtmasini xatoga
+aylantirmaydi. Bu faqat maqola xizmatiga tegishli.
+
+Alwaysdata backendini yangilab restart qiling. `/health` javobidagi
+`article-publication-offer-v1` yangi kod ishga tushganini bildiradi.

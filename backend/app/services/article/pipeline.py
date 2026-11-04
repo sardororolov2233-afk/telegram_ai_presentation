@@ -1,6 +1,7 @@
 """Claude Haiku writes structured text. Trusted Python code renders the DOCX."""
 import asyncio
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Optional
@@ -11,6 +12,9 @@ from docx import Document
 from docx.shared import Cm, Pt
 from app.core.config import settings
 from app.services.presentation.telegram_sender import send_document
+from app.services.article.telegram_sender import send_publication_offer
+
+logger = logging.getLogger(__name__)
 
 
 class ArticleSection(BaseModel):
@@ -92,7 +96,12 @@ class ArticlePipeline:
         try:
             await asyncio.to_thread(self.write_document, content, author, language, str(path))
             sent = await send_document(telegram_id, str(path), f'📝 {topic[:900]}') if telegram_id else False
-            return {'document_path': str(path), 'telegram_sent': sent}
         except BaseException:
             path.unlink(missing_ok=True)
             raise
+        if sent:
+            try:
+                await send_publication_offer(telegram_id)
+            except Exception:
+                logger.warning('Article publication offer could not be delivered')
+        return {'document_path': str(path), 'telegram_sent': sent}

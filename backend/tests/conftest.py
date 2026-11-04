@@ -71,6 +71,7 @@ def client(sql_server, tmp_path, monkeypatch):
     monkeypatch.setattr(pipeline, 'send_presentation_to_telegram', delivered)
     monkeypatch.setattr(ArticlePipeline, '_call_llm', article_content)
     monkeypatch.setattr('app.services.article.pipeline.send_document', delivered)
+    monkeypatch.setattr('app.services.article.pipeline.send_publication_offer', delivered)
     monkeypatch.setattr('app.services.job_worker.send_status_message', delivered)
     with TestClient(app) as api:
         api.db = db
