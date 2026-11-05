@@ -7,6 +7,7 @@ from supabase import Client
 from app.core.config import settings
 from app.core.database import get_db
 from app.routes.deps import get_current_user
+from app.services.generation_errors import public_error
 
 router = APIRouter(prefix='/jobs', tags=['Orders'])
 
@@ -22,9 +23,11 @@ async def owned_job(db, user_id, request_id):
 async def job_status(request_id: UUID, db: Client = Depends(get_db), user: dict = Depends(get_current_user)):
     job = await owned_job(db, user['telegram_id'], request_id)
     result = job.get('result') or {}
+    error_code, message = public_error(job.get('error')) if job['status'] == 'failed' else (None, None)
     return {'id': job['id'], 'status': job['status'], 'service': job['service'],
         'telegram_sent': result.get('telegram_sent', False), 'slide_count': result.get('slide_count'),
-        'message': 'Ish yakunlanmadi. Band qilingan kvota qaytarildi.' if job['status'] == 'failed' else None,
+        'error_code': error_code,
+        'message': message + ' Band qilingan kvota qaytarildi.' if message else None,
         'download_url': f"/api/v1/jobs/{job['id']}/download" if job['status'] == 'completed' else None}
 
 

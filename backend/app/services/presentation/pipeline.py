@@ -22,6 +22,10 @@ class PresentationPipeline:
                   bibliography_text: Optional[str] = None, document_format: str = 'ppt',
                   telegram_id: Optional[int] = None, user_images: Optional[list] = None,
                   request_id: Optional[str] = None) -> dict:
+        if document_format == 'pdf':
+            from app.services.presentation.pdf_converter import pdf_available, PdfUnavailableError
+            if not pdf_available():
+                raise PdfUnavailableError()
         subject = canonical_subject(subject)
         if not is_subject_pack(subject):
             raise ValueError('Fan shablonini tanlang')
@@ -49,6 +53,8 @@ class PresentationPipeline:
                 final_path = Path(await asyncio.to_thread(convert_pptx_to_pdf, output_path))
             if not final_path.is_file() or not final_path.stat().st_size:
                 raise RuntimeError('Taqdimot fayli yaratilmadi')
+            if final_path != output:
+                output.unlink(missing_ok=True)
             sent = False
             if telegram_id:
                 try:

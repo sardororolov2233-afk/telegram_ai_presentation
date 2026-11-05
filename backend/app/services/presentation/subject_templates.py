@@ -27,6 +27,21 @@ ALIASES = {
 }
 
 LEGACY_LABELS = {"biologiya": "Biologiya", "adabiyot": "Adabiyot", "bank": "Bank ishi"}
+AUTHOR_FIELDS = frozenset({"muallif", "ism_sharif", "ism_familya"})
+
+
+class PayloadValidationError(ValueError):
+    """Safe field diagnostics: never include generated text or user input."""
+
+    code = "presentation_content_invalid"
+
+    def __init__(self, issues: list[dict], subject: str, variant: int,
+                 message: str = "Shablon ma’lumotlari mos emas"):
+        self.issues = tuple(dict(issue) for issue in issues)
+        self.subject = canonical_subject(subject)
+        self.variant = variant
+        details = json.dumps(self.issues, ensure_ascii=False, separators=(",", ":"))
+        super().__init__(f"{message} ({self.subject} #{variant}): {details}")
 
 
 def legacy_manifest(subject, variant):
@@ -123,6 +138,7 @@ def subject_instructions(subject: str, variant: int) -> str:
         info["guidance"] + "\nSuggested section directions (adapt to the actual topic): " + "; ".join(info["sections"])
         + f"\n{manifest['slide_count']}-slide sequence: " + sequence
         + f"\nKeep every title and text within its character limit. No markdown, {{{{tokens}}}}, fake citations, repeated paragraphs or filler. Keep the {manifest['plan_count']} agenda items consistent with their related slides."
+        + " Count spaces and punctuation as characters. Use complete short words and concise meaningful sentences, never cut words or return clipped labels to fit. Leave a margin below each maximum."
         + "\nReferences: list only identifiable real sources or sources supplied by the user. Never invent author names, laws, dates or URLs. With no supplied references, write a short honest label if verified sources are unavailable."
         + "\nVisuals: " + info["image_rule"]
         + f" Return exactly {len(representative_image_slots(manifest))} image_keywords in the declared order. These images will be reused across related slots. An illustrated template with no photo slots must return []."
@@ -135,18 +151,34 @@ def representative_image_slots(manifest: dict) -> list[dict]:
     return [slots[index * len(slots) // count] for index in range(count)]
 
 
+def normalize_payload(data: dict, subject: str, variant: int) -> dict:
+    """Remove redundant whitespace without cutting text or changing the author."""
+    result = dict(data)
+    for key in load_manifest(subject, variant)["fields"]:
+        value = result.get(key)
+        if isinstance(value, str) and key not in AUTHOR_FIELDS:
+            lines = value.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+            result[key] = "\n".join(re.sub(r"[^\S\n]+", " ", line).strip() for line in lines).strip()
+    return result
+
+
 def validate_payload(data: dict, subject: str, variant: int) -> None:
+    if not isinstance(data, dict):
+        raise PayloadValidationError([{"code": "json_object_required"}], subject, variant)
     errors = []
     for key, spec in load_manifest(subject, variant)["fields"].items():
         value = data.get(key)
-        if not isinstance(value, str) or not value.strip():
-            errors.append(f"{key}: matn yo‘q")
+        if not isinstance(value, str):
+            errors.append({"field": key, "code": "text_required"})
+        elif not value.strip():
+            errors.append({"field": key, "code": "empty_text"})
         elif "{{" in value or "}}" in value:
-            errors.append(f"{key}: almashtirilmagan kalit")
-        elif key != "muallif" and len(value) > spec["max_chars"]:
-            errors.append(f"{key}: {len(value)} > {spec['max_chars']} belgi")
+            errors.append({"field": key, "code": "unresolved_placeholder"})
+        elif key not in AUTHOR_FIELDS and len(value) > spec["max_chars"]:
+            errors.append({"field": key, "code": "max_chars", "actual_chars": len(value),
+                           "max_chars": spec["max_chars"]})
     if errors:
-        raise ValueError("Shablon ma’lumotlari mos emas: " + "; ".join(errors))
+        raise PayloadValidationError(errors, subject, variant)
 
 
 def list_subject_templates() -> list[dict]:

@@ -81,6 +81,7 @@ class Settings:
     ADMIN_ID: str = _get_str("ADMIN_ID")
     BROADCAST_RATE_PER_SECOND: int = _get_int("BROADCAST_RATE_PER_SECOND", 25)
     BROADCAST_STORAGE_DIR: str = _get_str("BROADCAST_STORAGE_DIR")
+    LIBREOFFICE_PATH: str = _get_str("LIBREOFFICE_PATH")
 
 
 settings = Settings()

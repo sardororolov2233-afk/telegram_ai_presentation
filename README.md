@@ -43,6 +43,25 @@ eski foydalanuvchilar, takroriy `/start` va qayta tasdiqlash qo‘shimcha kvota 
 Foydalanuvchi pul to‘lamaydi; **model API xarajatlarini loyiha egasi qoplaydi**. Do‘st taklifi
 OpenRouter’da bepul token bermaydi.
 
+### Taqdimot xatolarini tekshirish
+
+- Haiku matni shablon chegarasidan oshsa, faqat xato maydonlar ikki martagacha tuzatiladi.
+  To‘g‘ri maydonlar va muallif saqlanadi; matn mexanik kesilmaydi. Tuzatish ham tekshiruvdan
+  o‘tmasa, rasm API chaqirilmaydi va buyurtmaning band qilingan kvotasi qaytariladi.
+- Minimalizm kabi rasm joyi bo‘lmagan shablon Seedream’ga so‘rov yubormaydi.
+- Rasm provayderining autentifikatsiya, balans, limit, timeout va noto‘g‘ri javob xatolari
+  alohida kod bilan qayd etiladi. Logga javob tanasi yoki maxfiy kalit yozilmaydi.
+- `GET /api/v1/presentations/capabilities` PDF uchun konvertor topilganini bildiradi.
+  Serverda bajariladigan `libreoffice` yoki `soffice` bo‘lishi kerak. PATH’da topilmasa,
+  `LIBREOFFICE_PATH` ga **o‘rnatilgan faylning to‘liq yo‘lini** kiriting va backendni restart qiling.
+  Bu sozlama LibreOffice’ni o‘zi o‘rnatmaydi. Konvertor topilmasa, PDF kvota olinmasdan rad
+  etiladi va frontend PPTX tanlashni taklif qiladi. Har bir konvertatsiya alohida profil
+  va vaqtinchalik katalogda bajariladi; eski yoki buzilgan PDF muvaffaqiyat deb qabul qilinmaydi.
+- Dizayn uchun `telegram_sent=true` faqat Telegram barcha rasmlar yetkazilganini
+  tasdiqlaganda qaytadi. Telegram xatosida yaratilgan rasmlar mini ilovada saqlanadi.
+
+Yangilanish belgisi: `/health` javobida `presentation-reliability-v1`.
+
 ## Yangilash va ishga tushirish
 
 1. Bot va backendni yangilash vaqtida to‘xtating. Ikkalasi ham shu taklif siyosatiga o‘tishi kerak.

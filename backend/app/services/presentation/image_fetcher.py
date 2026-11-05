@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from uuid import uuid4
 from app.core.config import settings
-from app.services.image_generation import generate_image
+from app.services.image_generation import generate_image, ImageGenerationError
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +18,7 @@ async def fetch_images_for_slides(keywords: list, cache_dir: Path | None = None)
     directory.mkdir(parents=True, exist_ok=True)
     prompts = list(dict.fromkeys(str(q).strip() for q in keywords if q and str(q).strip()))[:settings.PRESENTATION_MAX_IMAGES]
     images = []
+    failures = []
     for index, prompt in enumerate(prompts):
         output = directory / f'image_{index}.png'
         if output.is_file():
@@ -33,9 +34,14 @@ async def fetch_images_for_slides(keywords: list, cache_dir: Path | None = None)
         try:
             await generate_image(prompt, output)
             images.append(str(output))
-        except Exception:
-            logger.warning('Seedream image %s failed; reuse successful deck images', index + 1)
+        except Exception as exc:
+            failures.append(exc)
+            logger.warning('Seedream image %s failed code=%s http=%s; reuse successful deck images',
+                index + 1, getattr(exc, 'code', 'image_provider_error'), getattr(exc, 'status_code', None))
     if prompts and not images:
+        typed = next((exc for exc in failures if isinstance(exc, ImageGenerationError)), None)
+        if typed is not None:
+            raise typed from None
         raise RuntimeError('Taqdimot rasmlarini yaratib bo‘lmadi')
     return images
 

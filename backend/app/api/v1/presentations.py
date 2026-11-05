@@ -10,8 +10,15 @@ from app.core.database import get_db
 from app.routes.deps import get_current_user
 from app.services.commerce import rpc
 from app.services.presentation.subject_templates import canonical_subject, load_manifest, list_subject_templates
+from app.services.presentation.pdf_converter import pdf_available, PDF_UNAVAILABLE_MESSAGE
 
 router = APIRouter(prefix='/presentations', tags=['Presentations'])
+
+
+@router.get('/capabilities')
+async def capabilities():
+    available = pdf_available()
+    return {'pdf_available': available, 'formats': ['ppt', 'pdf'] if available else ['ppt']}
 
 
 @router.get('/templates')
@@ -44,6 +51,8 @@ async def generate_presentation(
 ):
     if len(topic.strip()) < 3:
         raise HTTPException(400, 'Mavzuni kamida 3 ta belgi bilan kiriting')
+    if document_format == 'pdf' and not pdf_available():
+        raise HTTPException(503, detail={'code': 'pdf_unavailable', 'message': PDF_UNAVAILABLE_MESSAGE})
     # Some FastAPI versions treat a missing bool form field as an unchecked checkbox.
     if 'send_to_telegram' not in await request.form():
         send_to_telegram = True

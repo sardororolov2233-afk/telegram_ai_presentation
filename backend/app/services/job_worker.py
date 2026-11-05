@@ -12,6 +12,7 @@ from app.services.presentation.pipeline import PresentationPipeline
 from app.services.article.pipeline import ArticlePipeline
 from app.services.academic.pipeline import AcademicPipeline
 from app.services.presentation.telegram_sender import send_status_message
+from app.services.generation_errors import persisted_error
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ async def process_job(db, job, worker_id):
     except Exception as exc:
         logger.exception('Job %s failed', job['id'])
         done = await rpc(db, 'commerce_finish_job', p_request_id=job['id'], p_worker_id=worker_id,
-            p_success=False, p_result=None, p_error=str(exc))
+            p_success=False, p_result=None, p_error=persisted_error(exc))
         if telegram_id and done:
             await send_status_message(telegram_id, 'Ishni tayyorlash yakunlanmadi. Band qilingan kvota qaytarildi.')
     finally:

@@ -77,5 +77,5 @@ async def mini_app(request: Request):
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "app": settings.APP_NAME,
-        "features": ["serverless-academic-queue-v1", "serverless-referral-only-v2", "article-publication-offer-v1"] +
+        "features": ["serverless-academic-queue-v1", "serverless-referral-only-v2", "article-publication-offer-v1", "presentation-reliability-v1"] +
             (["serverless-broadcast-v1"] if broadcast_available() else [])}
